@@ -1,0 +1,7 @@
+# Copy these lines into your .env file (username: admin_user, password: admin)
+
+# Standard connection string (no SRV) - use this
+MONGODB_URI=mongodb://admin_user:admin@ac-lycijz6-shard-00-00.jmrmhg3.mongodb.net:27017,ac-lycijz6-shard-00-01.jmrmhg3.mongodb.net:27017,ac-lycijz6-shard-00-02.jmrmhg3.mongodb.net:27017/mentorlink?ssl=true&replicaSet=atlas-lycijz6-shard-0&authSource=admin&retryWrites=true&w=majority
+
+# If still failing, add this line (TLS bypass - dev only)
+ATLAS_TLS_INSECURE=1
