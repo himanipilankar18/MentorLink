@@ -12,7 +12,7 @@ async function testConnection() {
   console.log('');
 
   try {
-    await mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/mentorlink');
+    await mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/peerly');
     console.log('✅ MongoDB Connected Successfully!');
     console.log('   Host:', mongoose.connection.host);
     console.log('   Database:', mongoose.connection.name);
@@ -34,7 +34,7 @@ async function testConnection() {
       console.log('💡 Troubleshooting:');
       console.log('   1. Check if MongoDB is running (local) or connection string is correct (Atlas)');
       console.log('   2. For Atlas: Verify network access and credentials');
-      console.log('   3. Try: mongodb://localhost:27017/mentorlink for local MongoDB');
+      console.log('   3. Try: mongodb://localhost:27017/peerly for local MongoDB');
     } else if (error.message.includes('authentication failed')) {
       console.log('💡 Troubleshooting:');
       console.log('   1. Check username and password in connection string');

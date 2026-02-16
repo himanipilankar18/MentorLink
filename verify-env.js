@@ -49,12 +49,12 @@ let issues = [];
 let warnings = [];
 
 // Check 1: Missing database name
-if (!mongodbUri.includes("/mentorlink") && !mongodbUri.includes("/?") && !mongodbUri.endsWith("/")) {
+if (!mongodbUri.includes("/peerly") && !mongodbUri.includes("/?") && !mongodbUri.endsWith("/")) {
   if (!mongodbUri.match(/\/[^\/\?]+(\?|$)/)) {
-    issues.push("Missing database name. Should have /mentorlink before ?");
+    issues.push("Missing database name. Should have /peerly before ?");
   }
 } else if (mongodbUri.includes("/?")) {
-  issues.push("Missing database name. Connection string has /? instead of /mentorlink?");
+  issues.push("Missing database name. Connection string has /? instead of /peerly?");
 }
 
 // Check 2: Wrong query parameters
@@ -121,7 +121,7 @@ if (issues.length === 0 && warnings.length === 0) {
   }
   
   console.log("🔧 Correct Format:");
-  console.log("   MONGODB_URI=mongodb+srv://admin:admin@db.jmrmhg3.mongodb.net/mentorlink?retryWrites=true&w=majority");
+  console.log("   MONGODB_URI=mongodb+srv://admin:admin@db.jmrmhg3.mongodb.net/peerly?retryWrites=true&w=majority");
   console.log("");
   console.log("📝 Steps to Fix:");
   console.log("   1. Open your .env file");

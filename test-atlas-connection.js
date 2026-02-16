@@ -18,7 +18,7 @@ async function testAtlasConnection() {
     console.error("   1. Created .env file in project root");
     console.error("   2. Added MONGODB_URI with your Atlas connection string");
     console.error("\n   Example:");
-    console.error("   MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/mentorlink?retryWrites=true&w=majority\n");
+    console.error("   MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/peerly?retryWrites=true&w=majority\n");
     process.exit(1);
   }
 
@@ -71,8 +71,8 @@ async function testAtlasConnection() {
     } else if (error.message.includes("Invalid connection string")) {
       console.log("💡 Troubleshooting Steps:");
       console.log("   1. Check connection string format:");
-      console.log("      mongodb+srv://username:password@cluster.mongodb.net/mentorlink?retryWrites=true&w=majority");
-      console.log("   2. Make sure database name (/mentorlink) is included");
+      console.log("      mongodb+srv://username:password@cluster.mongodb.net/peerly?retryWrites=true&w=majority");
+      console.log("   2. Make sure database name (/peerly) is included");
       console.log("   3. Verify no extra spaces or quotes in .env file");
     }
 

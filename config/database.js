@@ -51,7 +51,7 @@ const connectDB = async () => {
       console.error('   Fix: use the STANDARD (non-SRV) connection string so DNS SRV is not needed.');
       console.error('');
       console.error('   In .env, replace MONGODB_URI with (use your real username/password):');
-      console.error('   MONGODB_URI=mongodb://USER:PASS@ac-lycijz6-shard-00-00.jmrmhg3.mongodb.net:27017,ac-lycijz6-shard-00-01.jmrmhg3.mongodb.net:27017,ac-lycijz6-shard-00-02.jmrmhg3.mongodb.net:27017/mentorlink?ssl=true&replicaSet=atlas-lycijz6-shard-0&authSource=admin&retryWrites=true&w=majority');
+      console.error('   MONGODB_URI=mongodb://USER:PASS@ac-lycijz6-shard-00-00.jmrmhg3.mongodb.net:27017,ac-lycijz6-shard-00-01.jmrmhg3.mongodb.net:27017,ac-lycijz6-shard-00-02.jmrmhg3.mongodb.net:27017/peerly?ssl=true&replicaSet=atlas-lycijz6-shard-0&authSource=admin&retryWrites=true&w=majority');
       console.error('');
       console.error('   See DNS_SRV_FIX.md for details.');
     } else if (allUnknown) {
@@ -60,7 +60,7 @@ const connectDB = async () => {
       console.error('   Try in this order:');
       console.error('   1. Connection string: correct username/password; special chars URL-encoded (@→%40, #→%23).');
       console.error('   2. Add authSource if user is in admin DB:');
-      console.error('      MONGODB_URI=mongodb+srv://user:pass@host/mentorlink?retryWrites=true&w=majority&authSource=admin');
+      console.error('      MONGODB_URI=mongodb+srv://user:pass@host/peerly?retryWrites=true&w=majority&authSource=admin');
       console.error('   3. Test TLS bypass (dev only): in .env add  ATLAS_TLS_INSECURE=1  then run again.');
       console.error('   4. In Atlas: Database Access → user has "Atlas admin" or "Read and write to any database".');
       console.error('');
@@ -69,7 +69,7 @@ const connectDB = async () => {
       console.error('💡 Common causes:');
       console.error('   - Wrong username or password in MONGODB_URI');
       console.error('   - Special characters in password not URL-encoded (@→%40, #→%23)');
-      console.error('   - Missing database name in URI: /mentorlink before ?');
+      console.error('   - Missing database name in URI: /peerly before ?');
       console.error('   - Add authSource=admin if your Atlas user is in the admin database');
     }
     process.exit(1);
