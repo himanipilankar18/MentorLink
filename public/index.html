@@ -3,634 +3,412 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Peerly - API Testing Dashboard</title>
+    <title>MentorLink - Connect, Learn, Grow</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap" rel="stylesheet">
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
+        :root {
+            --bg-soft: #f5f5f7;
+            --bg-card: #ffffff;
+            --text-primary: #1a1a2e;
+            --text-secondary: #6b7280;
+            --accent-purple: #8B5CF6;
+            --accent-blue: #3B82F6;
+            --accent-pink: #EC4899;
+            --accent-green: #10B981;
+            --gradient-splash: linear-gradient(135deg, #8B5CF6 0%, #3B82F6 25%, #10B981 50%, #EC4899 100%);
+            --shadow-soft: 0 4px 24px rgba(0,0,0,0.06);
+            --shadow-elevated: 0 12px 48px rgba(0,0,0,0.08);
+            --radius-xl: 20px;
+            --radius-2xl: 28px;
         }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
 
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-soft);
             min-height: 100vh;
-            padding: 20px;
+            overflow-x: hidden;
+            color: var(--text-primary);
         }
 
-        .container {
+        /* Animated gradient background */
+        .bg-gradient-float {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #f5f5f7 0%, #e8eef4 30%, #f5eef8 60%, #e8f4f0 100%);
+            background-size: 400% 400%;
+            animation: gradientShift 15s ease infinite;
+            z-index: -2;
+        }
+
+        @keyframes gradientShift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        /* Floating orbs */
+        .orb {
+            position: fixed;
+            border-radius: 50%;
+            filter: blur(80px);
+            opacity: 0.5;
+            z-index: -1;
+        }
+        .orb-1 { width: 400px; height: 400px; background: var(--accent-purple); top: -100px; right: -100px; animation: float 20s ease-in-out infinite; }
+        .orb-2 { width: 300px; height: 300px; background: var(--accent-pink); bottom: -50px; left: -50px; animation: float 18s ease-in-out infinite 2s; }
+        .orb-3 { width: 250px; height: 250px; background: var(--accent-blue); top: 40%; left: 10%; animation: float 22s ease-in-out infinite 4s; }
+
+        @keyframes float {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            33% { transform: translate(30px, -30px) scale(1.05); }
+            66% { transform: translate(-20px, 20px) scale(0.95); }
+        }
+
+        /* Nav */
+        nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 24px 48px;
+            max-width: 1400px;
+            margin: 0 auto;
+            animation: fadeInDown 0.8s ease-out;
+        }
+
+        @keyframes fadeInDown {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none;
+            color: var(--text-primary);
+            font-weight: 700;
+            font-size: 1.5rem;
+        }
+
+        .logo-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: 14px;
+            background: var(--gradient-splash);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.2rem;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 32px;
+            list-style: none;
+        }
+
+        .nav-links a {
+            text-decoration: none;
+            color: var(--text-secondary);
+            font-weight: 500;
+            transition: color 0.3s;
+        }
+
+        .nav-links a:hover { color: var(--accent-purple); }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 24px;
+            border-radius: 14px;
+            font-weight: 600;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            border: none;
+            font-family: inherit;
+        }
+
+        .btn-primary {
+            background: var(--text-primary);
+            color: white;
+            box-shadow: var(--shadow-soft);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.15);
+        }
+
+        .btn-outline {
+            background: transparent;
+            color: var(--text-primary);
+            border: 2px solid rgba(0,0,0,0.1);
+        }
+
+        .btn-outline:hover {
+            border-color: var(--accent-purple);
+            color: var(--accent-purple);
+        }
+
+        /* Hero */
+        .hero {
             max-width: 1200px;
             margin: 0 auto;
-            background: white;
-            border-radius: 15px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
-            overflow: hidden;
-        }
-
-        .header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 30px;
+            padding: 80px 48px 120px;
             text-align: center;
+            animation: fadeInUp 1s ease-out 0.2s both;
         }
 
-        .header h1 {
-            font-size: 2.5em;
-            margin-bottom: 10px;
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(40px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
-        .header p {
-            opacity: 0.9;
+        .hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 20px;
+            background: var(--bg-card);
+            border-radius: 100px;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            margin-bottom: 24px;
+            box-shadow: var(--shadow-soft);
+            animation: fadeInUp 0.8s ease-out 0.4s both;
         }
 
-        .content {
-            padding: 30px;
-        }
-
-        .section {
-            margin-bottom: 30px;
-            border: 1px solid #e0e0e0;
-            border-radius: 10px;
-            padding: 20px;
-            background: #f9f9f9;
-        }
-
-        .section h2 {
-            color: #667eea;
-            margin-bottom: 15px;
-            font-size: 1.5em;
-            border-bottom: 2px solid #667eea;
-            padding-bottom: 10px;
-        }
-
-        .form-group {
-            margin-bottom: 15px;
-        }
-
-        label {
-            display: block;
-            margin-bottom: 5px;
-            color: #333;
-            font-weight: 600;
-        }
-
-        input, select, textarea {
-            width: 100%;
-            padding: 12px;
-            border: 2px solid #ddd;
-            border-radius: 5px;
-            font-size: 14px;
-            transition: border-color 0.3s;
-        }
-
-        input:focus, select:focus, textarea:focus {
-            outline: none;
-            border-color: #667eea;
-        }
-
-        textarea {
-            resize: vertical;
-            min-height: 80px;
-        }
-
-        button {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border: none;
-            padding: 12px 25px;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 16px;
-            font-weight: 600;
-            transition: transform 0.2s, box-shadow 0.2s;
-            margin-right: 10px;
-            margin-top: 10px;
-        }
-
-        button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
-        }
-
-        button:active {
-            transform: translateY(0);
-        }
-
-        .btn-secondary {
-            background: #6c757d;
-        }
-
-        .btn-success {
-            background: #28a745;
-        }
-
-        .btn-danger {
-            background: #dc3545;
-        }
-
-        .response {
-            margin-top: 20px;
-            padding: 15px;
-            border-radius: 5px;
-            background: #f8f9fa;
-            border-left: 4px solid #667eea;
-            max-height: 400px;
-            overflow-y: auto;
-        }
-
-        .response pre {
-            white-space: pre-wrap;
-            word-wrap: break-word;
-            font-family: 'Courier New', monospace;
-            font-size: 12px;
-        }
-
-        .success {
-            border-left-color: #28a745;
-            background: #d4edda;
-        }
-
-        .error {
-            border-left-color: #dc3545;
-            background: #f8d7da;
-        }
-
-        .token-display {
-            background: #fff3cd;
-            border: 1px solid #ffc107;
-            padding: 10px;
-            border-radius: 5px;
-            margin-top: 10px;
-            word-break: break-all;
-            font-size: 12px;
-        }
-
-        .grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 20px;
-        }
-
-        .status-indicator {
-            display: inline-block;
-            width: 12px;
-            height: 12px;
+        .hero-badge span {
+            width: 8px;
+            height: 8px;
+            background: var(--accent-green);
             border-radius: 50%;
-            margin-right: 8px;
+            animation: pulse 2s infinite;
         }
 
-        .status-online {
-            background: #28a745;
-            box-shadow: 0 0 10px #28a745;
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
         }
 
-        .status-offline {
-            background: #dc3545;
-            box-shadow: 0 0 10px #dc3545;
+        .hero h1 {
+            font-size: clamp(2.5rem, 5vw, 4rem);
+            font-weight: 700;
+            line-height: 1.15;
+            margin-bottom: 24px;
+            letter-spacing: -0.02em;
         }
 
-        .api-url {
-            background: #e9ecef;
-            padding: 10px;
-            border-radius: 5px;
-            font-family: monospace;
-            margin-bottom: 15px;
+        .hero h1 .gradient-text {
+            background: var(--gradient-splash);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero p {
+            font-size: 1.25rem;
+            color: var(--text-secondary);
+            max-width: 560px;
+            margin: 0 auto 40px;
+            line-height: 1.7;
+        }
+
+        .hero-btns {
+            display: flex;
+            gap: 16px;
+            justify-content: center;
+            flex-wrap: wrap;
+            animation: fadeInUp 0.8s ease-out 0.6s both;
+        }
+
+        .hero-btns .btn { padding: 16px 32px; font-size: 1rem; }
+
+        /* Feature cards */
+        .features {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 48px 120px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 24px;
+        }
+
+        .feature-card {
+            background: var(--bg-card);
+            border-radius: var(--radius-xl);
+            padding: 32px;
+            box-shadow: var(--shadow-soft);
+            transition: all 0.4s ease;
+            animation: fadeInUp 0.8s ease-out both;
+        }
+
+        .feature-card:nth-child(1) { animation-delay: 0.2s; }
+        .feature-card:nth-child(2) { animation-delay: 0.3s; }
+        .feature-card:nth-child(3) { animation-delay: 0.4s; }
+        .feature-card:nth-child(4) { animation-delay: 0.5s; }
+
+        .feature-card:hover {
+            transform: translateY(-8px);
+            box-shadow: var(--shadow-elevated);
+        }
+
+        .feature-icon {
+            width: 56px;
+            height: 56px;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+        }
+
+        .feature-icon.purple { background: rgba(139, 92, 246, 0.15); color: var(--accent-purple); }
+        .feature-icon.blue { background: rgba(59, 130, 246, 0.15); color: var(--accent-blue); }
+        .feature-icon.green { background: rgba(16, 185, 129, 0.15); color: var(--accent-green); }
+        .feature-icon.pink { background: rgba(236, 72, 153, 0.15); color: var(--accent-pink); }
+
+        .feature-card h3 {
+            font-size: 1.2rem;
+            margin-bottom: 12px;
+        }
+
+        .feature-card p {
+            color: var(--text-secondary);
+            line-height: 1.6;
+            font-size: 0.95rem;
+        }
+
+        /* CTA Section */
+        .cta {
+            max-width: 900px;
+            margin: 0 auto 120px;
+            padding: 64px 48px;
+            background: var(--bg-card);
+            border-radius: var(--radius-2xl);
+            box-shadow: var(--shadow-elevated);
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+            animation: fadeInUp 1s ease-out 0.6s both;
+        }
+
+        .cta::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: var(--gradient-splash);
+            animation: shimmer 3s ease-in-out infinite;
+        }
+
+        @keyframes shimmer {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        .cta h2 {
+            font-size: 2rem;
+            margin-bottom: 16px;
+        }
+
+        .cta p {
+            color: var(--text-secondary);
+            margin-bottom: 32px;
+        }
+
+        /* Footer */
+        footer {
+            text-align: center;
+            padding: 32px;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        @media (max-width: 768px) {
+            nav { padding: 20px 24px; flex-wrap: wrap; gap: 16px; }
+            .nav-links { display: none; }
+            .hero { padding: 48px 24px 80px; }
+            .features { padding: 0 24px 80px; }
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <h1>🚀 Peerly API Testing Dashboard</h1>
-            <p>Test your backend API endpoints easily</p>
-            <div style="margin-top: 15px;">
-                <span class="status-indicator" id="statusIndicator"></span>
-                <span id="statusText">Checking connection...</span>
-            </div>
+    <div class="bg-gradient-float"></div>
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+
+    <nav>
+        <a href="/" class="logo">
+            <div class="logo-icon">ML</div>
+            MentorLink
+        </a>
+        <ul class="nav-links">
+            <li><a href="#features">Features</a></li>
+            <li><a href="#cta">Get Started</a></li>
+        </ul>
+        <div>
+            <a href="login.html" class="btn btn-outline">Log in</a>
+            <a href="login.html" class="btn btn-primary">Get Started</a>
         </div>
+    </nav>
 
-        <div class="content">
-            <!-- API Configuration -->
-            <div class="section">
-                <h2>⚙️ API Configuration</h2>
-                <div class="form-group">
-                    <label>API Base URL:</label>
-                    <input type="text" id="apiUrl" value="http://localhost:5000/api" placeholder="http://localhost:5000/api">
-                </div>
-                <button onclick="checkConnection()">Check Connection</button>
-            </div>
-
-            <!-- Authentication -->
-            <div class="section">
-                <h2>🔐 Authentication</h2>
-                <div class="grid">
-                    <div>
-                        <h3 style="margin-bottom: 15px; color: #667eea;">Register</h3>
-                        <div class="form-group">
-                            <label>Name:</label>
-                            <input type="text" id="regName" placeholder="John Doe">
-                        </div>
-                        <div class="form-group">
-                            <label>Email:</label>
-                            <input type="email" id="regEmail" placeholder="john@spit.ac.in">
-                        </div>
-                        <div class="form-group">
-                            <label>Password:</label>
-                            <input type="password" id="regPassword" placeholder="SecurePass123">
-                        </div>
-                        <div class="form-group">
-                            <label>Year:</label>
-                            <select id="regYear">
-                                <option value="1">Year 1</option>
-                                <option value="2" selected>Year 2</option>
-                                <option value="3">Year 3</option>
-                                <option value="4">Year 4</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label>Department:</label>
-                            <select id="regDepartment">
-                                <option value="CSE" selected>CSE</option>
-                                <option value="IT">IT</option>
-                                <option value="ECE">ECE</option>
-                                <option value="EEE">EEE</option>
-                                <option value="MECH">MECH</option>
-                                <option value="CIVIL">CIVIL</option>
-                                <option value="CHEM">CHEM</option>
-                                <option value="OTHER">OTHER</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label>Role:</label>
-                            <select id="regRole">
-                                <option value="junior" selected>Junior</option>
-                                <option value="senior">Senior</option>
-                                <option value="faculty">Faculty</option>
-                            </select>
-                        </div>
-                        <button onclick="register()">Register</button>
-                    </div>
-                    <div>
-                        <h3 style="margin-bottom: 15px; color: #667eea;">Login</h3>
-                        <div class="form-group">
-                            <label>Email:</label>
-                            <input type="email" id="loginEmail" placeholder="john@spit.ac.in">
-                        </div>
-                        <div class="form-group">
-                            <label>Password:</label>
-                            <input type="password" id="loginPassword" placeholder="SecurePass123">
-                        </div>
-                        <button onclick="login()">Login</button>
-                        <button class="btn-secondary" onclick="getCurrentUser()">Get Current User</button>
-                    </div>
-                </div>
-                <div id="tokenDisplay" class="token-display" style="display: none;">
-                    <strong>Token:</strong> <span id="tokenValue"></span>
-                </div>
-                <div id="authResponse" class="response" style="display: none;"></div>
-            </div>
-
-            <!-- Mentorship -->
-            <div class="section">
-                <h2>🤝 Mentorship</h2>
-                <div class="form-group">
-                    <label>Mentor ID (for requesting mentorship):</label>
-                    <input type="text" id="mentorId" placeholder="Paste mentor's user ID">
-                </div>
-                <button onclick="requestMentorship()">Request Mentorship</button>
-                <button class="btn-secondary" onclick="getMyRequests()">Get My Requests</button>
-                <button class="btn-success" onclick="getActiveMentorships()">Get Active Mentorships</button>
-                <div id="mentorshipResponse" class="response" style="display: none;"></div>
-            </div>
-
-            <!-- Interactions -->
-            <div class="section">
-                <h2>📊 Interactions (Critical for Analytics)</h2>
-                <div class="form-group">
-                    <label>Mentor ID:</label>
-                    <input type="text" id="interactionMentorId" placeholder="Mentor's user ID">
-                </div>
-                <div class="form-group">
-                    <label>Mentorship ID:</label>
-                    <input type="text" id="interactionMentorshipId" placeholder="Mentorship ID">
-                </div>
-                <div class="form-group">
-                    <label>Topic:</label>
-                    <input type="text" id="interactionTopic" placeholder="Data Structures - Binary Trees">
-                </div>
-                <div class="form-group">
-                    <label>Subject Tag:</label>
-                    <select id="interactionSubjectTag">
-                        <option value="Data Structures">Data Structures</option>
-                        <option value="Algorithms">Algorithms</option>
-                        <option value="Database Systems">Database Systems</option>
-                        <option value="Machine Learning">Machine Learning</option>
-                        <option value="Web Development">Web Development</option>
-                        <option value="Other">Other</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>Interaction Type:</label>
-                    <select id="interactionType">
-                        <option value="Chat">Chat</option>
-                        <option value="Video Call">Video Call</option>
-                        <option value="In-Person">In-Person</option>
-                        <option value="Email">Email</option>
-                        <option value="Forum Discussion">Forum Discussion</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>Duration (minutes):</label>
-                    <input type="number" id="interactionDuration" placeholder="45">
-                </div>
-                <div class="form-group">
-                    <label>Satisfaction Rating (1-5):</label>
-                    <input type="number" id="interactionRating" min="1" max="5" placeholder="5">
-                </div>
-                <button onclick="logInteraction()">Log Interaction</button>
-                <button class="btn-secondary" onclick="getInteractions()">Get Interactions</button>
-                <button class="btn-success" onclick="getInteractionStats()">Get Statistics</button>
-                <div id="interactionResponse" class="response" style="display: none;"></div>
-            </div>
-
-            <!-- Discussions -->
-            <div class="section">
-                <h2>💬 Discussions</h2>
-                <div class="form-group">
-                    <label>Title:</label>
-                    <input type="text" id="discussionTitle" placeholder="How to implement Dijkstra's algorithm?">
-                </div>
-                <div class="form-group">
-                    <label>Content:</label>
-                    <textarea id="discussionContent" placeholder="I'm struggling with..."></textarea>
-                </div>
-                <div class="form-group">
-                    <label>Subject Tag:</label>
-                    <select id="discussionSubjectTag">
-                        <option value="Algorithms">Algorithms</option>
-                        <option value="Data Structures">Data Structures</option>
-                        <option value="Database Systems">Database Systems</option>
-                        <option value="Other">Other</option>
-                    </select>
-                </div>
-                <button onclick="createDiscussion()">Create Discussion</button>
-                <button class="btn-secondary" onclick="getDiscussions()">Get Discussions</button>
-                <div id="discussionResponse" class="response" style="display: none;"></div>
-            </div>
+    <section class="hero">
+        <div class="hero-badge">
+            <span></span>
+            Institute-exclusive mentoring platform
         </div>
-    </div>
+        <h1>Connect, Learn, <span class="gradient-text">Grow</span></h1>
+        <p>MentorLink brings juniors and seniors together for structured academic mentoring. Share knowledge, build connections, and unlock insights through data-driven analytics.</p>
+        <div class="hero-btns">
+            <a href="login.html" class="btn btn-primary">Get Started</a>
+            <a href="home.html" class="btn btn-outline">Explore</a>
+        </div>
+    </section>
 
-    <script>
-        const API_URL = document.getElementById('apiUrl');
-        let authToken = localStorage.getItem('mentorlink_token') || '';
+    <section class="features" id="features">
+        <div class="feature-card">
+            <div class="feature-icon purple">🤝</div>
+            <h3>Verified Mentorship</h3>
+            <p>Connect with verified seniors and faculty. Structured mentoring for academics, projects, internships, and career planning.</p>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon blue">💬</div>
+            <h3>Discussion Forums</h3>
+            <p>Post doubts, get answers, and upvote helpful responses. Subject-tagged discussions that matter.</p>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon green">📊</div>
+            <h3>Analytics & Insights</h3>
+            <p>Interaction data powers recommendations, trend analysis, and academic intelligence for your institution.</p>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon pink">🔒</div>
+            <h3>Institute-Only Access</h3>
+            <p>Secure, email-verified access. Your campus. Your community. Your growth.</p>
+        </div>
+    </section>
 
-        // Check connection on load
-        window.onload = () => {
-            checkConnection();
-            if (authToken) {
-                document.getElementById('tokenDisplay').style.display = 'block';
-                document.getElementById('tokenValue').textContent = authToken.substring(0, 50) + '...';
-            }
-        };
+    <section class="cta" id="cta">
+        <h2>Ready to grow together?</h2>
+        <p>Join MentorLink and start your mentoring journey today. Register with your institute email.</p>
+        <a href="login.html" class="btn btn-primary">Create Account</a>
+    </section>
 
-        function getApiUrl() {
-            return API_URL.value || 'http://localhost:5000/api';
-        }
-
-        function getHeaders() {
-            const headers = {
-                'Content-Type': 'application/json'
-            };
-            if (authToken) {
-                headers['Authorization'] = `Bearer ${authToken}`;
-            }
-            return headers;
-        }
-
-        async function checkConnection() {
-            const statusIndicator = document.getElementById('statusIndicator');
-            const statusText = document.getElementById('statusText');
-            
-            try {
-                const response = await fetch(`${getApiUrl()}/health`);
-                const data = await response.json();
-                
-                if (data.success) {
-                    statusIndicator.className = 'status-indicator status-online';
-                    statusText.textContent = 'Connected to API';
-                } else {
-                    throw new Error('API not responding correctly');
-                }
-            } catch (error) {
-                statusIndicator.className = 'status-indicator status-offline';
-                statusText.textContent = 'Connection failed - ' + error.message;
-            }
-        }
-
-        function showResponse(elementId, data, isError = false) {
-            const element = document.getElementById(elementId);
-            element.style.display = 'block';
-            element.className = 'response ' + (isError ? 'error' : 'success');
-            element.innerHTML = `<pre>${JSON.stringify(data, null, 2)}</pre>`;
-        }
-
-        async function register() {
-            const data = {
-                name: document.getElementById('regName').value,
-                email: document.getElementById('regEmail').value,
-                password: document.getElementById('regPassword').value,
-                year: parseInt(document.getElementById('regYear').value),
-                department: document.getElementById('regDepartment').value,
-                role: document.getElementById('regRole').value
-            };
-
-            try {
-                const response = await fetch(`${getApiUrl()}/auth/register`, {
-                    method: 'POST',
-                    headers: getHeaders(),
-                    body: JSON.stringify(data)
-                });
-
-                const result = await response.json();
-                
-                if (result.success && result.token) {
-                    authToken = result.token;
-                    localStorage.setItem('mentorlink_token', authToken);
-                    document.getElementById('tokenDisplay').style.display = 'block';
-                    document.getElementById('tokenValue').textContent = authToken.substring(0, 50) + '...';
-                    showResponse('authResponse', result);
-                } else {
-                    showResponse('authResponse', result, true);
-                }
-            } catch (error) {
-                showResponse('authResponse', { error: error.message }, true);
-            }
-        }
-
-        async function login() {
-            const data = {
-                email: document.getElementById('loginEmail').value,
-                password: document.getElementById('loginPassword').value
-            };
-
-            try {
-                const response = await fetch(`${getApiUrl()}/auth/login`, {
-                    method: 'POST',
-                    headers: getHeaders(),
-                    body: JSON.stringify(data)
-                });
-
-                const result = await response.json();
-                
-                if (result.success && result.token) {
-                    authToken = result.token;
-                    localStorage.setItem('mentorlink_token', authToken);
-                    document.getElementById('tokenDisplay').style.display = 'block';
-                    document.getElementById('tokenValue').textContent = authToken.substring(0, 50) + '...';
-                    showResponse('authResponse', result);
-                } else {
-                    showResponse('authResponse', result, true);
-                }
-            } catch (error) {
-                showResponse('authResponse', { error: error.message }, true);
-            }
-        }
-
-        async function getCurrentUser() {
-            try {
-                const response = await fetch(`${getApiUrl()}/auth/me`, {
-                    headers: getHeaders()
-                });
-                const result = await response.json();
-                showResponse('authResponse', result, !result.success);
-            } catch (error) {
-                showResponse('authResponse', { error: error.message }, true);
-            }
-        }
-
-        async function requestMentorship() {
-            const mentorId = document.getElementById('mentorId').value;
-            if (!mentorId) {
-                alert('Please enter Mentor ID');
-                return;
-            }
-
-            try {
-                const response = await fetch(`${getApiUrl()}/mentorship/request`, {
-                    method: 'POST',
-                    headers: getHeaders(),
-                    body: JSON.stringify({ mentorId })
-                });
-                const result = await response.json();
-                showResponse('mentorshipResponse', result, !result.success);
-            } catch (error) {
-                showResponse('mentorshipResponse', { error: error.message }, true);
-            }
-        }
-
-        async function getMyRequests() {
-            try {
-                const response = await fetch(`${getApiUrl()}/mentorship/my-requests`, {
-                    headers: getHeaders()
-                });
-                const result = await response.json();
-                showResponse('mentorshipResponse', result, !result.success);
-            } catch (error) {
-                showResponse('mentorshipResponse', { error: error.message }, true);
-            }
-        }
-
-        async function getActiveMentorships() {
-            try {
-                const response = await fetch(`${getApiUrl()}/mentorship/active`, {
-                    headers: getHeaders()
-                });
-                const result = await response.json();
-                showResponse('mentorshipResponse', result, !result.success);
-            } catch (error) {
-                showResponse('mentorshipResponse', { error: error.message }, true);
-            }
-        }
-
-        async function logInteraction() {
-            const data = {
-                mentorId: document.getElementById('interactionMentorId').value,
-                mentorshipId: document.getElementById('interactionMentorshipId').value,
-                topic: document.getElementById('interactionTopic').value,
-                subjectTag: document.getElementById('interactionSubjectTag').value,
-                interactionType: document.getElementById('interactionType').value,
-                duration: parseInt(document.getElementById('interactionDuration').value) || null,
-                satisfactionRating: parseInt(document.getElementById('interactionRating').value) || null
-            };
-
-            try {
-                const response = await fetch(`${getApiUrl()}/interactions`, {
-                    method: 'POST',
-                    headers: getHeaders(),
-                    body: JSON.stringify(data)
-                });
-                const result = await response.json();
-                showResponse('interactionResponse', result, !result.success);
-            } catch (error) {
-                showResponse('interactionResponse', { error: error.message }, true);
-            }
-        }
-
-        async function getInteractions() {
-            try {
-                const response = await fetch(`${getApiUrl()}/interactions`, {
-                    headers: getHeaders()
-                });
-                const result = await response.json();
-                showResponse('interactionResponse', result, !result.success);
-            } catch (error) {
-                showResponse('interactionResponse', { error: error.message }, true);
-            }
-        }
-
-        async function getInteractionStats() {
-            try {
-                const response = await fetch(`${getApiUrl()}/interactions/stats`, {
-                    headers: getHeaders()
-                });
-                const result = await response.json();
-                showResponse('interactionResponse', result, !result.success);
-            } catch (error) {
-                showResponse('interactionResponse', { error: error.message }, true);
-            }
-        }
-
-        async function createDiscussion() {
-            const data = {
-                title: document.getElementById('discussionTitle').value,
-                content: document.getElementById('discussionContent').value,
-                subjectTag: document.getElementById('discussionSubjectTag').value
-            };
-
-            try {
-                const response = await fetch(`${getApiUrl()}/discussions`, {
-                    method: 'POST',
-                    headers: getHeaders(),
-                    body: JSON.stringify(data)
-                });
-                const result = await response.json();
-                showResponse('discussionResponse', result, !result.success);
-            } catch (error) {
-                showResponse('discussionResponse', { error: error.message }, true);
-            }
-        }
-
-        async function getDiscussions() {
-            try {
-                const response = await fetch(`${getApiUrl()}/discussions`, {
-                    headers: getHeaders()
-                });
-                const result = await response.json();
-                showResponse('discussionResponse', result, !result.success);
-            } catch (error) {
-                showResponse('discussionResponse', { error: error.message }, true);
-            }
-        }
-    </script>
+    <footer>MentorLink · SPIT Campus · Built with ❤️</footer>
 </body>
 </html>

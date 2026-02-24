@@ -1,4 +1,5 @@
 require('dotenv').config();
+const path = require('path');
 
 const express = require('express');
 const cors = require('cors');
@@ -15,7 +16,12 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Serve static files (frontend)
-app.use(express.static('public'));
+app.use(express.static(path.join(__dirname, 'public')));
+
+// Landing page at root
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
 
 // Rate limiting
 app.use('/api/', apiLimiter);
@@ -36,8 +42,8 @@ app.get('/api/health', (req, res) => {
   });
 });
 
-// Root endpoint
-app.get('/', (req, res) => {
+// API info (landing page is served by static index.html at /)
+app.get('/api', (req, res) => {
   res.json({
     success: true,
     message: 'Welcome to MentorLink API',
