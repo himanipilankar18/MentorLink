@@ -66,22 +66,19 @@ router.post('/register',
         isVerified: false
       });
 
-      // Generate email verification token (store hashed)
-      const rawToken = crypto.randomBytes(32).toString('hex');
-      const hashedToken = crypto.createHash('sha256').update(rawToken).digest('hex');
-      user.emailVerificationToken = hashedToken;
-      user.emailVerificationExpires = Date.now() + 24 * 60 * 60 * 1000; // 24 hours
+      // Generate 6-digit OTP for email verification
+      const otp = Math.floor(100000 + Math.random() * 900000).toString();
+      user.emailVerificationOTP = otp;
+      user.otpExpires = Date.now() + 15 * 60 * 1000; // 15 minutes
       await user.save();
-
-      const backendBase = process.env.BACKEND_BASE_URL || 'http://localhost:5000';
-      const verifyUrl = `${backendBase}/api/auth/verify-email?token=${rawToken}`;
 
       const html = `
         <h2>Verify your MentorLink account</h2>
         <p>Hello ${user.name || ''},</p>
-        <p>Thank you for registering on MentorLink. Please verify that this is your official SPIT email by clicking the link below:</p>
-        <p><a href="${verifyUrl}" target="_blank">Verify Email</a></p>
-        <p>This link will expire in 24 hours.</p>
+        <p>Thank you for registering on MentorLink. Please verify that this is your official SPIT email by entering the OTP below:</p>
+        <h1 style="color: #4F46E5; font-size: 32px; letter-spacing: 5px; font-family: monospace;">${otp}</h1>
+        <p><strong>This OTP will expire in 15 minutes.</strong></p>
+        <p>If you did not request this, please ignore this email.</p>
       `;
 
       // Fire-and-forget email (logs to console if SMTP not configured)
@@ -89,7 +86,7 @@ router.post('/register',
 
       res.status(201).json({
         success: true,
-        message: 'User registered successfully. Please check your SPIT email to verify your account.',
+        message: 'User registered successfully. Please check your SPIT email for a 6-digit OTP to verify your account.',
         user: {
           id: user._id,
           name: user.name,
@@ -144,7 +141,7 @@ router.post('/login',
       if (!user.isVerified) {
         return res.status(403).json({
           success: false,
-          message: 'Email not verified. Please check your SPIT inbox for the verification link.'
+          message: 'Email not verified. Please check your SPIT inbox for the OTP and verify your account.'
         });
       }
 
@@ -218,8 +215,8 @@ router.get('/me', verifyToken, async (req, res) => {
   }
 });
 
-// @route   GET /api/auth/verify-email?token=...
-// @desc    Verify email using emailed token
+// @route   GET /api/auth/verify-email
+// @desc    Verify email using emailed token (legacy - keep for backwards compatibility)
 // @access  Public
 router.get('/verify-email', async (req, res) => {
   try {
@@ -261,5 +258,117 @@ router.get('/verify-email', async (req, res) => {
     });
   }
 });
+
+// @route   POST /api/auth/verify-otp
+// @desc    Verify email using OTP sent to email
+// @access  Public
+router.post('/verify-otp',
+  authLimiter,
+  async (req, res) => {
+    try {
+      const { email, otp } = req.body;
+
+      // Validate input
+      if (!email || !otp) {
+        return res.status(400).json({
+          success: false,
+          message: 'Email and OTP are required'
+        });
+      }
+
+      // Find user with matching OTP that hasn't expired
+      const user = await User.findOne({
+        email: email.toLowerCase(),
+        emailVerificationOTP: otp,
+        otpExpires: { $gt: Date.now() }
+      }).select('+emailVerificationOTP +otpExpires');
+
+      if (!user) {
+        return res.status(400).json({
+          success: false,
+          message: 'Invalid or expired OTP. Please request a new one.'
+        });
+      }
+
+      // Verify user and clear OTP
+      user.isVerified = true;
+      user.emailVerificationOTP = null;
+      user.otpExpires = null;
+      await user.save();
+
+      return res.json({
+        success: true,
+        message: 'Email verified successfully! You can now log in.'
+      });
+    } catch (error) {
+      res.status(500).json({
+        success: false,
+        message: 'OTP verification failed',
+        error: error.message
+      });
+    }
+  }
+);
+
+// @route   POST /api/auth/resend-otp
+// @desc    Resend OTP to user's email
+// @access  Public
+router.post('/resend-otp',
+  authLimiter,
+  async (req, res) => {
+    try {
+      const { email } = req.body;
+
+      if (!email) {
+        return res.status(400).json({
+          success: false,
+          message: 'Email is required'
+        });
+      }
+
+      // Find unverified user
+      const user = await User.findOne({
+        email: email.toLowerCase(),
+        isVerified: false
+      });
+
+      if (!user) {
+        return res.status(404).json({
+          success: false,
+          message: 'User not found or already verified'
+        });
+      }
+
+      // Generate new OTP
+      const otp = Math.floor(100000 + Math.random() * 900000).toString();
+      user.emailVerificationOTP = otp;
+      user.otpExpires = Date.now() + 15 * 60 * 1000; // 15 minutes
+      await user.save();
+
+      const html = `
+        <h2>Verify your MentorLink account</h2>
+        <p>Hello ${user.name || ''},</p>
+        <p>Here is your new OTP to verify your SPIT email:</p>
+        <h1 style="color: #4F46E5; font-size: 32px; letter-spacing: 5px; font-family: monospace;">${otp}</h1>
+        <p><strong>This OTP will expire in 15 minutes.</strong></p>
+        <p>If you did not request this, please ignore this email.</p>
+      `;
+
+      // Send email
+      sendEmail({ to: user.email, subject: 'MentorLink - New OTP', html }).catch(console.error);
+
+      res.json({
+        success: true,
+        message: 'OTP has been resent to your email'
+      });
+    } catch (error) {
+      res.status(500).json({
+        success: false,
+        message: 'Failed to resend OTP',
+        error: error.message
+      });
+    }
+  }
+);
 
 module.exports = router;

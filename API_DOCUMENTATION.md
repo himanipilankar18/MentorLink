@@ -37,9 +37,47 @@ Content-Type: application/json
 ```json
 {
   "success": true,
-  "message": "User registered successfully",
-  "token": "jwt_token_here",
+  "message": "User registered successfully. Please check your SPIT email for a 6-digit OTP to verify your account.",
   "user": { ... }
+}
+```
+
+**Note:** User must verify email with OTP before logging in.
+
+### Verify OTP
+```http
+POST /api/auth/verify-otp
+Content-Type: application/json
+
+{
+  "email": "john.doe@spit.ac.in",
+  "otp": "123456"
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Email verified successfully! You can now log in."
+}
+```
+
+### Resend OTP
+```http
+POST /api/auth/resend-otp
+Content-Type: application/json
+
+{
+  "email": "john.doe@spit.ac.in"
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "OTP has been resent to your email"
 }
 ```
 
