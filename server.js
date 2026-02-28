@@ -32,9 +32,19 @@ app.use('/api/users', require('./routes/users'));
 app.use('/api/mentorship', require('./routes/mentorship'));
 app.use('/api/interactions', require('./routes/interactions'));
 app.use('/api/discussions', require('./routes/discussions'));
+app.use('/api/posts', require('./routes/posts'));
+app.use('/api/communities', require('./routes/communities'));
+
+// Serve uploaded profile images
+app.use('/uploads', express.static('uploads'));
 
 // Serve static files (frontend dashboard) - after API routes
 app.use(express.static('public'));
+
+// Handle favicon.ico requests gracefully
+app.get('/favicon.ico', (req, res) => {
+  res.status(204).end();
+});
 
 // Root API info (for clients hitting / directly)
 app.get('/', (req, res) => {

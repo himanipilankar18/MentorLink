@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Register - MentorLink</title>
+    <title>Register - PingMe</title>
     <style>
         * {
             margin: 0;
@@ -12,259 +12,668 @@
         }
 
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', system-ui, sans-serif;
+            background: #0a0a0a;
             min-height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
-            padding: 20px;
+            padding: 0;
+            position: relative;
+            overflow: hidden;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        .register-wrapper {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            width: 100vw;
+            height: 100vh;
         }
 
         .register-container {
-            background: white;
-            border-radius: 20px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
-            max-width: 500px;
-            width: 100%;
-            padding: 40px;
+            background: #000000;
+            padding: 25px 45px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            position: relative;
+            z-index: 1;
+            animation: fadeIn 0.5s ease;
+            overflow-y: auto;
         }
 
-        .logo {
-            text-align: center;
-            font-size: 2.5em;
-            color: #667eea;
-            margin-bottom: 10px;
+        .form-box {
+            background: rgba(10, 10, 10, 0.9);
+            backdrop-filter: blur(20px) saturate(180%);
+            -webkit-backdrop-filter: blur(20px) saturate(180%);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 24px;
+            padding: 25px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.05);
         }
 
-        h2 {
-            text-align: center;
-            color: #333;
-            margin-bottom: 10px;
+        .register-container::-webkit-scrollbar {
+            width: 4px;
         }
 
-        .subtitle {
-            text-align: center;
-            color: #666;
-            margin-bottom: 30px;
-            font-size: 0.95em;
+        .register-container::-webkit-scrollbar-track {
+            background: transparent;
         }
 
-        .form-group {
-            margin-bottom: 20px;
+        .register-container::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
         }
 
-        label {
-            display: block;
-            color: #333;
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .header {
+            text-align: left;
+            margin-bottom: 24px;
+        }
+
+        .welcome-text {
+            color: #ffffff;
+            font-size: 0.95rem;
             font-weight: 600;
             margin-bottom: 8px;
-            font-size: 0.95em;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            background: linear-gradient(135deg, #a78bfa 0%, #ec4899 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: slideInLeft 0.6s ease-out;
         }
 
-        input, select {
+        @keyframes slideInLeft {
+            from {
+                opacity: 0;
+                transform: translateX(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .header h2 {
+            color: #ffffff;
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 6px;
+            letter-spacing: -0.8px;
+            animation: slideInLeft 0.6s ease-out 0.1s backwards;
+        }
+
+        .header p {
+            color: #888888;
+            font-size: 0.85rem;
+            font-weight: 500;
+            animation: slideInLeft 0.6s ease-out 0.2s backwards;
+        }
+
+        /* OTP Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
             width: 100%;
-            padding: 12px;
-            border: 2px solid #e0e0e0;
-            border-radius: 8px;
-            font-size: 1em;
-            transition: border-color 0.3s;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            animation: fadeIn 0.3s ease;
         }
 
-        input:focus, select:focus {
+        .modal-content {
+            background: rgba(10, 10, 10, 0.95);
+            backdrop-filter: blur(40px) saturate(180%);
+            -webkit-backdrop-filter: blur(40px) saturate(180%);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 24px;
+            margin: 10% auto;
+            padding: 35px;
+            width: 90%;
+            max-width: 450px;
+            animation: slideUp 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+        }
+
+        @keyframes slideUp {
+            from { 
+                transform: translateY(50px) scale(0.95); 
+                opacity: 0; 
+            }
+            to { 
+                transform: translateY(0) scale(1); 
+                opacity: 1; 
+            }
+        }
+
+        .modal-header {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+
+        .modal-header h3 {
+            color: #ffffff;
+            font-size: 1.6rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .modal-header p {
+            color: #666666;
+            font-size: 0.9rem;
+        }
+
+        .otp-input {
+            width: 100%;
+            padding: 16px;
+            background: rgba(26, 26, 26, 0.8);
+            border: 2px solid rgba(255, 255, 255, 0.08);
+            border-radius: 14px;
+            font-size: 1.3rem;
+            text-align: center;
+            letter-spacing: 10px;
+            color: #ffffff;
+            font-weight: 700;
+            margin-bottom: 20px;
+            transition: all 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
+            box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.4);
+        }
+
+        .otp-input:-webkit-autofill,
+        .otp-input:-webkit-autofill:hover,
+        .otp-input:-webkit-autofill:focus,
+        .otp-input:-webkit-autofill:active {
+            -webkit-box-shadow: 0 0 0 30px rgba(26, 26, 26, 0.8) inset !important;
+            -webkit-text-fill-color: #ffffff !important;
+            transition: background-color 5000s ease-in-out 0s;
+        }
+
+        .otp-input:focus {
             outline: none;
-            border-color: #667eea;
+            border-color: rgba(167, 139, 250, 0.5);
+            background: rgba(31, 31, 31, 0.9);
+            box-shadow: 0 0 0 5px rgba(167, 139, 250, 0.15), inset 0 2px 6px rgba(0, 0, 0, 0.4);
+            transform: scale(1.02);
+        }
+
+        /* Right Side - Illustration */
+        .illustration-section {
+            background: #000000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .illustration {
+            width: 450px;
+            height: 450px;
+            background: linear-gradient(135deg, #8b5cf6 0%, #a78bfa 50%, #c4b5fd 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            animation: float 3s ease-in-out infinite;
+            box-shadow: 0 20px 60px rgba(139, 92, 246, 0.3);
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .person-illustration {
+            width: 170px;
+            height: 210px;
+            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+            border-radius: 85px 85px 55px 55px;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding-top: 28px;
+        }
+
+        .person-head {
+            width: 75px;
+            height: 75px;
+            background: #1f2937;
+            border-radius: 50%;
+            position: relative;
+            margin-bottom: 22px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        .person-face {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background: #10b981;
+            border-radius: 50%;
+            top: 30px;
+        }
+
+        .person-face.eye-left { left: 20px; }
+        .person-face.eye-right { right: 20px; }
+
+        .person-mouth {
+            position: absolute;
+            width: 25px;
+            height: 12px;
+            border: 3px solid #10b981;
+            border-top: none;
+            border-radius: 0 0 25px 25px;
+            bottom: 16px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .hand {
+            width: 36px;
+            height: 42px;
+            background: #fde68a;
+            border-radius: 18px;
+            position: absolute;
+            top: 105px;
+        }
+
+        .hand.left {
+            left: -18px;
+            transform: rotate(-20deg);
+        }
+
+        .hand.right {
+            right: -18px;
+            transform: rotate(20deg);
+        }
+
+        .welcome-icon {
+            position: absolute;
+            top: 35px;
+            left: 50px;
+            padding: 11px 20px;
+            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+            border-radius: 16px;
+            color: #1f2937;
+            font-size: 0.95rem;
+            font-weight: 700;
+            animation: bounce 2s ease-in-out infinite;
+            box-shadow: 0 8px 24px rgba(254, 243, 199, 0.4);
+            letter-spacing: 0.5px;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-8px); }
+        }
+
+        .play-icon {
+            position: absolute;
+            bottom: 35px;
+            right: 50px;
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            color: #1f2937;
+            animation: pulse 2s ease-in-out infinite;
+            box-shadow: 0 8px 24px rgba(254, 243, 199, 0.4);
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        .decorative-shapes {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+        }
+
+        .shape {
+            position: absolute;
+            opacity: 0.7;
+        }
+
+        .shape-circle {
+            width: 18px;
+            height: 18px;
+            border: 3px solid #ec4899;
+            border-radius: 50%;
+        }
+
+        .shape-triangle {
+            width: 0;
+            height: 0;
+            border-left: 12px solid transparent;
+            border-right: 12px solid transparent;
+            border-bottom: 20px solid #10b981;
+        }
+
+        .shape-dash {
+            width: 25px;
+            height: 4px;
+            background: #f59e0b;
+            border-radius: 2px;
+        }
+
+        .shape:nth-child(1) { top: 45px; left: 40px; }
+        .shape:nth-child(2) { top: 110px; right: 45px; }
+        .shape:nth-child(3) { bottom: 90px; left: 45px; }
+        .shape:nth-child(4) { bottom: 45px; right: 50px; }
+
+        .form-group {
+            margin-bottom: 14px;
+        }
+
+        .form-group label {
+            display: block;
+            color: #cccccc;
+            font-weight: 600;
+            margin-bottom: 5px;
+            font-size: 0.85rem;
+            letter-spacing: -0.2px;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 11px 14px;
+            background: rgba(26, 26, 26, 0.8);
+            border: 2px solid rgba(255, 255, 255, 0.08);
+            border-radius: 12px;
+            font-size: 0.9rem;
+            transition: all 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
+            color: #ffffff;
+            font-family: inherit;
+            letter-spacing: -0.1px;
+            box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.3);
+        }
+
+        .form-group select {
+            cursor: pointer;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg width='12' height='8' viewBox='0 0 12 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1.5L6 6.5L11 1.5' stroke='%23888888' stroke-opacity='1' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 14px center;
+            padding-right: 40px;
+            font-weight: 500;
+        }
+
+        .form-group select option {
+            background: #1a1a1a;
+            color: #ffffff;
+        }
+
+        .form-group input:-webkit-autofill,
+        .form-group input:-webkit-autofill:hover,
+        .form-group input:-webkit-autofill:focus,
+        .form-group input:-webkit-autofill:active {
+            -webkit-box-shadow: 0 0 0 30px rgba(26, 26, 26, 0.8) inset !important;
+            -webkit-text-fill-color: #ffffff !important;
+            transition: background-color 5000s ease-in-out 0s;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: rgba(167, 139, 250, 0.4);
+            background: rgba(31, 31, 31, 0.9);
+            box-shadow: 0 0 0 4px rgba(167, 139, 250, 0.1), inset 0 1px 3px rgba(0, 0, 0, 0.3);
+            transform: translateY(-1px);
+        }
+
+        .form-group input::placeholder,
+        .form-group select option {
+            color: #555555;
         }
 
         .form-row {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 15px;
+            gap: 12px;
+        }
+
+        .helper-text {
+            font-size: 0.75rem;
+            color: #555555;
+            margin-top: 3px;
         }
 
         .btn {
             width: 100%;
-            padding: 14px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
+            padding: 13px;
+            background: linear-gradient(135deg, #ffffff 0%, #f7f7f7 100%);
+            color: #000000;
             border: none;
-            border-radius: 8px;
-            font-size: 1.1em;
+            border-radius: 14px;
+            font-size: 0.95rem;
             font-weight: 600;
             cursor: pointer;
-            transition: transform 0.2s;
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            margin-top: 15px;
+            box-shadow: 0 4px 16px rgba(255, 255, 255, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.8);
+            letter-spacing: -0.3px;
         }
 
         .btn:hover:not(:disabled) {
-            transform: translateY(-2px);
+            transform: scale(1.02) translateY(-1px);
+            box-shadow: 0 6px 20px rgba(255, 255, 255, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.8);
+            background: linear-gradient(135deg, #ffffff 0%, #ffffff 100%);
+        }
+
+        .btn:active:not(:disabled) {
+            transform: scale(0.98);
+            transition: all 0.1s ease;
         }
 
         .btn:disabled {
             opacity: 0.6;
             cursor: not-allowed;
-        }
-
-        .message {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            padding: 16px 24px;
-            border-radius: 8px;
-            display: none;
-            z-index: 9999;
-            min-width: 300px;
-            max-width: 400px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-            animation: slideIn 0.3s ease;
-        }
-
-        @keyframes slideIn {
-            from {
-                transform: translateX(400px);
-                opacity: 0;
-            }
-            to {
-                transform: translateX(0);
-                opacity: 1;
-            }
-        }
-
-        .message.success {
-            background: #d4edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
-        }
-
-        .message.error {
-            background: #f8d7da;
-            color: #721c24;
-            border: 1px solid #f5c6cb;
+            transform: none;
         }
 
         .login-link {
-            text-align: center;
-            margin-top: 20px;
-            color: #666;
+            text-align: left;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #1f1f1f;
+            color: #666666;
+            font-size: 0.85rem;
         }
 
         .login-link a {
-            color: #667eea;
+            color: #888888;
             text-decoration: none;
             font-weight: 600;
         }
 
         .login-link a:hover {
             text-decoration: underline;
+            color: #aaaaaa;
         }
 
-        .helper-text {
-            font-size: 0.85em;
-            color: #666;
-            margin-top: 5px;
+        .message {
+            padding: 10px 14px;
+            border-radius: 10px;
+            margin-bottom: 12px;
+            font-size: 0.8rem;
+            display: none;
+            text-align: center;
         }
 
-        @media (max-width: 600px) {
-            .form-row {
+        .message.success {
+            background: #d1fae5;
+            color: #065f46;
+            border: 1px solid #6ee7b7;
+        }
+
+        .message.error {
+            background: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #fca5a5;
+        }
+
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            color: #666666;
+            text-decoration: none;
+            font-size: 0.8rem;
+            margin-bottom: 20px;
+            font-weight: 500;
+        }
+
+        .back-link:hover {
+            color: #888888;
+        }
+
+        @media (max-width: 1024px) {
+            .register-wrapper {
                 grid-template-columns: 1fr;
             }
 
+            .illustration-section {
+                display: none;
+            }
+
             .register-container {
-                padding: 30px 20px;
+                padding: 50px 40px;
+            }
+        }
+
+        @media (max-width: 600px) {
+            .register-container {
+                padding: 40px 30px;
+            }
+
+            .header h2 {
+                font-size: 2rem;
+            }
+
+            .form-row {
+                grid-template-columns: 1fr;
             }
         }
     </style>
 </head>
 <body>
-    <div class="register-container">
-        <div class="logo">🎓</div>
-        <h2>Create Account</h2>
-        <p class="subtitle">Join the MentorLink community</p>
+    <div class="register-wrapper">
+        <!-- Left Side - Form -->
+        <div class="register-container">
+            <a href="index.html" class="back-link">
+                ← Back to Home
+            </a>
 
-        <div id="message" class="message"></div>
-
-        <form id="registerForm">
-            <div class="form-group">
-                <label for="name">Full Name *</label>
-                <input type="text" id="name" name="name" required placeholder="Enter your full name">
-            </div>
-
-            <div class="form-group">
-                <label for="email">SPIT Email *</label>
-                <input type="email" id="email" name="email" required placeholder="your.name@spit.ac.in">
-                <div class="helper-text">Use your official SPIT email address</div>
-            </div>
-
-            <div class="form-group">
-                <label for="password">Password *</label>
-                <input type="password" id="password" name="password" required placeholder="Minimum 6 characters" minlength="6">
-            </div>
-
-            <div class="form-row">
-                <div class="form-group">
-                    <label for="year">Year</label>
-                    <select id="year" name="year">
-                        <option value="">Select (optional)</option>
-                        <option value="1">1st Year</option>
-                        <option value="2">2nd Year</option>
-                        <option value="3">3rd Year</option>
-                        <option value="4">4th Year</option>
-                        <option value="5">Alumni/Passout</option>
-                    </select>
-                    <div class="helper-text">Optional for alumni</div>
+            <div class="form-box">
+                <div class="header">
+                    <div class="welcome-text">Welcome to PingMe</div>
+                    <h2>Create Account</h2>
+                    <p>Join PingMe to connect with mentors</p>
                 </div>
 
-                <div class="form-group">
-                    <label for="department">Department *</label>
-                    <select id="department" name="department" required>
-                        <option value="">Select</option>
-                        <option value="CSE">CSE</option>
-                        <option value="IT">IT</option>
-                        <option value="ECE">ECE</option>
-                        <option value="EEE">EEE</option>
-                        <option value="MECH">MECH</option>
-                        <option value="CIVIL">CIVIL</option>
-                        <option value="CHEM">CHEM</option>
-                        <option value="OTHER">OTHER</option>
-                    </select>
+                <div id="message" class="message"></div>
+
+                <form id="registerForm">
+                    <div class="form-group">
+                        <label for="name">Full Name *</label>
+                        <input type="text" id="name" name="name" required placeholder="Enter your full name">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="email">SPIT Email *</label>
+                        <input type="email" id="email" name="email" required placeholder="your.name@spit.ac.in">
+                        <div class="helper-text">Use your official SPIT email address</div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="year">Year *</label>
+                            <select id="year" name="year" required>
+                                <option value="">Select</option>
+                                <option value="1">1st Year</option>
+                                <option value="2">2nd Year</option>
+                                <option value="3">3rd Year</option>
+                                <option value="4">4th Year</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="branch">Branch *</label>
+                            <select id="branch" name="branch" required>
+                                <option value="">Select</option>
+                                <option value="COMPS">COMPS</option>
+                                <option value="CSE">CSE</option>
+                                <option value="EXTC">EXTC</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn" id="submitBtn">Continue</button>
+                </form>
+
+                <div class="login-link">
+                    Already have an account? <a href="login.html">Sign In</a>
                 </div>
             </div>
+        </div>
 
-            <div class="form-group">
-                <label for="role">Role *</label>
-                <select id="role" name="role" required>
-                    <option value="">Select</option>
-                    <option value="junior">Student (Junior)</option>
-                    <option value="senior">Student (Senior)</option>
-                    <option value="senior">Alumni/Mentor</option>
-                    <option value="faculty">Faculty</option>
-                    <!-- SECURITY: Admin role NOT allowed in public registration -->
-                    <!-- Admin users can only be created via protected /api/auth/create-admin endpoint -->
-                </select>
-                <div class="helper-text">Choose your current status</div>
+        <!-- Right Side - Illustration -->
+        <div class="illustration-section">
+            <div class="illustration">
+                <div class="decorative-shapes">
+                    <div class="shape shape-circle"></div>
+                    <div class="shape shape-triangle"></div>
+                    <div class="shape shape-circle"></div>
+                    <div class="shape shape-dash"></div>
+                </div>
+                
+                <div class="person-illustration">
+                    <div class="person-head">
+                        <div class="person-face eye-left"></div>
+                        <div class="person-face eye-right"></div>
+                        <div class="person-mouth"></div>
+                    </div>
+                    <div class="hand left"></div>
+                    <div class="hand right"></div>
+                </div>
+                
+                <div class="welcome-icon">welcome</div>
+                <div class="play-icon">▶</div>
             </div>
+        </div>
+    </div>
 
-            <div class="form-group">
-                <label for="skills">Skills (Optional)</label>
-                <input type="text" id="skills" name="skills" placeholder="e.g., JavaScript, Python, AI">
-                <div class="helper-text">Comma-separated list</div>
+    <!-- OTP Modal -->
+    <div id="otpModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Verify Your Email</h3>
+                <p>We've sent a 6-digit code to <span id="emailDisplay" style="color: #888888;"></span></p>
             </div>
-
-            <div class="form-group">
-                <label for="interests">Interests (Optional)</label>
-                <input type="text" id="interests" name="interests" placeholder="e.g., Web Dev, Machine Learning">
-                <div class="helper-text">Comma-separated list</div>
-            </div>
-
-            <div class="form-group">
-                <label for="cgpa">CGPA (Optional)</label>
-                <input type="number" id="cgpa" name="cgpa" step="0.01" min="0" max="10" placeholder="e.g., 8.5">
-            </div>
-
-            <button type="submit" class="btn" id="submitBtn">Create Account</button>
-        </form>
-
-        <div class="login-link">
-            Already have an account? <a href="login.html">Sign In</a>
+            <div id="otpMessage" class="message"></div>
+            <form id="otpForm">
+                <input type="text" id="otpInput" class="otp-input" maxlength="6" placeholder="000000" required autocomplete="off">
+                <button type="submit" class="btn" id="verifyBtn">Verify & Continue</button>
+            </form>
         </div>
     </div>
 
@@ -272,36 +681,60 @@
         const form = document.getElementById('registerForm');
         const messageDiv = document.getElementById('message');
         const submitBtn = document.getElementById('submitBtn');
+        const otpModal = document.getElementById('otpModal');
+        const otpForm = document.getElementById('otpForm');
+        const otpInput = document.getElementById('otpInput');
+        const otpMessage = document.getElementById('otpMessage');
+        const verifyBtn = document.getElementById('verifyBtn');
+        const emailDisplay = document.getElementById('emailDisplay');
+        let userEmail = '';
 
-        function showMessage(text, type) {
-            messageDiv.textContent = text;
-            messageDiv.className = `message ${type}`;
-            messageDiv.style.display = 'block';
+        function showMessage(element, text, type) {
+            element.textContent = text;
+            element.className = `message ${type}`;
+            element.style.display = 'block';
             
-            // Auto-hide after 5 seconds
             setTimeout(() => {
-                messageDiv.style.display = 'none';
+                element.style.display = 'none';
             }, 5000);
+        }
+
+        function showOTPModal(email) {
+            userEmail = email;
+            emailDisplay.textContent = email;
+            otpModal.style.display = 'block';
+            otpInput.focus();
+        }
+
+        function hideOTPModal() {
+            otpModal.style.display = 'none';
+            otpInput.value = '';
         }
 
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
             
             submitBtn.disabled = true;
-            submitBtn.textContent = 'Creating Account...';
+            submitBtn.textContent = 'Sending OTP...';
+
+            const year = parseInt(document.getElementById('year').value);
+            
+            // Auto-detect role based on year: 1-2 = junior, 3-4 = senior
+            let role;
+            if (year === 1 || year === 2) {
+                role = 'junior';
+            } else if (year === 3 || year === 4) {
+                role = 'senior';
+            } else {
+                role = 'junior';
+            }
 
             const formData = {
                 name: document.getElementById('name').value.trim(),
                 email: document.getElementById('email').value.trim().toLowerCase(),
-                password: document.getElementById('password').value,
-                year: document.getElementById('year').value ? parseInt(document.getElementById('year').value) : null,
-                department: document.getElementById('department').value,
-                role: document.getElementById('role').value,
-                skills: document.getElementById('skills').value ? 
-                    document.getElementById('skills').value.split(',').map(s => s.trim()).filter(s => s) : [],
-                interests: document.getElementById('interests').value ? 
-                    document.getElementById('interests').value.split(',').map(s => s.trim()).filter(s => s) : [],
-                cgpa: document.getElementById('cgpa').value ? parseFloat(document.getElementById('cgpa').value) : null
+                year: year,
+                branch: document.getElementById('branch').value,
+                role: role
             };
 
             try {
@@ -316,25 +749,80 @@
                 const data = await response.json();
 
                 if (response.ok) {
-                    showMessage(data.message, 'success');
-                    
-                    // Store email for OTP verification page
+                    showMessage(messageDiv, 'OTP sent! Check your email.', 'success');
                     sessionStorage.setItem('verifyEmail', formData.email);
+                    sessionStorage.setItem('userName', formData.name);
+                    sessionStorage.setItem('userYear', formData.year);
+                    sessionStorage.setItem('userBranch', formData.branch);
+                    sessionStorage.setItem('userRole', formData.role);
                     
-                    // Redirect to OTP verification page after 1.5 seconds
                     setTimeout(() => {
-                        window.location.href = 'verify-otp.html';
-                    }, 1500);
+                        showOTPModal(formData.email);
+                    }, 800);
                 } else {
-                    showMessage(data.message || 'Registration failed. Please try again.', 'error');
+                    let errorMessage = data.message || 'Registration failed. Please try again.';
+                    if (data.errors && data.errors.length > 0) {
+                        errorMessage = data.errors.map(err => err.msg).join('. ');
+                    }
+                    showMessage(messageDiv, errorMessage, 'error');
                     submitBtn.disabled = false;
-                    submitBtn.textContent = 'Create Account';
+                    submitBtn.textContent = 'Continue';
                 }
             } catch (error) {
-                showMessage('Network error. Please check your connection and try again.', 'error');
+                showMessage(messageDiv, 'Network error. Please check your connection and try again.', 'error');
                 submitBtn.disabled = false;
-                submitBtn.textContent = 'Create Account';
+                submitBtn.textContent = 'Continue';
             }
+        });
+
+        // OTP Form Submission
+        otpForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const otp = otpInput.value.trim();
+            if (otp.length !== 6) {
+                showMessage(otpMessage, 'Please enter a valid 6-digit code', 'error');
+                return;
+            }
+
+            verifyBtn.disabled = true;
+            verifyBtn.textContent = 'Verifying...';
+
+            try {
+                const response = await fetch('/api/auth/verify-otp', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        email: userEmail,
+                        otp: otp
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    showMessage(otpMessage, 'Email verified! Redirecting...', 'success');
+                    
+                    setTimeout(() => {
+                        window.location.href = 'profile-setup.html';
+                    }, 1000);
+                } else {
+                    showMessage(otpMessage, data.message || 'Invalid or expired OTP', 'error');
+                    verifyBtn.disabled = false;
+                    verifyBtn.textContent = 'Verify & Continue';
+                }
+            } catch (error) {
+                showMessage(otpMessage, 'Network error. Please try again.', 'error');
+                verifyBtn.disabled = false;
+                verifyBtn.textContent = 'Verify & Continue';
+            }
+        });
+
+        // Auto-format OTP input
+        otpInput.addEventListener('input', (e) => {
+            e.target.value = e.target.value.replace(/\D/g, '').slice(0, 6);
         });
     </script>
 </body>

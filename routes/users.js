@@ -332,4 +332,56 @@ router.get('/profile-completion', verifyToken, apiLimiter, async (req, res) => {
   }
 });
 
+// @route   GET /api/users/suggestions
+// @desc    Get suggested users to follow/connect with
+// @access  Private
+router.get('/suggestions', verifyToken, apiLimiter, async (req, res) => {
+  try {
+    const { limit = 10 } = req.query;
+
+    // Get random users excluding the current user
+    // Prioritize users with similar interests or from same department
+    const currentUser = await User.findById(req.user._id);
+    
+    const suggestions = await User.find({
+      _id: { $ne: req.user._id },
+      isVerified: true,
+      $or: [
+        { department: currentUser.department },
+        { interests: { $in: currentUser.interests || [] } },
+        { skills: { $in: currentUser.skills || [] } }
+      ]
+    })
+      .select('name email department year role profilePicture bio')
+      .limit(parseInt(limit));
+
+    // If we don't have enough suggestions, get random verified users
+    if (suggestions.length < limit) {
+      const randomUsers = await User.find({
+        _id: { 
+          $ne: req.user._id,
+          $nin: suggestions.map(s => s._id)
+        },
+        isVerified: true
+      })
+        .select('name email department year role profilePicture bio')
+        .limit(parseInt(limit) - suggestions.length);
+
+      suggestions.push(...randomUsers);
+    }
+
+    res.json({
+      success: true,
+      count: suggestions.length,
+      users: suggestions
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch suggestions',
+      error: error.message
+    });
+  }
+});
+
 module.exports = router;

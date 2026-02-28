@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Complete Profile - PingMe</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', system-ui, sans-serif;
+            background: #0a0a0a;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 40px 20px;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        .setup-wrapper {
+            display: grid;
+            grid-template-columns: 320px 1fr;
+            gap: 0;
+            max-width: 1400px;
+            width: 100%;
+            height: 90vh;
+            background: #000000;
+            border-radius: 24px;
+            overflow: hidden;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8);
+        }
+
+        .setup-container {
+            background: #000000;
+            padding: 40px 30px;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+            border-right: 1px solid rgba(255, 255, 255, 0.08);
+            overflow-y: auto;
+        }
+
+        .form-box {
+            background: #000000;
+            padding: 40px;
+            overflow-y: auto;
+        }
+
+        .setup-container::-webkit-scrollbar,
+        .form-box::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .setup-container::-webkit-scrollbar-track,
+        .form-box::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .setup-container::-webkit-scrollbar-thumb,
+        .form-box::-webkit-scrollbar-thumb {
+            background: rgba(167, 139, 250, 0.3);
+            border-radius: 10px;
+        }
+
+        .setup-container::-webkit-scrollbar-thumb:hover,
+        .form-box::-webkit-scrollbar-thumb:hover {
+            background: rgba(167, 139, 250, 0.5);
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .header {
+            margin-bottom: 30px;
+            animation: fadeIn 0.6s ease;
+        }
+
+        .header .welcome-text {
+            color: #ffffff;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-bottom: 8px;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            background: linear-gradient(135deg, #a78bfa 0%, #ec4899 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .header h2 {
+            color: #ffffff;
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+            letter-spacing: -0.5px;
+        }
+
+        .header p {
+            color: #888888;
+            font-size: 0.9rem;
+        }
+
+
+
+        /* Profile Picture Upload */
+        .profile-picture-section {
+            text-align: center;
+            margin-bottom: 0;
+        }
+
+        .section-header {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #ffffff;
+            margin-bottom: 24px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .profile-picture-preview {
+            width: 140px;
+            height: 140px;
+            border-radius: 50%;
+            background: rgba(167, 139, 250, 0.1);
+            border: 3px solid rgba(167, 139, 250, 0.3);
+            margin: 0 auto 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
+            box-shadow: 0 8px 24px rgba(167, 139, 250, 0.15);
+        }
+
+        .profile-picture-preview:hover {
+            border-color: rgba(167, 139, 250, 0.5);
+            transform: scale(1.05);
+            box-shadow: 0 12px 32px rgba(167, 139, 250, 0.25);
+        }
+
+        .profile-picture-preview img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .profile-picture-preview.empty {
+            font-size: 3.5rem;
+            color: rgba(167, 139, 250, 0.6);
+        }
+
+        .upload-label {
+            display: block;
+            width: 100%;
+            color: #ffffff;
+            font-size: 0.85rem;
+            cursor: pointer;
+            padding: 11px;
+            background: rgba(167, 139, 250, 0.15);
+            border: 2px solid rgba(167, 139, 250, 0.3);
+            border-radius: 12px;
+            transition: all 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
+            font-weight: 600;
+            text-align: center;
+        }
+
+        .upload-label:hover {
+            background: rgba(167, 139, 250, 0.25);
+            border-color: rgba(167, 139, 250, 0.5);
+            transform: translateY(-1px);
+        }
+
+        #profilePicture {
+            display: none;
+        }
+
+        .form-group {
+            margin-bottom: 18px;
+        }
+
+        .form-group label {
+            display: block;
+            color: #cccccc;
+            font-weight: 600;
+            margin-bottom: 6px;
+            font-size: 0.85rem;
+            letter-spacing: -0.2px;
+        }
+
+        .form-group input,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px 14px;
+            background: rgba(26, 26, 26, 0.8);
+            border: 2px solid rgba(255, 255, 255, 0.08);
+            border-radius: 12px;
+            font-size: 0.9rem;
+            transition: all 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
+            color: #ffffff;
+            font-family: inherit;
+            letter-spacing: -0.1px;
+            box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.3);
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .form-group input:-webkit-autofill,
+        .form-group input:-webkit-autofill:hover,
+        .form-group input:-webkit-autofill:focus,
+        .form-group input:-webkit-autofill:active {
+            -webkit-box-shadow: 0 0 0 30px rgba(26, 26, 26, 0.8) inset !important;
+            -webkit-text-fill-color: #ffffff !important;
+            transition: background-color 5000s ease-in-out 0s;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: rgba(167, 139, 250, 0.4);
+            background: rgba(31, 31, 31, 0.9);
+            box-shadow: 0 0 0 4px rgba(167, 139, 250, 0.1), inset 0 1px 3px rgba(0, 0, 0, 0.3);
+            transform: translateY(-1px);
+        }
+
+        .form-group input::placeholder,
+        .form-group textarea::placeholder {
+            color: #555555;
+        }
+
+        .helper-text {
+            font-size: 0.75rem;
+            color: #555555;
+            margin-top: 4px;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 13px;
+            background: linear-gradient(135deg, #ffffff 0%, #f7f7f7 100%);
+            color: #000000;
+            border: none;
+            border-radius: 14px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            margin-top: 20px;
+            box-shadow: 0 4px 16px rgba(255, 255, 255, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.8);
+            letter-spacing: -0.3px;
+        }
+
+        .btn:hover:not(:disabled) {
+            transform: scale(1.02) translateY(-1px);
+            box-shadow: 0 6px 20px rgba(255, 255, 255, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.8);
+            background: linear-gradient(135deg, #ffffff 0%, #ffffff 100%);
+        }
+
+        .btn:active:not(:disabled) {
+            transform: scale(0.98);
+            transition: all 0.1s ease;
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .message {
+            padding: 12px 16px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            font-size: 0.85rem;
+            display: none;
+            border: 2px solid;
+        }
+
+        .message.success {
+            background: rgba(16, 185, 129, 0.1);
+            border-color: rgba(16, 185, 129, 0.3);
+            color: #10b981;
+        }
+
+        .message.error {
+            background: rgba(239, 68, 68, 0.1);
+            border-color: rgba(239, 68, 68, 0.3);
+            color: #ef4444;
+        }
+
+        .skip-link {
+            text-align: center;
+            margin-top: 16px;
+            padding-top: 16px;
+            border-top: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .skip-link a {
+            color: #888888;
+            text-decoration: none;
+            font-size: 0.85rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .skip-link a:hover {
+            color: #aaaaaa;
+            text-decoration: underline;
+        }
+
+        .section-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #ffffff;
+            margin: 30px 0 20px 0;
+            padding-bottom: 12px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .section-title:first-child {
+            margin-top: 0;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        @media (max-width: 1024px) {
+            .setup-wrapper {
+                grid-template-columns: 1fr;
+                height: auto;
+            }
+
+            .setup-container {
+                border-right: none;
+                border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            }
+
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 600px) {
+            body {
+                padding: 20px 10px;
+            }
+
+            .setup-wrapper {
+                border-radius: 16px;
+            }
+
+            .setup-container,
+            .form-box {
+                padding: 25px 20px;
+            }
+
+            .header h2 {
+                font-size: 1.6rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="setup-wrapper">
+        <!-- Left Side - Account Management -->
+        <div class="setup-container">
+            <div class="section-header">Account Management</div>
+            
+            <!-- Profile Picture Upload -->
+            <div class="profile-picture-section">
+                <div class="profile-picture-preview empty" id="picturePreview">
+                    👤
+                </div>
+                <label for="profilePicture" class="upload-label">Upload Photo</label>
+                <input type="file" id="profilePicture" accept="image/*">
+            </div>
+
+            <div class="form-group">
+                <label for="password">Password *</label>
+                <input type="password" id="password" name="password" required placeholder="Minimum 6 characters" minlength="6">
+                <div class="helper-text">Must contain uppercase, lowercase, and number</div>
+            </div>
+        </div>
+
+        <!-- Right Side - Profile Information -->
+        <div class="form-box">
+            <div class="header">
+                <div class="welcome-text">Complete Your Profile</div>
+                <h2>Profile Setup</h2>
+                <p>Add your details to personalize your PingMe experience</p>
+            </div>
+
+            <div id="message" class="message"></div>
+
+            <form id="profileForm">
+                <h2 class="section-title">Basic Information</h2>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="firstName">First Name</label>
+                        <input type="text" id="firstName" name="firstName" placeholder="First name">
+                    </div>
+                    <div class="form-group">
+                        <label for="lastName">Last Name</label>
+                        <input type="text" id="lastName" name="lastName" placeholder="Last name">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="displayName">Display Name</label>
+                    <input type="text" id="displayName" name="displayName" placeholder="How should others see your name?">
+                    <div class="helper-text">This will be shown publicly on your profile</div>
+                </div>
+
+                <h2 class="section-title">About You</h2>
+
+                <div class="form-group">
+                    <label for="bio">Bio</label>
+                    <textarea id="bio" name="bio" placeholder="Tell us about yourself..."></textarea>
+                </div>
+
+                <h2 class="section-title">Academic & Skills</h2>
+                
+                <div class="form-group">
+                    <label for="interests">Interests</label>
+                    <input type="text" id="interests" name="interests" placeholder="e.g., Web Dev, AI, Machine Learning">
+                    <div class="helper-text">Comma-separated list</div>
+                </div>
+
+                <div class="form-group">
+                    <label for="skills">Skills</label>
+                    <input type="text" id="skills" name="skills" placeholder="e.g., JavaScript, Python, React">
+                    <div class="helper-text">Comma-separated list</div>
+                </div>
+
+                <div class="form-group">
+                    <label for="projects">Projects</label>
+                    <input type="text" id="projects" name="projects" placeholder="e.g., Portfolio Website, Chat App">
+                    <div class="helper-text">Comma-separated list</div>
+                </div>
+
+                <div class="form-group">
+                    <label for="cgpa">CGPA (Optional)</label>
+                    <input type="number" id="cgpa" name="cgpa" step="0.01" min="0" max="10" placeholder="e.g., 8.5">
+                </div>
+
+                <button type="submit" class="btn" id="submitBtn">Complete Profile</button>
+                
+                <div class="skip-link">
+                    <a href="#" id="skipLink">Skip for now</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const form = document.getElementById('profileForm');
+        const messageDiv = document.getElementById('message');
+        const submitBtn = document.getElementById('submitBtn');
+        const picturePreview = document.getElementById('picturePreview');
+        const profilePictureInput = document.getElementById('profilePicture');
+        const skipLink = document.getElementById('skipLink');
+        let uploadedFile = null;
+
+        // Check if user completed registration
+        const userEmail = sessionStorage.getItem('verifyEmail');
+        if (!userEmail) {
+            window.location.href = 'register.html';
+        }
+
+        function showMessage(text, type) {
+            messageDiv.textContent = text;
+            messageDiv.className = `message ${type}`;
+            messageDiv.style.display = 'block';
+            
+            setTimeout(() => {
+                messageDiv.style.display = 'none';
+            }, 5000);
+        }
+
+        // Profile picture preview
+        profilePictureInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                if (file.size > 5 * 1024 * 1024) { // 5MB limit
+                    showMessage('Image size should be less than 5MB', 'error');
+                    return;
+                }
+
+                uploadedFile = file;
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    picturePreview.innerHTML = `<img src="${event.target.result}" alt="Profile">`;
+                    picturePreview.classList.remove('empty');
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        // Click on preview to upload
+        picturePreview.addEventListener('click', () => {
+            profilePictureInput.click();
+        });
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Completing Profile...';
+
+            const formData = new FormData();
+            
+            // Add basic info from session
+            formData.append('email', userEmail);
+            
+            // Add form fields
+            formData.append('password', document.getElementById('password').value);
+            
+            // Add names
+            const firstName = document.getElementById('firstName').value.trim();
+            if (firstName) {
+                formData.append('firstName', firstName);
+            }
+            
+            const lastName = document.getElementById('lastName').value.trim();
+            if (lastName) {
+                formData.append('lastName', lastName);
+            }
+            
+            const displayName = document.getElementById('displayName').value.trim();
+            if (displayName) {
+                formData.append('displayName', displayName);
+            }
+            
+            formData.append('bio', document.getElementById('bio').value.trim());
+            
+            // Process comma-separated lists
+            const interests = document.getElementById('interests').value;
+            if (interests) {
+                formData.append('interests', JSON.stringify(interests.split(',').map(s => s.trim()).filter(s => s)));
+            }
+            
+            const skills = document.getElementById('skills').value;
+            if (skills) {
+                formData.append('skills', JSON.stringify(skills.split(',').map(s => s.trim()).filter(s => s)));
+            }
+            
+            const projects = document.getElementById('projects').value;
+            if (projects) {
+                formData.append('projects', JSON.stringify(projects.split(',').map(s => s.trim()).filter(s => s)));
+            }
+            
+            const cgpa = document.getElementById('cgpa').value;
+            if (cgpa) {
+                formData.append('cgpa', parseFloat(cgpa));
+            }
+            
+            // Add profile picture if uploaded
+            if (uploadedFile) {
+                formData.append('profilePicture', uploadedFile);
+            }
+
+            try {
+                const response = await fetch('/api/auth/complete-profile', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    showMessage('Profile completed successfully!', 'success');
+                    
+                    // Store token if returned
+                    if (data.token) {
+                        localStorage.setItem('mentorlink_token', data.token);
+                    }
+                    
+                    // Clear session storage
+                    sessionStorage.clear();
+                    
+                    setTimeout(() => {
+                        window.location.href = 'home.html';
+                    }, 1500);
+                } else {
+                    let errorMessage = data.message || 'Failed to complete profile. Please try again.';
+                    if (data.errors && data.errors.length > 0) {
+                        errorMessage = data.errors.map(err => err.msg).join('. ');
+                    }
+                    showMessage(errorMessage, 'error');
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = 'Complete Profile';
+                }
+            } catch (error) {
+                showMessage('Network error. Please check your connection and try again.', 'error');
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Complete Profile';
+            }
+        });
+
+        // Skip link handler
+        skipLink.addEventListener('click', async (e) => {
+            e.preventDefault();
+            
+            if (!confirm('Are you sure you want to skip profile setup? You can complete it later from your account settings.')) {
+                return;
+            }
+
+            const password = document.getElementById('password').value;
+            if (!password || password.length < 6) {
+                showMessage('Password is required (minimum 6 characters)', 'error');
+                return;
+            }
+
+            submitBtn.disabled = true;
+            skipLink.style.pointerEvents = 'none';
+
+            const formData = new FormData();
+            formData.append('email', userEmail);
+            formData.append('password', password);
+            formData.append('skipProfile', 'true');
+
+            try {
+                const response = await fetch('/api/auth/complete-profile', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    showMessage('Profile created! Redirecting...', 'success');
+                    
+                    // Store token if returned
+                    if (data.token) {
+                        localStorage.setItem('mentorlink_token', data.token);
+                    }
+                    
+                    sessionStorage.clear();
+                    
+                    setTimeout(() => {
+                        window.location.href = 'home.html';
+                    }, 1000);
+                } else {
+                    showMessage(data.message || 'Failed to create profile', 'error');
+                    submitBtn.disabled = false;
+                    skipLink.style.pointerEvents = 'auto';
+                }
+            } catch (error) {
+                showMessage('Network error. Please try again.', 'error');
+                submitBtn.disabled = false;
+                skipLink.style.pointerEvents = 'auto';
+            }
+        });
+    </script>
+</body>
+</html>

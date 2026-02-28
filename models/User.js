@@ -8,6 +8,30 @@ const userSchema = new mongoose.Schema({
     trim: true,
     maxlength: [100, 'Name cannot exceed 100 characters']
   },
+  firstName: {
+    type: String,
+    trim: true,
+    maxlength: [50, 'First name cannot exceed 50 characters'],
+    default: ''
+  },
+  lastName: {
+    type: String,
+    trim: true,
+    maxlength: [50, 'Last name cannot exceed 50 characters'],
+    default: ''
+  },
+  nickname: {
+    type: String,
+    trim: true,
+    maxlength: [50, 'Nickname cannot exceed 50 characters'],
+    default: ''
+  },
+  displayName: {
+    type: String,
+    trim: true,
+    maxlength: [100, 'Display name cannot exceed 100 characters'],
+    default: ''
+  },
   email: {
     type: String,
     required: [true, 'Email is required'],
@@ -16,9 +40,30 @@ const userSchema = new mongoose.Schema({
     trim: true,
     match: [/^\S+@\S+\.\S+$/, 'Please provide a valid email']
   },
+  whatsapp: {
+    type: String,
+    trim: true,
+    maxlength: [20, 'WhatsApp number cannot exceed 20 characters'],
+    default: ''
+  },
+  telegram: {
+    type: String,
+    trim: true,
+    maxlength: [50, 'Telegram username cannot exceed 50 characters'],
+    default: ''
+  },
+  website: {
+    type: String,
+    trim: true,
+    maxlength: [200, 'Website URL cannot exceed 200 characters'],
+    default: ''
+  },
   password: {
     type: String,
-    required: [true, 'Password is required'],
+    required: function() {
+      // Password is required only when profileComplete is true
+      return this.profileComplete === true;
+    },
     minlength: [6, 'Password must be at least 6 characters'],
     select: false // Don't return password in queries by default
   },
@@ -34,7 +79,7 @@ const userSchema = new mongoose.Schema({
     required: [true, 'Department is required'],
     trim: true,
     enum: {
-      values: ['CSE', 'IT', 'ECE', 'EEE', 'MECH', 'CIVIL', 'CHEM', 'OTHER'],
+      values: ['CSE', 'IT', 'ECE', 'EEE', 'MECH', 'CIVIL', 'CHEM', 'OTHER', 'COMPS', 'EXTC'],
       message: 'Invalid department'
     }
   },
@@ -81,8 +126,9 @@ const userSchema = new mongoose.Schema({
       },
       description: {
         type: String,
-        required: true,
-        trim: true
+        required: false,
+        trim: true,
+        default: ''
       },
       technologies: {
         type: [String],
@@ -96,6 +142,14 @@ const userSchema = new mongoose.Schema({
     min: [0, 'CGPA cannot be negative'],
     max: [10, 'CGPA cannot exceed 10'],
     default: null
+  },
+  profilePicture: {
+    type: String,
+    default: null
+  },
+  profileComplete: {
+    type: Boolean,
+    default: false
   },
   isVerified: {
     type: Boolean,
