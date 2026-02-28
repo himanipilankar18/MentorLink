@@ -262,7 +262,7 @@
     <div class="orb orb-2"></div>
 
     <div class="login-container">
-        <a href="/" class="back-link">← Back to home</a>
+        <a href="landing.html" class="back-link">← Back to home</a>
 
         <div class="login-card">
             <div class="logo-row">
@@ -381,9 +381,9 @@
                 const data = await res.json();
 
                 if (data.success && data.token) {
-                    localStorage.setItem('mentorlink_token', data.token);
+                    localStorage.setItem('token', data.token);
                     showMessage('Login successful! Redirecting...', 'success');
-                    setTimeout(() => { window.location.href = '/home.html'; }, 800);
+                    setTimeout(() => { window.location.href = 'dashboard.html'; }, 800);
                 } else {
                     showMessage(data.message || 'Login failed');
                     btn.disabled = false;
@@ -419,9 +419,9 @@
                 const data = await res.json();
 
                 if (data.success && data.token) {
-                    localStorage.setItem('mentorlink_token', data.token);
-                    showMessage('Account created! Redirecting...', 'success');
-                    setTimeout(() => { window.location.href = '/home.html'; }, 800);
+                    localStorage.setItem('token', data.token);
+                    showMessage('Login successful! Redirecting...', 'success');
+                    setTimeout(() => { window.location.href = 'dashboard.html'; }, 800);
                 } else {
                     showMessage(data.message || 'Registration failed');
                     btn.disabled = false;
