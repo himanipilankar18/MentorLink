@@ -2,6 +2,15 @@
 
 A Data-Driven Interaction and Academic Analytics Platform Backend
 
+## ✅ Project Status
+
+**Current Version:** Working with MongoDB Atlas connectivity verified (Feb 2026)
+- ✅ Database: MongoDB Atlas connected and operational
+- ✅ Authentication: JWT-based auth with bcrypt password hashing
+- ✅ Email Verification: Ready (SMTP configuration needed for production)
+- ✅ API Endpoints: All core routes functional
+- ✅ Security: Helmet, rate limiting, and input validation active
+
 ## 🎯 Overview
 
 MentorLink is a web-based, institute-exclusive mentoring and academic analytics platform.
