@@ -2,8 +2,13 @@
 node_modules/
 package-lock.json
 
-# Environment variables
+# Environment variables - DO NOT COMMIT THESE
 .env
+.env.*
+*.env
+YOUR_ENV_FIXED.env
+fix-env-example.txt
+env-connection-example.txt
 
 # Logs
 logs
