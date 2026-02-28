@@ -1,0 +1,721 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>News Feed · MentorLink</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-soft: #f5f5f7;
+            --bg-card: #ffffff;
+            --text-primary: #1a1a2e;
+            --text-secondary: #6b7280;
+            --accent-purple: #8B5CF6;
+            --accent-blue: #3B82F6;
+            --accent-pink: #EC4899;
+            --accent-green: #10B981;
+            --gradient-splash: linear-gradient(135deg, #8B5CF6 0%, #3B82F6 25%, #10B981 50%, #EC4899 100%);
+            --shadow-soft: 0 4px 24px rgba(0,0,0,0.06);
+            --shadow-elevated: 0 12px 48px rgba(0,0,0,0.08);
+            --radius-xl: 20px;
+            --radius-lg: 14px;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background: var(--bg-soft);
+            min-height: 100vh;
+            color: var(--text-primary);
+        }
+
+        .app {
+            display: flex;
+            min-height: 100vh;
+            max-width: 1400px;
+            margin: 0 auto;
+            background: var(--bg-card);
+            border-radius: 24px;
+            margin-top: 16px;
+            margin-bottom: 16px;
+            box-shadow: var(--shadow-elevated);
+            overflow: hidden;
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        /* Sidebar */
+        .sidebar {
+            width: 280px;
+            padding: 32px 24px;
+            background: var(--bg-card);
+            border-right: 1px solid #f1f5f9;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .user-card {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 32px;
+        }
+
+        .avatar-wrap {
+            position: relative;
+            margin-bottom: 12px;
+        }
+
+        .avatar {
+            width: 72px;
+            height: 72px;
+            border-radius: 50%;
+            background: var(--gradient-splash);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+
+        .avatar-badge {
+            position: absolute;
+            bottom: 2px;
+            right: 2px;
+            width: 16px;
+            height: 16px;
+            background: var(--accent-green);
+            border: 2px solid white;
+            border-radius: 50%;
+        }
+
+        .user-card .name {
+            font-weight: 700;
+            font-size: 1.1rem;
+        }
+
+        .user-card .handle {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        .nav-menu {
+            list-style: none;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 12px 16px;
+            border-radius: var(--radius-lg);
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-weight: 500;
+            margin-bottom: 4px;
+            transition: all 0.2s;
+        }
+
+        .nav-item:hover {
+            background: #f8fafc;
+            color: var(--text-primary);
+        }
+
+        .nav-item.active {
+            background: var(--text-primary);
+            color: white;
+        }
+
+        .nav-item .icon {
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+        }
+
+        .nav-item .badge {
+            margin-left: auto;
+            background: var(--text-primary);
+            color: white;
+            font-size: 0.75rem;
+            padding: 2px 8px;
+            border-radius: 100px;
+        }
+
+        .sidebar-footer {
+            margin-top: auto;
+            padding: 20px;
+            background: linear-gradient(135deg, rgba(139,92,246,0.08) 0%, rgba(236,72,153,0.08) 100%);
+            border-radius: var(--radius-lg);
+            text-align: center;
+            position: relative;
+        }
+
+        .sidebar-footer .splash-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 14px;
+            background: var(--gradient-splash);
+            margin: 0 auto 12px;
+        }
+
+        .sidebar-footer p {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        /* Main feed */
+        .main {
+            flex: 1;
+            padding: 32px 40px 48px;
+            overflow-y: auto;
+        }
+
+        .feed-tabs {
+            display: flex;
+            gap: 32px;
+            margin-bottom: 28px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .feed-tab {
+            padding-bottom: 12px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            margin-bottom: -1px;
+            transition: all 0.2s;
+        }
+
+        .feed-tab:hover { color: var(--text-primary); }
+        .feed-tab.active { color: var(--text-primary); border-bottom-color: var(--text-primary); }
+
+        .post-card {
+            background: #f8fafc;
+            border-radius: var(--radius-xl);
+            padding: 24px;
+            margin-bottom: 20px;
+            transition: all 0.3s;
+            animation: slideUp 0.5s ease both;
+        }
+
+        .post-card:nth-child(1) { animation-delay: 0.1s; }
+        .post-card:nth-child(2) { animation-delay: 0.2s; }
+        .post-card:nth-child(3) { animation-delay: 0.3s; }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .post-card:hover {
+            box-shadow: var(--shadow-soft);
+        }
+
+        .post-card.blue { background: #eff6ff; }
+        .post-card.cream { background: #fffbeb; }
+
+        .post-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 16px;
+        }
+
+        .post-author {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .post-author .avatar-sm {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background: var(--gradient-splash);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 700;
+        }
+
+        .post-author .meta .name { font-weight: 600; }
+        .post-author .meta .time { font-size: 0.85rem; color: var(--text-secondary); }
+
+        .post-options {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: var(--text-secondary);
+            transition: all 0.2s;
+        }
+
+        .post-options:hover { background: rgba(0,0,0,0.06); }
+
+        .post-content {
+            margin-bottom: 16px;
+            line-height: 1.6;
+        }
+
+        .post-content .highlight { color: var(--accent-purple); font-weight: 600; }
+
+        .post-stats {
+            display: flex;
+            align-items: center;
+            gap: 24px;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        .post-stats span { display: flex; align-items: center; gap: 6px; cursor: pointer; transition: color 0.2s; }
+        .post-stats span:hover { color: var(--accent-pink); }
+        .post-stats .like.active { color: var(--accent-pink); }
+
+        /* Share input */
+        .share-box {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding: 20px;
+            background: #f8fafc;
+            border-radius: var(--radius-xl);
+            margin-bottom: 28px;
+            animation: slideUp 0.5s ease 0.4s both;
+        }
+
+        .share-box .avatar-sm {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: var(--gradient-splash);
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 700;
+        }
+
+        .share-box input {
+            flex: 1;
+            padding: 14px 20px;
+            border: 2px solid #e5e7eb;
+            border-radius: var(--radius-lg);
+            font-size: 1rem;
+            font-family: inherit;
+            background: white;
+            transition: border-color 0.2s;
+        }
+
+        .share-box input:focus {
+            outline: none;
+            border-color: var(--accent-purple);
+        }
+
+        .share-actions {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .share-actions .icon-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .share-actions .icon-btn:hover { background: #e5e7eb; color: var(--text-primary); }
+
+        .btn-send {
+            padding: 12px 24px;
+            background: var(--text-primary);
+            color: white;
+            border: none;
+            border-radius: var(--radius-lg);
+            font-weight: 600;
+            font-family: inherit;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-send:hover { transform: translateY(-1px); }
+
+        /* Right sidebar */
+        .right-sidebar {
+            width: 320px;
+            padding: 32px 24px;
+            background: #fafbfc;
+            border-left: 1px solid #f1f5f9;
+        }
+
+        .section-title {
+            font-weight: 700;
+            font-size: 1rem;
+            margin-bottom: 16px;
+        }
+
+        .stories-row {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 32px;
+        }
+
+        .story-card {
+            flex: 1;
+            min-width: 100px;
+            height: 140px;
+            border-radius: var(--radius-lg);
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            color: white;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .story-card:hover { transform: scale(1.02); }
+        .story-card:nth-child(2) { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
+
+        .story-card .avatar-sm {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.9);
+            color: #333;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.9rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .story-card .name { font-size: 0.8rem; font-weight: 600; }
+
+        .suggestion-list { margin-bottom: 32px; }
+
+        .suggestion-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 0;
+            border-bottom: 1px solid #f1f5f9;
+        }
+
+        .suggestion-item:last-child { border-bottom: none; }
+
+        .suggestion-item .avatar-sm {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background: var(--gradient-splash);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 700;
+        }
+
+        .suggestion-item .info { flex: 1; }
+        .suggestion-item .info .name { font-weight: 600; font-size: 0.95rem; }
+        .suggestion-item .btn-follow {
+            padding: 8px 16px;
+            background: var(--text-primary);
+            color: white;
+            border: none;
+            border-radius: 100px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .suggestion-item .btn-follow:hover { opacity: 0.9; transform: scale(1.02); }
+
+        .see-all { color: var(--accent-purple); font-size: 0.9rem; font-weight: 600; cursor: pointer; margin-top: 8px; }
+        .see-all:hover { text-decoration: underline; }
+
+        .categories {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .category-card {
+            padding: 20px;
+            border-radius: var(--radius-lg);
+            text-align: center;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .category-card:hover { transform: scale(1.03); }
+        .category-card.purple { background: #f5f3ff; color: var(--accent-purple); }
+        .category-card.blue { background: #eff6ff; color: var(--accent-blue); }
+        .category-card.green { background: #ecfdf5; color: var(--accent-green); }
+        .category-card.pink { background: #fdf2f8; color: var(--accent-pink); }
+
+        .auth-prompt {
+            text-align: center;
+            padding: 60px 40px;
+        }
+
+        .auth-prompt h2 { margin-bottom: 16px; }
+        .auth-prompt p { color: var(--text-secondary); margin-bottom: 24px; }
+
+        @media (max-width: 1100px) {
+            .right-sidebar { display: none; }
+        }
+
+        @media (max-width: 768px) {
+            .sidebar { width: 80px; padding: 20px 12px; }
+            .user-card .name, .user-card .handle, .nav-item span:not(.badge), .sidebar-footer { display: none; }
+            .user-card .avatar-wrap { margin-bottom: 0; }
+            .nav-item { justify-content: center; padding: 14px; }
+            .nav-item .badge { display: none; }
+        }
+    </style>
+</head>
+<body>
+    <div class="app">
+        <aside class="sidebar">
+            <div class="user-card">
+                <div class="avatar-wrap">
+                    <div class="avatar" id="user-avatar">U</div>
+                    <span class="avatar-badge"></span>
+                </div>
+                <span class="name" id="user-name">User</span>
+                <span class="handle" id="user-handle">@mentorlink</span>
+            </div>
+
+            <ul class="nav-menu">
+                <li><a href="#" class="nav-item active">
+                    <span class="icon">📰</span>
+                    <span>News Feed</span>
+                </a></li>
+                <li><a href="#" class="nav-item">
+                    <span class="icon">✉️</span>
+                    <span>Messages</span>
+                    <span class="badge">6</span>
+                </a></li>
+                <li><a href="#" class="nav-item">
+                    <span class="icon">💬</span>
+                    <span>Forums</span>
+                </a></li>
+                <li><a href="#" class="nav-item">
+                    <span class="icon">👥</span>
+                    <span>Friends</span>
+                    <span class="badge">3</span>
+                </a></li>
+                <li><a href="#" class="nav-item">
+                    <span class="icon">📁</span>
+                    <span>Media</span>
+                </a></li>
+                <li><a href="#" class="nav-item">
+                    <span class="icon">⚙️</span>
+                    <span>Settings</span>
+                </a></li>
+            </ul>
+
+            <div class="sidebar-footer">
+                <div class="splash-icon"></div>
+                <p>Download the App</p>
+            </div>
+        </aside>
+
+        <main class="main" id="main-content">
+            <div id="feed-view">
+                <div class="feed-tabs">
+                    <span class="feed-tab active">Recents</span>
+                    <span class="feed-tab">Friends</span>
+                    <span class="feed-tab">Popular</span>
+                </div>
+
+                <div class="share-box">
+                    <div class="avatar-sm" id="share-avatar">U</div>
+                    <input type="text" placeholder="Share something...">
+                    <div class="share-actions">
+                        <span class="icon-btn">📎</span>
+                        <span class="icon-btn">🖼️</span>
+                        <span class="icon-btn">📍</span>
+                        <select style="border:none;background:transparent;font-size:0.9rem;color:var(--text-secondary);cursor:pointer;">
+                            <option>Public</option>
+                        </select>
+                    </div>
+                    <button class="btn-send">Send</button>
+                </div>
+
+                <div class="post-card blue">
+                    <div class="post-header">
+                        <div class="post-author">
+                            <div class="avatar-sm">GL</div>
+                            <div class="meta">
+                                <div class="name">George Lobko</div>
+                                <div class="time">2 hours ago</div>
+                            </div>
+                        </div>
+                        <div class="post-options">⋯</div>
+                    </div>
+                    <div class="post-content">
+                        Great study session with <span class="highlight">Silena</span> and <span class="highlight">Olya</span> on Data Structures! Thanks <span class="highlight">Davis!</span> for the mentorship tips.
+                    </div>
+                    <div class="post-stats">
+                        <span>👁 6355</span>
+                        <span class="like active">❤️ Like</span>
+                        <span>💬 Comment</span>
+                    </div>
+                </div>
+
+                <div class="post-card cream">
+                    <div class="post-header">
+                        <div class="post-author">
+                            <div class="avatar-sm">VB</div>
+                            <div class="meta">
+                                <div class="name">Vitaliy Boyko</div>
+                                <div class="time">3 hours ago</div>
+                            </div>
+                        </div>
+                        <div class="post-options">⋯</div>
+                    </div>
+                    <div class="post-content">
+                        Coffee and algorithms – the perfect combo for exam prep! Who else is grinding for the upcoming tests?
+                    </div>
+                    <div class="post-stats">
+                        <span>👁 234</span>
+                        <span class="like">❤️ Like</span>
+                        <span>💬 Comment</span>
+                    </div>
+                </div>
+
+                <div class="post-card">
+                    <div class="post-header">
+                        <div class="post-author">
+                            <div class="avatar-sm">ML</div>
+                            <div class="meta">
+                                <div class="name">MentorLink</div>
+                                <div class="time">Welcome to your feed</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="post-content">
+                        Connect with mentors, share your progress, and grow together. Start by exploring the Forums or browsing mentor profiles!
+                    </div>
+                    <div class="post-stats">
+                        <span>👁 1.2k</span>
+                        <span class="like">❤️ Like</span>
+                        <span>💬 Comment</span>
+                    </div>
+                </div>
+            </div>
+
+            <div id="auth-prompt" class="auth-prompt" style="display:none;">
+                <h2>Log in to see your feed</h2>
+                <p>Connect with mentors and join the conversation.</p>
+                <a href="login.html" class="btn-send" style="text-decoration:none;display:inline-block;">Log in</a>
+            </div>
+        </main>
+
+        <aside class="right-sidebar">
+            <div class="section-title">Stories</div>
+            <div class="stories-row">
+                <div class="story-card">
+                    <div class="avatar-sm">AP</div>
+                    <span class="name">Anatoly P.</span>
+                </div>
+                <div class="story-card">
+                    <div class="avatar-sm">LE</div>
+                    <span class="name">Lolita E.</span>
+                </div>
+            </div>
+
+            <div class="section-title">Suggestions</div>
+            <div class="suggestion-list">
+                <div class="suggestion-item">
+                    <div class="avatar-sm">NS</div>
+                    <div class="info"><div class="name">Nick Shelburne</div></div>
+                    <button class="btn-follow">Follow</button>
+                </div>
+                <div class="suggestion-item">
+                    <div class="avatar-sm">BL</div>
+                    <div class="info"><div class="name">Brittni Lando</div></div>
+                    <button class="btn-follow">Follow</button>
+                </div>
+                <div class="suggestion-item">
+                    <div class="avatar-sm">IS</div>
+                    <div class="info"><div class="name">Ivan Shevchenko</div></div>
+                    <button class="btn-follow">Follow</button>
+                </div>
+                <span class="see-all">See all</span>
+            </div>
+
+            <div class="section-title">Recommendations</div>
+            <div class="categories">
+                <div class="category-card purple">UI/UX</div>
+                <div class="category-card blue">Algorithms</div>
+                <div class="category-card green">Data Structures</div>
+                <div class="category-card pink">Web Dev</div>
+            </div>
+        </aside>
+    </div>
+
+    <script>
+        const token = localStorage.getItem('mentorlink_token');
+        const API_BASE = window.location.origin + '/api';
+
+        if (!token) {
+            document.getElementById('feed-view').style.display = 'none';
+            document.getElementById('auth-prompt').style.display = 'block';
+        } else {
+            fetch(API_BASE + '/auth/me', {
+                headers: { 'Authorization': 'Bearer ' + token }
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success && data.user) {
+                    const u = data.user;
+                    const initial = (u.name || 'U').split(' ').map(n=>n[0]).join('').slice(0,2).toUpperCase();
+                    document.getElementById('user-avatar').textContent = initial;
+                    document.getElementById('share-avatar').textContent = initial;
+                    document.getElementById('user-name').textContent = u.name || 'User';
+                    document.getElementById('user-handle').textContent = '@' + (u.email || 'user').split('@')[0];
+                }
+            })
+            .catch(() => {});
+        }
+
+        document.querySelectorAll('.feed-tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.feed-tab').forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+            });
+        });
+
+        document.querySelectorAll('.post-stats .like').forEach(btn => {
+            btn.addEventListener('click', function() { this.classList.toggle('active'); });
+        });
+    </script>
+</body>
+</html>
