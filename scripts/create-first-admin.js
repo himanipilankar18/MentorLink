@@ -22,7 +22,7 @@ const FIRST_ADMIN = {
   name: 'System Administrator',
   email: 'admin@spit.ac.in',
   password: 'Admin@123',  // ⚠️ CHANGE THIS AFTER FIRST LOGIN
-  department: 'Computer',
+  department: 'CSE',
   role: 'admin',
   isVerified: true,
   profileComplete: true
