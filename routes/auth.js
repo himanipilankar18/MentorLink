@@ -37,20 +37,8 @@ router.post('/register',
         });
       }
 
-      // Validate role constraints
-      if (role === 'junior' && year >= 3) {
-        return res.status(400).json({
-          success: false,
-          message: 'Juniors must be in year 1 or 2'
-        });
-      }
-
-      if (role === 'senior' && year < 3) {
-        return res.status(400).json({
-          success: false,
-          message: 'Seniors must be in year 3 or 4'
-        });
-      }
+      // No year/role restrictions - anyone with SPIT email can register
+      // (including alumni, faculty, etc.)
 
       // Create user (unverified initially)
       const user = await User.create({
@@ -157,6 +145,33 @@ router.post('/login',
       // Generate token
       const token = generateToken(user._id);
 
+      // Send login notification email
+      const loginTime = new Date().toLocaleString('en-IN', { 
+        timeZone: 'Asia/Kolkata',
+        dateStyle: 'full',
+        timeStyle: 'short'
+      });
+
+      const loginHtml = `
+        <h2>New Login to Your MentorLink Account</h2>
+        <p>Hello ${user.name},</p>
+        <p>We detected a login to your MentorLink account:</p>
+        <div style="background: #f5f5f5; padding: 15px; border-radius: 8px; margin: 20px 0;">
+          <p style="margin: 5px 0;"><strong>Time:</strong> ${loginTime}</p>
+          <p style="margin: 5px 0;"><strong>Email:</strong> ${user.email}</p>
+        </div>
+        <p>If this was you, you can safely ignore this email.</p>
+        <p><strong>If this wasn't you, please reset your password immediately and contact support.</strong></p>
+        <hr style="margin: 20px 0; border: none; border-top: 1px solid #e0e0e0;">
+        <p style="color: #666; font-size: 0.9em;">This is an automated security notification from MentorLink.</p>
+      `;
+
+      sendEmail({ 
+        to: user.email, 
+        subject: 'New Login to Your MentorLink Account', 
+        html: loginHtml 
+      }).catch(console.error);
+
       res.json({
         success: true,
         message: 'Login successful',
@@ -202,6 +217,8 @@ router.get('/me', verifyToken, async (req, res) => {
         skills: user.skills,
         interests: user.interests,
         cgpa: user.cgpa,
+        bio: user.bio,
+        projects: user.projects,
         isVerified: user.isVerified,
         createdAt: user.createdAt
       }
@@ -296,6 +313,32 @@ router.post('/verify-otp',
       user.otpExpires = null;
       await user.save();
 
+      // Send welcome email
+      const welcomeHtml = `
+        <h2>Welcome to MentorLink! 🎉</h2>
+        <p>Hello ${user.name},</p>
+        <p>Your email has been successfully verified! Welcome to the MentorLink community at SPIT.</p>
+        <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 20px; border-radius: 10px; color: white; margin: 20px 0;">
+          <h3 style="margin: 0 0 10px 0; color: white;">What's Next?</h3>
+          <ul style="margin: 10px 0; padding-left: 20px;">
+            <li style="margin: 8px 0;">Complete your profile with your skills and interests</li>
+            <li style="margin: 8px 0;">Connect with mentors in your field</li>
+            <li style="margin: 8px 0;">Join discussions and share knowledge</li>
+            <li style="margin: 8px 0;">Track your academic progress</li>
+          </ul>
+        </div>
+        <p><a href="${process.env.BACKEND_BASE_URL || 'http://localhost:5000'}/login.html" style="display: inline-block; padding: 12px 24px; background: #667eea; color: white; text-decoration: none; border-radius: 5px; margin: 10px 0;">Login to Your Account</a></p>
+        <p>If you have any questions, feel free to reach out to our support team.</p>
+        <hr style="margin: 20px 0; border: none; border-top: 1px solid #e0e0e0;">
+        <p style="color: #666; font-size: 0.9em;">You're receiving this email because you registered for MentorLink at SPIT.</p>
+      `;
+
+      sendEmail({ 
+        to: user.email, 
+        subject: 'Welcome to MentorLink! 🎓', 
+        html: welcomeHtml 
+      }).catch(console.error);
+
       return res.json({
         success: true,
         message: 'Email verified successfully! You can now log in.'
@@ -365,6 +408,157 @@ router.post('/resend-otp',
       res.status(500).json({
         success: false,
         message: 'Failed to resend OTP',
+        error: error.message
+      });
+    }
+  }
+);
+
+// @route   POST /api/auth/forgot-password
+// @desc    Send password reset email
+// @access  Public
+router.post('/forgot-password',
+  authLimiter,
+  async (req, res) => {
+    try {
+      const { email } = req.body;
+
+      if (!email) {
+        return res.status(400).json({
+          success: false,
+          message: 'Email is required'
+        });
+      }
+
+      // Find user
+      const user = await User.findOne({ email: email.toLowerCase() });
+
+      if (!user) {
+        // Don't reveal if user exists or not for security
+        return res.json({
+          success: true,
+          message: 'If an account with that email exists, a password reset link has been sent.'
+        });
+      }
+
+      // Generate reset token
+      const resetToken = crypto.randomBytes(32).toString('hex');
+      const hashedToken = crypto.createHash('sha256').update(resetToken).digest('hex');
+      
+      user.resetPasswordToken = hashedToken;
+      user.resetPasswordExpires = Date.now() + 60 * 60 * 1000; // 1 hour
+      await user.save();
+
+      const backendBase = process.env.BACKEND_BASE_URL || 'http://localhost:5000';
+      const resetUrl = `${backendBase}/reset-password.html?token=${resetToken}`;
+
+      const html = `
+        <h2>Reset Your MentorLink Password</h2>
+        <p>Hello ${user.name},</p>
+        <p>You requested to reset your password. Click the link below to set a new password:</p>
+        <p><a href="${resetUrl}" style="display: inline-block; padding: 12px 24px; background: #667eea; color: white; text-decoration: none; border-radius: 5px;">Reset Password</a></p>
+        <p>Or copy and paste this URL into your browser:</p>
+        <p>${resetUrl}</p>
+        <p><strong>This link will expire in 1 hour.</strong></p>
+        <p>If you didn't request this, please ignore this email.</p>
+      `;
+
+      // Send email
+      sendEmail({ to: user.email, subject: 'MentorLink - Password Reset Request', html }).catch(console.error);
+
+      res.json({
+        success: true,
+        message: 'Password reset link has been sent to your email'
+      });
+    } catch (error) {
+      res.status(500).json({
+        success: false,
+        message: 'Failed to process password reset request',
+        error: error.message
+      });
+    }
+  }
+);
+
+// @route   POST /api/auth/reset-password
+// @desc    Reset password using token
+// @access  Public
+router.post('/reset-password',
+  authLimiter,
+  async (req, res) => {
+    try {
+      const { token, password } = req.body;
+
+      if (!token || !password) {
+        return res.status(400).json({
+          success: false,
+          message: 'Token and new password are required'
+        });
+      }
+
+      // Validate password
+      if (password.length < 6) {
+        return res.status(400).json({
+          success: false,
+          message: 'Password must be at least 6 characters'
+        });
+      }
+
+      // Hash token and find user
+      const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
+      const user = await User.findOne({
+        resetPasswordToken: hashedToken,
+        resetPasswordExpires: { $gt: Date.now() }
+      }).select('+password');
+
+      if (!user) {
+        return res.status(400).json({
+          success: false,
+          message: 'Invalid or expired reset token'
+        });
+      }
+
+      // Update password
+      user.password = password;
+      user.resetPasswordToken = null;
+      user.resetPasswordExpires = null;
+      await user.save();
+
+      // Send password change confirmation email
+      const changeTime = new Date().toLocaleString('en-IN', { 
+        timeZone: 'Asia/Kolkata',
+        dateStyle: 'full',
+        timeStyle: 'short'
+      });
+
+      const passwordChangeHtml = `
+        <h2>Password Changed Successfully</h2>
+        <p>Hello ${user.name},</p>
+        <p>Your MentorLink password was successfully changed.</p>
+        <div style="background: #f5f5f5; padding: 15px; border-radius: 8px; margin: 20px 0;">
+          <p style="margin: 5px 0;"><strong>Time:</strong> ${changeTime}</p>
+          <p style="margin: 5px 0;"><strong>Account:</strong> ${user.email}</p>
+        </div>
+        <p>You can now login with your new password.</p>
+        <p><strong>If you didn't make this change, please contact support immediately.</strong></p>
+        <hr style="margin: 20px 0; border: none; border-top: 1px solid #e0e0e0;">
+        <p style="color: #666; font-size: 0.9em;">This is an automated security notification from MentorLink.</p>
+      `;
+
+      sendEmail({ 
+        to: user.email, 
+        subject: 'Your MentorLink Password Was Changed', 
+        html: passwordChangeHtml 
+      }).catch(console.error);
+
+      res.json({
+        success: true,
+        message: 'Password reset successful! You can now login with your new password.'
+      });
+    } catch (error) {
+      res.status(500).json({
+        success: false,
+        message: 'Failed to reset password',
         error: error.message
       });
     }

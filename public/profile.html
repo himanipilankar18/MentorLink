@@ -1,0 +1,957 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile - MentorLink</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f5f7fa;
+            min-height: 100vh;
+            padding-bottom: 40px;
+        }
+
+        .header {
+            background: white;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 16px 0;
+            margin-bottom: 30px;
+        }
+
+        .header-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 1.5em;
+            font-weight: 700;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+        }
+
+        .nav-links a {
+            text-decoration: none;
+            color: #333;
+            font-weight: 500;
+            transition: color 0.3s;
+        }
+
+        .nav-links a:hover {
+            color: #667eea;
+        }
+
+        .logout-btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 8px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: transform 0.2s;
+        }
+
+        .logout-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        .message {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 16px 24px;
+            border-radius: 8px;
+            display: none;
+            z-index: 9999;
+            min-width: 300px;
+            max-width: 400px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        .message.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .message.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .profile-card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+
+        .profile-banner {
+            height: 150px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            position: relative;
+        }
+
+        .profile-header {
+            padding: 0 30px 20px 30px;
+            position: relative;
+        }
+
+        .profile-avatar {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            border: 5px solid white;
+            background: #ccc;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3em;
+            color: white;
+            margin-top: -60px;
+            position: relative;
+        }
+
+        .profile-name-section {
+            margin-top: 15px;
+        }
+
+        .profile-name {
+            font-size: 2em;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .profile-role {
+            font-size: 1.1em;
+            color: #666;
+            margin-bottom: 10px;
+        }
+
+        .profile-stats {
+            display: flex;
+            gap: 30px;
+            margin-top: 15px;
+        }
+
+        .stat-item {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .stat-label {
+            font-size: 0.85em;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .stat-value {
+            font-size: 1.2em;
+            font-weight: 700;
+            color: #333;
+            margin-top: 2px;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 30px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .section-title {
+            font-size: 1.3em;
+            font-weight: 700;
+            color: #333;
+        }
+
+        .edit-btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 8px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+
+        .edit-btn:hover {
+            background: #5568d3;
+        }
+
+        .edit-btn.save {
+            background: #10B981;
+        }
+
+        .edit-btn.save:hover {
+            background: #059669;
+        }
+
+        .edit-btn.cancel {
+            background: #6b7280;
+            margin-left: 10px;
+        }
+
+        .edit-btn.cancel:hover {
+            background: #4b5563;
+        }
+
+        .section-content {
+            padding: 30px;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+        }
+
+        .info-item {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .info-label {
+            font-size: 0.9em;
+            color: #666;
+            margin-bottom: 5px;
+            font-weight: 600;
+        }
+
+        .info-value {
+            font-size: 1.05em;
+            color: #333;
+        }
+
+        .info-item input,
+        .info-item select,
+        .info-item textarea {
+            padding: 10px;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 1em;
+            font-family: inherit;
+            transition: border-color 0.3s;
+        }
+
+        .info-item input:focus,
+        .info-item select:focus,
+        .info-item textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .tags-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .tag {
+            background: #e8eef7;
+            color: #667eea;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .tag.edit-mode {
+            background: #667eea;
+            color: white;
+        }
+
+        .remove-tag {
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .add-tag-input {
+            padding: 8px 16px;
+            border: 2px solid #e0e0e0;
+            border-radius: 20px;
+            font-size: 0.9em;
+            outline: none;
+            min-width: 150px;
+        }
+
+        .add-tag-input:focus {
+            border-color: #667eea;
+        }
+
+        .projects-list {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .project-item {
+            padding: 20px;
+            background: #f9fafb;
+            border-radius: 8px;
+            border: 1px solid #e5e7eb;
+        }
+
+        .project-title {
+            font-size: 1.15em;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 8px;
+        }
+
+        .project-description {
+            color: #666;
+            line-height: 1.6;
+            margin-bottom: 10px;
+        }
+
+        .project-tech {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .tech-tag {
+            background: #667eea;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 15px;
+            font-size: 0.85em;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: #999;
+        }
+
+        .empty-state-icon {
+            font-size: 3em;
+            margin-bottom: 10px;
+        }
+
+        textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="header-content">
+            <div class="logo">MentorLink</div>
+            <div class="nav-links">
+                <a href="dashboard.html">Dashboard</a>
+                <a href="profile.html">Profile</a>
+                <button class="logout-btn" onclick="logout()">Logout</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="message" class="message"></div>
+
+    <div class="container">
+        <!-- Profile Header Card -->
+        <div class="profile-card">
+            <div class="profile-banner"></div>
+            <div class="profile-header">
+                <div class="profile-avatar" id="profileAvatar">👤</div>
+                <div class="profile-name-section">
+                    <div class="profile-name" id="profileName">Loading...</div>
+                    <div class="profile-role" id="profileRole">Loading...</div>
+                </div>
+                <div class="profile-stats">
+                    <div class="stat-item">
+                        <span class="stat-label">Year</span>
+                        <span class="stat-value" id="statYear">-</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Department</span>
+                        <span class="stat-value" id="statDepartment">-</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">CGPA</span>
+                        <span class="stat-value" id="statCGPA">-</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Basic Information -->
+        <div class="profile-card">
+            <div class="section-header">
+                <div class="section-title">Basic Information</div>
+                <div>
+                    <button class="edit-btn" id="basicEditBtn" onclick="toggleEdit('basic')">Edit</button>
+                    <button class="edit-btn save" id="basicSaveBtn" style="display: none;" onclick="saveSection('basic')">Save</button>
+                    <button class="edit-btn cancel" id="basicCancelBtn" style="display: none;" onclick="cancelEdit('basic')">Cancel</button>
+                </div>
+            </div>
+            <div class="section-content">
+                <div class="info-grid" id="basicInfo">
+                    <!-- Will be populated by JavaScript -->
+                </div>
+            </div>
+        </div>
+
+        <!-- About / Bio -->
+        <div class="profile-card">
+            <div class="section-header">
+                <div class="section-title">About</div>
+                <div>
+                    <button class="edit-btn" id="aboutEditBtn" onclick="toggleEdit('about')">Edit</button>
+                    <button class="edit-btn save" id="aboutSaveBtn" style="display: none;" onclick="saveSection('about')">Save</button>
+                    <button class="edit-btn cancel" id="aboutCancelBtn" style="display: none;" onclick="cancelEdit('about')">Cancel</button>
+                </div>
+            </div>
+            <div class="section-content">
+                <div id="aboutContent">
+                    <!-- Will be populated by JavaScript -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Skills -->
+        <div class="profile-card">
+            <div class="section-header">
+                <div class="section-title">Skills</div>
+                <div>
+                    <button class="edit-btn" id="skillsEditBtn" onclick="toggleEdit('skills')">Edit</button>
+                    <button class="edit-btn save" id="skillsSaveBtn" style="display: none;" onclick="saveSection('skills')">Save</button>
+                    <button class="edit-btn cancel" id="skillsCancelBtn" style="display: none;" onclick="cancelEdit('skills')">Cancel</button>
+                </div>
+            </div>
+            <div class="section-content">
+                <div id="skillsContent">
+                    <!-- Will be populated by JavaScript -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Interests -->
+        <div class="profile-card">
+            <div class="section-header">
+                <div class="section-title">Interests</div>
+                <div>
+                    <button class="edit-btn" id="interestsEditBtn" onclick="toggleEdit('interests')">Edit</button>
+                    <button class="edit-btn save" id="interestsSaveBtn" style="display: none;" onclick="saveSection('interests')">Save</button>
+                    <button class="edit-btn cancel" id="interestsCancelBtn" style="display: none;" onclick="cancelEdit('interests')">Cancel</button>
+                </div>
+            </div>
+            <div class="section-content">
+                <div id="interestsContent">
+                    <!-- Will be populated by JavaScript -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Projects / Achievements -->
+        <div class="profile-card">
+            <div class="section-header">
+                <div class="section-title">Projects & Achievements</div>
+                <div>
+                    <button class="edit-btn" id="projectsEditBtn" onclick="toggleEdit('projects')">Edit</button>
+                    <button class="edit-btn save" id="projectsSaveBtn" style="display: none;" onclick="saveSection('projects')">Save</button>
+                    <button class="edit-btn cancel" id="projectsCancelBtn" style="display: none;" onclick="cancelEdit('projects')">Cancel</button>
+                </div>
+            </div>
+            <div class="section-content">
+                <div id="projectsContent">
+                    <!-- Will be populated by JavaScript -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let userData = {};
+        let editingData = {};
+
+        // Check auth
+        const token = localStorage.getItem('token');
+        if (!token) {
+            window.location.href = 'login.html';
+        }
+
+        // Load user data
+        async function loadUserData() {
+            try {
+                const response = await fetch('/api/auth/me', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (!response.ok) {
+                    if (response.status === 401) {
+                        localStorage.removeItem('token');
+                        window.location.href = 'login.html';
+                        return;
+                    }
+                    throw new Error('Failed to load user data');
+                }
+
+                const data = await response.json();
+                userData = data.user || data;
+
+                // Safety check
+                if (!userData || !userData.name) {
+                    throw new Error('Invalid user data');
+                }
+
+                renderProfile();
+            } catch (error) {
+                showMessage('Error loading profile: ' + error.message, 'error');
+            }
+        }
+
+        function renderProfile() {
+            // Header section
+            const initials = userData.name ? userData.name.split(' ').map(n => n[0]).join('').toUpperCase() : '??';
+            document.getElementById('profileAvatar').textContent = initials;
+            document.getElementById('profileName').textContent = userData.name;
+            document.getElementById('profileRole').textContent = `${userData.role.charAt(0).toUpperCase() + userData.role.slice(1)} • ${userData.email}`;
+            document.getElementById('statYear').textContent = userData.year || 'N/A';
+            document.getElementById('statDepartment').textContent = userData.department || 'N/A';
+            document.getElementById('statCGPA').textContent = userData.cgpa || 'N/A';
+
+            // Basic info section
+            renderBasicInfo();
+            
+            // About section
+            renderAbout();
+            
+            // Skills section
+            renderSkills();
+            
+            // Interests section
+            renderInterests();
+            
+            // Projects section
+            renderProjects();
+        }
+
+        function renderBasicInfo() {
+            const basicInfo = document.getElementById('basicInfo');
+            basicInfo.innerHTML = `
+                <div class="info-item">
+                    <div class="info-label">Name</div>
+                    <div class="info-value">${userData.name}</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Email</div>
+                    <div class="info-value">${userData.email}</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Year</div>
+                    <div class="info-value">${userData.year || 'Not specified'}</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Department</div>
+                    <div class="info-value">${userData.department || 'Not specified'}</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Role</div>
+                    <div class="info-value">${userData.role.charAt(0).toUpperCase() + userData.role.slice(1)}</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">CGPA</div>
+                    <div class="info-value">${userData.cgpa || 'Not specified'}</div>
+                </div>
+            `;
+        }
+
+        function renderAbout() {
+            const aboutContent = document.getElementById('aboutContent');
+            const bio = userData.bio || '';
+            
+            if (bio) {
+                aboutContent.innerHTML = `<div class="info-value">${bio}</div>`;
+            } else {
+                aboutContent.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📝</div><div>Add an introduction about yourself</div></div>';
+            }
+        }
+
+        function renderSkills() {
+            const skillsContent = document.getElementById('skillsContent');
+            const skills = userData.skills || [];
+            
+            if (skills.length > 0) {
+                skillsContent.innerHTML = '<div class="tags-container">' + 
+                    skills.map(skill => `<div class="tag">${skill}</div>`).join('') +
+                    '</div>';
+            } else {
+                skillsContent.innerHTML = '<div class="empty-state"><div class="empty-state-icon">💡</div><div>Add your skills</div></div>';
+            }
+        }
+
+        function renderInterests() {
+            const interestsContent = document.getElementById('interestsContent');
+            const interests = userData.interests || [];
+            
+            if (interests.length > 0) {
+                interestsContent.innerHTML = '<div class="tags-container">' + 
+                    interests.map(interest => `<div class="tag">${interest}</div>`).join('') +
+                    '</div>';
+            } else {
+                interestsContent.innerHTML = '<div class="empty-state"><div class="empty-state-icon">❤️</div><div>Add your interests</div></div>';
+            }
+        }
+
+        function renderProjects() {
+            const projectsContent = document.getElementById('projectsContent');
+            const projects = userData.projects || [];
+            
+            if (projects.length > 0) {
+                projectsContent.innerHTML = '<div class="projects-list">' + 
+                    projects.map(project => `
+                        <div class="project-item">
+                            <div class="project-title">${project.title}</div>
+                            <div class="project-description">${project.description}</div>
+                            ${project.technologies ? '<div class="project-tech">' + 
+                                project.technologies.map(tech => `<span class="tech-tag">${tech}</span>`).join('') + 
+                                '</div>' : ''}
+                        </div>
+                    `).join('') +
+                    '</div>';
+            } else {
+                projectsContent.innerHTML = '<div class="empty-state"><div class="empty-state-icon">🚀</div><div>Add your projects and achievements</div></div>';
+            }
+        }
+
+        function toggleEdit(section) {
+            document.getElementById(`${section}EditBtn`).style.display = 'none';
+            document.getElementById(`${section}SaveBtn`).style.display = 'inline-block';
+            document.getElementById(`${section}CancelBtn`).style.display = 'inline-block';
+
+            switch(section) {
+                case 'basic':
+                    renderBasicInfoEdit();
+                    break;
+                case 'about':
+                    renderAboutEdit();
+                    break;
+                case 'skills':
+                    renderSkillsEdit();
+                    break;
+                case 'interests':
+                    renderInterestsEdit();
+                    break;
+                case 'projects':
+                    renderProjectsEdit();
+                    break;
+            }
+        }
+
+        function cancelEdit(section) {
+            document.getElementById(`${section}EditBtn`).style.display = 'inline-block';
+            document.getElementById(`${section}SaveBtn`).style.display = 'none';
+            document.getElementById(`${section}CancelBtn`).style.display = 'none';
+
+            switch(section) {
+                case 'basic':
+                    renderBasicInfo();
+                    break;
+                case 'about':
+                    renderAbout();
+                    break;
+                case 'skills':
+                    renderSkills();
+                    break;
+                case 'interests':
+                    renderInterests();
+                    break;
+                case 'projects':
+                    renderProjects();
+                    break;
+            }
+        }
+
+        function renderBasicInfoEdit() {
+            const basicInfo = document.getElementById('basicInfo');
+            basicInfo.innerHTML = `
+                <div class="info-item">
+                    <div class="info-label">Name</div>
+                    <input type="text" id="editName" value="${userData.name}">
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Email</div>
+                    <div class="info-value">${userData.email} (cannot be changed)</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Year</div>
+                    <select id="editYear">
+                        <option value="">Select Year</option>
+                        <option value="1" ${userData.year == 1 ? 'selected' : ''}>1</option>
+                        <option value="2" ${userData.year == 2 ? 'selected' : ''}>2</option>
+                        <option value="3" ${userData.year == 3 ? 'selected' : ''}>3</option>
+                        <option value="4" ${userData.year == 4 ? 'selected' : ''}>4</option>
+                        <option value="5" ${userData.year == 5 ? 'selected' : ''}>Alumni</option>
+                    </select>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Department</div>
+                    <select id="editDepartment">
+                        <option value="">Select Department</option>
+                        <option value="CSE" ${userData.department === 'CSE' ? 'selected' : ''}>CSE</option>
+                        <option value="IT" ${userData.department === 'IT' ? 'selected' : ''}>IT</option>
+                        <option value="ECE" ${userData.department === 'ECE' ? 'selected' : ''}>ECE</option>
+                        <option value="EEE" ${userData.department === 'EEE' ? 'selected' : ''}>EEE</option>
+                        <option value="MECH" ${userData.department === 'MECH' ? 'selected' : ''}>MECH</option>
+                        <option value="CIVIL" ${userData.department === 'CIVIL' ? 'selected' : ''}>CIVIL</option>
+                    </select>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Role</div>
+                    <div class="info-value">${userData.role.charAt(0).toUpperCase() + userData.role.slice(1)} (cannot be changed)</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">CGPA</div>
+                    <input type="number" step="0.01" min="0" max="10" id="editCGPA" value="${userData.cgpa || ''}">
+                </div>
+            `;
+        }
+
+        function renderAboutEdit() {
+            const aboutContent = document.getElementById('aboutContent');
+            aboutContent.innerHTML = `<textarea id="editBio" placeholder="Write a brief introduction about yourself...">${userData.bio || ''}</textarea>`;
+        }
+
+        function renderSkillsEdit() {
+            const skillsContent = document.getElementById('skillsContent');
+            editingData.skills = [...(userData.skills || [])];
+            
+            skillsContent.innerHTML = `
+                <div class="tags-container" id="skillsTagsEdit">
+                    ${editingData.skills.map((skill, index) => 
+                        `<div class="tag edit-mode">${skill} <span class="remove-tag" onclick="removeTag('skills', ${index})">&times;</span></div>`
+                    ).join('')}
+                    <input type="text" class="add-tag-input" id="addSkillInput" placeholder="Add skill..." onkeypress="handleTagKeyPress(event, 'skills')">
+                </div>
+            `;
+        }
+
+        function renderInterestsEdit() {
+            const interestsContent = document.getElementById('interestsContent');
+            editingData.interests = [...(userData.interests || [])];
+            
+            interestsContent.innerHTML = `
+                <div class="tags-container" id="interestsTagsEdit">
+                    ${editingData.interests.map((interest, index) => 
+                        `<div class="tag edit-mode">${interest} <span class="remove-tag" onclick="removeTag('interests', ${index})">&times;</span></div>`
+                    ).join('')}
+                    <input type="text" class="add-tag-input" id="addInterestInput" placeholder="Add interest..." onkeypress="handleTagKeyPress(event, 'interests')">
+                </div>
+            `;
+        }
+
+        function renderProjectsEdit() {
+            const projectsContent = document.getElementById('projectsContent');
+            editingData.projects = JSON.parse(JSON.stringify(userData.projects || []));
+            
+            projectsContent.innerHTML = `
+                <div class="projects-list" id="projectsListEdit">
+                    ${editingData.projects.map((project, index) => `
+                        <div class="project-item">
+                            <input type="text" placeholder="Project Title" value="${project.title}" id="projectTitle${index}" style="width: 100%; margin-bottom: 10px;">
+                            <textarea placeholder="Project Description" id="projectDesc${index}" style="width: 100%;">${project.description}</textarea>
+                            <button class="edit-btn cancel" onclick="removeProject(${index})" style="margin-top: 10px;">Remove</button>
+                        </div>
+                    `).join('')}
+                    <button class="edit-btn" onclick="addProject()">+ Add Project</button>
+                </div>
+            `;
+        }
+
+        function removeTag(type, index) {
+            editingData[type].splice(index, 1);
+            if (type === 'skills') {
+                renderSkillsEdit();
+            } else if (type === 'interests') {
+                renderInterestsEdit();
+            }
+        }
+
+        function handleTagKeyPress(event, type) {
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                const input = event.target;
+                const value = input.value.trim();
+                
+                if (value && !editingData[type].includes(value)) {
+                    editingData[type].push(value);
+                    input.value = '';
+                    
+                    if (type === 'skills') {
+                        renderSkillsEdit();
+                    } else if (type === 'interests') {
+                        renderInterestsEdit();
+                    }
+                }
+            }
+        }
+
+        function removeProject(index) {
+            editingData.projects.splice(index, 1);
+            renderProjectsEdit();
+        }
+
+        function addProject() {
+            editingData.projects.push({ title: '', description: '' });
+            renderProjectsEdit();
+        }
+
+        async function saveSection(section) {
+            let updateData = {};
+
+            switch(section) {
+                case 'basic':
+                    updateData = {
+                        name: document.getElementById('editName').value,
+                        year: document.getElementById('editYear').value,
+                        department: document.getElementById('editDepartment').value,
+                        cgpa: document.getElementById('editCGPA').value
+                    };
+                    break;
+                case 'about':
+                    updateData = {
+                        bio: document.getElementById('editBio').value
+                    };
+                    break;
+                case 'skills':
+                    // Add any remaining text in input
+                    const skillInput = document.getElementById('addSkillInput');
+                    if (skillInput && skillInput.value.trim()) {
+                        editingData.skills.push(skillInput.value.trim());
+                    }
+                    updateData = {
+                        skills: editingData.skills
+                    };
+                    break;
+                case 'interests':
+                    // Add any remaining text in input
+                    const interestInput = document.getElementById('addInterestInput');
+                    if (interestInput && interestInput.value.trim()) {
+                        editingData.interests.push(interestInput.value.trim());
+                    }
+                    updateData = {
+                        interests: editingData.interests
+                    };
+                    break;
+                case 'projects':
+                    // Collect project data
+                    const projects = editingData.projects.map((_, index) => {
+                        const titleEl = document.getElementById(`projectTitle${index}`);
+                        const descEl = document.getElementById(`projectDesc${index}`);
+                        return {
+                            title: titleEl ? titleEl.value : '',
+                            description: descEl ? descEl.value : ''
+                        };
+                    }).filter(p => p.title.trim() !== '');
+                    
+                    updateData = {
+                        projects
+                    };
+                    break;
+            }
+
+            try {
+                const response = await fetch('/api/users/profile', {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify(updateData)
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    userData = { ...userData, ...updateData };
+                    showMessage('Profile updated successfully!', 'success');
+                    cancelEdit(section);
+                    
+                    // Update header if basic info changed
+                    if (section === 'basic') {
+                        document.getElementById('statYear').textContent = userData.year || 'N/A';
+                        document.getElementById('statDepartment').textContent = userData.department || 'N/A';
+                        document.getElementById('statCGPA').textContent = userData.cgpa || 'N/A';
+                    }
+                } else {
+                    showMessage(data.message || 'Failed to update profile', 'error');
+                }
+            } catch (error) {
+                showMessage('Network error. Please try again.', 'error');
+            }
+        }
+
+        function showMessage(text, type) {
+            const messageDiv = document.getElementById('message');
+            messageDiv.textContent = text;
+            messageDiv.className = `message ${type}`;
+            messageDiv.style.display = 'block';
+            
+            setTimeout(() => {
+                messageDiv.style.display = 'none';
+            }, 5000);
+        }
+
+        function logout() {
+            localStorage.removeItem('token');
+            window.location.href = 'login.html';
+        }
+
+        // Load data on page load
+        loadUserData();
+    </script>
+</body>
+</html>

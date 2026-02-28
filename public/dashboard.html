@@ -95,6 +95,89 @@
             line-height: 1.6;
         }
 
+        /* Profile Completion Banner */
+        .profile-completion-banner {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .profile-completion-banner.hidden {
+            display: none;
+        }
+
+        .profile-completion-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .profile-completion-title {
+            font-size: 1.2em;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .profile-completion-percent {
+            font-size: 1.5em;
+            font-weight: 700;
+        }
+
+        .profile-completion-message {
+            margin-bottom: 15px;
+            opacity: 0.95;
+        }
+
+        .profile-progress-bar {
+            background: rgba(255,255,255,0.3);
+            height: 10px;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-bottom: 15px;
+        }
+
+        .profile-progress-fill {
+            background: white;
+            height: 100%;
+            border-radius: 10px;
+            transition: width 1s ease;
+        }
+
+        .missing-fields {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 15px;
+        }
+
+        .missing-field-tag {
+            background: rgba(255,255,255,0.2);
+            padding: 5px 12px;
+            border-radius: 15px;
+            font-size: 0.9em;
+        }
+
+        .btn-complete-profile {
+            background: white;
+            color: #667eea;
+            border: none;
+            padding: 10px 25px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .btn-complete-profile:hover {
+            transform: translateY(-2px);
+        }
+
         /* Stats Cards */
         .stats-grid {
             display: grid;
@@ -243,6 +326,27 @@
                 <p>Ready to connect, learn, and grow with the SPIT community.</p>
             </div>
 
+            <!-- Profile Completion Banner -->
+            <div class="profile-completion-banner" id="profileCompletionBanner">
+                <div class="profile-completion-header">
+                    <div class="profile-completion-title">
+                        <span>📊</span>
+                        <span>Profile Completion</span>
+                    </div>
+                    <div class="profile-completion-percent" id="completionPercent">0%</div>
+                </div>
+                <div class="profile-completion-message" id="completionMessage">
+                    Complete your profile to get better mentor matches and opportunities!
+                </div>
+                <div class="profile-progress-bar">
+                    <div class="profile-progress-fill" id="progressFill" style="width: 0%"></div>
+                </div>
+                <div class="missing-fields" id="missingFields"></div>
+                <button class="btn-complete-profile" onclick="window.location.href='profile.html'">
+                    Complete Your Profile
+                </button>
+            </div>
+
             <!-- Stats Grid -->
             <div class="stats-grid">
                 <div class="stat-card">
@@ -289,7 +393,7 @@
                         <div class="action-title">My Progress</div>
                     </a>
 
-                    <a href="#" class="action-card">
+                    <a href="profile.html" class="action-card">
                         <div class="action-icon">👤</div>
                         <div class="action-title">My Profile</div>
                     </a>
@@ -319,12 +423,15 @@
                 }
 
                 const data = await response.json();
-                const user = data.user;
+                const user = data.user || data;
 
                 // Update UI with user data
-                document.getElementById('userName').textContent = user.name;
-                document.getElementById('welcomeName').textContent = user.name.split(' ')[0];
+                document.getElementById('userName').textContent = user.name || 'User';
+                document.getElementById('welcomeName').textContent = user.name ? user.name.split(' ')[0] : 'User';
                 document.getElementById('userRole').textContent = `${user.role.charAt(0).toUpperCase() + user.role.slice(1)} • ${user.department} • Year ${user.year}`;
+
+                // Load profile completion
+                await loadProfileCompletion();
 
                 // Hide loading, show content
                 document.getElementById('loadingState').style.display = 'none';
@@ -335,6 +442,54 @@
                 // Redirect to login if token is invalid
                 localStorage.removeItem('token');
                 window.location.href = 'login.html';
+            }
+        }
+
+        async function loadProfileCompletion() {
+            try {
+                const response = await fetch('/api/users/profile-completion', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to load profile completion');
+                }
+
+                const data = await response.json();
+                const { completionPercentage, missingFields } = data;
+
+                // If profile is complete, hide the banner
+                if (completionPercentage === 100) {
+                    document.getElementById('profileCompletionBanner').classList.add('hidden');
+                    return;
+                }
+
+                // Update completion percentage
+                document.getElementById('completionPercent').textContent = completionPercentage + '%';
+                document.getElementById('progressFill').style.width = completionPercentage + '%';
+
+                // Update message based on completion
+                const message = completionPercentage < 50 
+                    ? 'Your profile needs attention! Complete it to unlock all features.'
+                    : completionPercentage < 80
+                    ? 'You\'re almost there! Complete your profile to get better matches.'
+                    : 'Just a few more details to make your profile perfect!';
+                
+                document.getElementById('completionMessage').textContent = message;
+
+                // Display missing fields
+                const missingFieldsContainer = document.getElementById('missingFields');
+                if (missingFields.length > 0) {
+                    missingFieldsContainer.innerHTML = '<strong style="display: block; margin-bottom: 8px;">Missing:</strong>' +
+                        missingFields.map(field => `<span class="missing-field-tag">${field.charAt(0).toUpperCase() + field.slice(1)}</span>`).join('');
+                }
+
+            } catch (error) {
+                console.error('Error loading profile completion:', error);
+                // Hide banner on error
+                document.getElementById('profileCompletionBanner').classList.add('hidden');
             }
         }
 

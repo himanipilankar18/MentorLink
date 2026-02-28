@@ -18,7 +18,7 @@ exports.securityHeaders = helmet({
 // Rate limiting for authentication routes
 exports.authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 5, // Limit each IP to 5 requests per windowMs
+  max: 1000, // High limit for development - set to 5-10 for production
   message: {
     success: false,
     message: 'Too many authentication attempts, please try again later.'
@@ -30,7 +30,7 @@ exports.authLimiter = rateLimit({
 // Rate limiting for API routes
 exports.apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // Limit each IP to 100 requests per windowMs
+  max: 10000, // High limit for development - set to 100 for production
   message: {
     success: false,
     message: 'Too many requests, please try again later.'

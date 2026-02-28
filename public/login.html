@@ -254,6 +254,23 @@
         }
 
         .footer-text a:hover { text-decoration: underline; }
+
+        .forgot-password {
+            text-align: right;
+            margin-top: -12px;
+            margin-bottom: 16px;
+        }
+
+        .forgot-password a {
+            color: var(--accent-purple);
+            text-decoration: none;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        .forgot-password a:hover {
+            text-decoration: underline;
+        }
     </style>
 </head>
 <body>
@@ -287,6 +304,9 @@
                     <div class="form-group">
                         <label>Password</label>
                         <input type="password" name="password" placeholder="••••••••" required>
+                    </div>
+                    <div class="forgot-password">
+                        <a href="forgot-password.html">Forgot password?</a>
                     </div>
                     <button type="submit" class="btn-primary" id="login-btn">Log in</button>
                 </form>
