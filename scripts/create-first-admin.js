@@ -17,14 +17,15 @@ const mongoose = require('mongoose');
 const User = require('../models/User');
 const connectDB = require('../config/database');
 
-// Default admin credentials (MUST be changed after first login)
+// Admin credentials from environment variables (or defaults for development)
+// Configure these in .env before running this script
 const FIRST_ADMIN = {
-  name: 'System Administrator',
-  email: 'admin@spit.ac.in',
-  password: 'Admin@123',  // ⚠️ CHANGE THIS AFTER FIRST LOGIN
-  department: 'CSE',
+  name: process.env.BOOTSTRAP_ADMIN_NAME || 'System Administrator',
+  email: process.env.BOOTSTRAP_ADMIN_EMAIL || 'admin@spit.ac.in',
+  password: process.env.BOOTSTRAP_ADMIN_PASSWORD || 'Admin@123',
+  department: process.env.BOOTSTRAP_ADMIN_DEPARTMENT || 'CSE',
   role: 'admin',
-  isVerified: true,
+  isVerified: true,  // Admin bypasses email verification
   profileComplete: true
 };
 
@@ -33,6 +34,10 @@ async function createFirstAdmin() {
     console.log('🔌 Connecting to database...');
     await connectDB();
     console.log('✅ Connected to MongoDB\n');
+
+    // Show configuration source
+    const usingEnv = process.env.BOOTSTRAP_ADMIN_EMAIL ? '✅ Using .env configuration' : '⚠️  Using default configuration';
+    console.log(`${usingEnv}\n`);
 
     // Check if any admin already exists
     const existingAdmin = await User.findOne({ role: 'admin' });
