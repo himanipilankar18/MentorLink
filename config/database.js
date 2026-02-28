@@ -2,10 +2,10 @@ const mongoose = require('mongoose');
 
 /**
  * Connect to MongoDB (Atlas or local).
- * Atlas: uses TLS; optional ATLAS_TLS_INSECURE=1 in .env for testing cert issues.
+ * Auto-retries with alternate shard node if "not primary" or connection fails.
  */
 const connectDB = async () => {
-  const uri = process.env.MONGODB_URI;
+  let uri = process.env.MONGODB_URI;
 
   if (!uri) {
     console.error('MONGODB_URI is not set in .env');
@@ -13,24 +13,46 @@ const connectDB = async () => {
   }
 
   const options = {
-    serverSelectionTimeoutMS: 15000,
+    serverSelectionTimeoutMS: 30000,
+    connectTimeoutMS: 30000,
     maxPoolSize: 10,
-    // Atlas uses TLS; explicit options can help on some Windows/Node setups
     tls: true,
   };
 
-  // Optional: skip TLS cert verification (testing only) if TCP works but connection still fails
   if (process.env.ATLAS_TLS_INSECURE === '1') {
-    console.warn('⚠️ ATLAS_TLS_INSECURE=1 is set — TLS certificate verification disabled (dev only).');
     options.tlsAllowInvalidCertificates = true;
   }
 
-  try {
-    const conn = await mongoose.connect(uri, options);
-    console.log(`MongoDB Connected: ${conn.connection.host}`);
-    return conn;
-  } catch (error) {
-    console.error('\n========== FULL MongoDB Error (for debugging) ==========');
+  const urisToTry = [uri];
+  if (uri.includes('shard-00-00')) {
+    urisToTry.push(uri.replace('shard-00-00', 'shard-00-01'));
+    urisToTry.push(uri.replace('shard-00-00', 'shard-00-02'));
+  } else if (uri.includes('shard-00-01')) {
+    urisToTry.push(uri.replace('shard-00-01', 'shard-00-00'));
+    urisToTry.push(uri.replace('shard-00-01', 'shard-00-02'));
+  } else if (uri.includes('shard-00-02')) {
+    urisToTry.push(uri.replace('shard-00-02', 'shard-00-00'));
+    urisToTry.push(uri.replace('shard-00-02', 'shard-00-01'));
+  }
+
+  let lastError;
+  for (const tryUri of urisToTry) {
+    try {
+      const conn = await mongoose.connect(tryUri, options);
+      console.log(`MongoDB Connected: ${conn.connection.host}`);
+      return conn;
+    } catch (error) {
+      lastError = error;
+      if (error.message && (error.message.includes('not primary') || error.message.includes('MongoNetworkError'))) {
+        console.warn(`Retrying with alternate node...`);
+        continue;
+      }
+      break;
+    }
+  }
+
+  const error = lastError || new Error('Unknown connection failure');
+  console.error('\n========== FULL MongoDB Error (for debugging) ==========');
     console.error('Message:', error.message);
     console.error('Name:', error.name);
     if (error.reason) console.error('Reason:', error.reason);
@@ -65,15 +87,17 @@ const connectDB = async () => {
       console.error('   4. In Atlas: Database Access → user has "Atlas admin" or "Read and write to any database".');
       console.error('');
       console.error('   See TLS_AUTH_FIX.md for details.');
+    } else if (error.message && error.message.toLowerCase().includes('whitelist')) {
+      console.error('🔴 IP NOT WHITELISTED: Add your IP in MongoDB Atlas → Network Access → Add Current IP Address');
+      console.error('   https://cloud.mongodb.com → Project → Network Access → IP Access List');
     } else {
       console.error('💡 Common causes:');
-      console.error('   - Wrong username or password in MONGODB_URI');
-      console.error('   - Special characters in password not URL-encoded (@→%40, #→%23)');
-      console.error('   - Missing database name in URI: /peerly before ?');
-      console.error('   - Add authSource=admin if your Atlas user is in the admin database');
+      console.error('   - IP not whitelisted in Atlas → Network Access');
+      console.error('   - Wrong username/password; special chars URL-encoded (@→%40, #→%23)');
+      console.error('   - Database name /mentorlink before ? in URI');
+      console.error('   - Add authSource=admin if user is in admin database');
     }
-    process.exit(1);
-  }
+  process.exit(1);
 };
 
 module.exports = connectDB;

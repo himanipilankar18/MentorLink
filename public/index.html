@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Peerly - API Testing Dashboard</title>
+    <title>MentorLink - API Testing Dashboard</title>
     <style>
         * {
             margin: 0;
@@ -196,12 +196,42 @@
             font-family: monospace;
             margin-bottom: 15px;
         }
+
+        /* Toast popup */
+        .toast-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            pointer-events: none;
+        }
+        .toast {
+            padding: 16px 24px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 14px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            animation: toastIn 0.3s ease;
+            pointer-events: auto;
+        }
+        .toast-success { background: #28a745; color: white; }
+        .toast-error { background: #dc3545; color: white; }
+        .toast-warning { background: #ffc107; color: #333; }
+        @keyframes toastIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        button:disabled { opacity: 0.7; cursor: not-allowed; }
     </style>
 </head>
 <body>
+    <div id="toastContainer" class="toast-container"></div>
     <div class="container">
         <div class="header">
-            <h1>🚀 Peerly API Testing Dashboard</h1>
+            <h1>🚀 MentorLink API Testing Dashboard</h1>
             <p>Test your backend API endpoints easily</p>
             <div style="margin-top: 15px;">
                 <span class="status-indicator" id="statusIndicator"></span>
@@ -231,11 +261,11 @@
                             <input type="text" id="regName" placeholder="John Doe">
                         </div>
                         <div class="form-group">
-                            <label>Email:</label>
+                            <label>Email: <small>(must end with @spit.ac.in)</small></label>
                             <input type="email" id="regEmail" placeholder="john@spit.ac.in">
                         </div>
                         <div class="form-group">
-                            <label>Password:</label>
+                            <label>Password: <small>(min 6 chars, include A-Z, a-z, 0-9)</small></label>
                             <input type="password" id="regPassword" placeholder="SecurePass123">
                         </div>
                         <div class="form-group">
@@ -268,7 +298,7 @@
                                 <option value="faculty">Faculty</option>
                             </select>
                         </div>
-                        <button onclick="register()">Register</button>
+                        <button type="button" id="registerBtn" onclick="register()">Register</button>
                     </div>
                     <div>
                         <h3 style="margin-bottom: 15px; color: #667eea;">Login</h3>
@@ -280,7 +310,7 @@
                             <label>Password:</label>
                             <input type="password" id="loginPassword" placeholder="SecurePass123">
                         </div>
-                        <button onclick="login()">Login</button>
+                        <button type="button" id="loginBtn" onclick="login()">Login</button>
                         <button class="btn-secondary" onclick="getCurrentUser()">Get Current User</button>
                     </div>
                 </div>
@@ -381,20 +411,37 @@
     </div>
 
     <script>
-        const API_URL = document.getElementById('apiUrl');
         let authToken = localStorage.getItem('mentorlink_token') || '';
 
-        // Check connection on load
-        window.onload = () => {
-            checkConnection();
-            if (authToken) {
-                document.getElementById('tokenDisplay').style.display = 'block';
-                document.getElementById('tokenValue').textContent = authToken.substring(0, 50) + '...';
-            }
+        window.onload = function() {
+            try {
+                checkConnection();
+                if (authToken) {
+                    var d = document.getElementById('tokenDisplay');
+                    if (d) { d.style.display = 'block'; }
+                    var v = document.getElementById('tokenValue');
+                    if (v) { v.textContent = authToken.substring(0, 50) + '...'; }
+                }
+            } catch (e) { alert('Load error: ' + e.message); }
         };
 
         function getApiUrl() {
-            return API_URL.value || 'http://localhost:5000/api';
+            var el = document.getElementById('apiUrl');
+            var base = (el && el.value ? el.value : 'http://localhost:5000/api').trim();
+            if (base.endsWith('/')) base = base.slice(0, -1);
+            return base || 'http://localhost:5000/api';
+        }
+
+        function showToast(message, type) {
+            try {
+                var container = document.getElementById('toastContainer');
+                if (!container) return;
+                var toast = document.createElement('div');
+                toast.className = 'toast toast-' + (type === 'error' ? 'error' : type === 'warning' ? 'warning' : 'success');
+                toast.textContent = message;
+                container.appendChild(toast);
+                setTimeout(function() { toast.remove(); }, 4000);
+            } catch (e) { alert(message); }
         }
 
         function getHeaders() {
@@ -408,22 +455,21 @@
         }
 
         async function checkConnection() {
-            const statusIndicator = document.getElementById('statusIndicator');
-            const statusText = document.getElementById('statusText');
-            
+            var si = document.getElementById('statusIndicator');
+            var st = document.getElementById('statusText');
             try {
-                const response = await fetch(`${getApiUrl()}/health`);
-                const data = await response.json();
-                
-                if (data.success) {
-                    statusIndicator.className = 'status-indicator status-online';
-                    statusText.textContent = 'Connected to API';
+                var url = getApiUrl() + '/health';
+                var r = await fetch(url);
+                var data = await r.json();
+                if (data && data.success) {
+                    if (si) si.className = 'status-indicator status-online';
+                    if (st) st.textContent = 'Connected to API';
                 } else {
-                    throw new Error('API not responding correctly');
+                    throw new Error('API not OK');
                 }
-            } catch (error) {
-                statusIndicator.className = 'status-indicator status-offline';
-                statusText.textContent = 'Connection failed - ' + error.message;
+            } catch (e) {
+                if (si) si.className = 'status-indicator status-offline';
+                if (st) st.textContent = 'Connection failed - ' + e.message;
             }
         }
 
@@ -435,64 +481,107 @@
         }
 
         async function register() {
-            const data = {
-                name: document.getElementById('regName').value,
-                email: document.getElementById('regEmail').value,
-                password: document.getElementById('regPassword').value,
-                year: parseInt(document.getElementById('regYear').value),
-                department: document.getElementById('regDepartment').value,
-                role: document.getElementById('regRole').value
-            };
-
+            var btn = document.getElementById('registerBtn');
+            if (btn) btn.disabled = true;
             try {
-                const response = await fetch(`${getApiUrl()}/auth/register`, {
-                    method: 'POST',
-                    headers: getHeaders(),
-                    body: JSON.stringify(data)
-                });
+                var name = (document.getElementById('regName') || {}).value || '';
+                var email = (document.getElementById('regEmail') || {}).value || '';
+                var password = (document.getElementById('regPassword') || {}).value || '';
+                var year = parseInt((document.getElementById('regYear') || {}).value || '2', 10);
+                var department = (document.getElementById('regDepartment') || {}).value || 'CSE';
+                var role = (document.getElementById('regRole') || {}).value || 'junior';
+                name = String(name).trim();
+                email = String(email).trim();
 
-                const result = await response.json();
-                
+                if (!name || !email || !password) {
+                    showToast('Please fill Name, Email, and Password', 'error');
+                    return;
+                }
+                if (password.length < 6) {
+                    showToast('Password must be at least 6 characters', 'error');
+                    return;
+                }
+                if (!/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(password)) {
+                    showToast('Password must contain uppercase, lowercase, and number', 'error');
+                    return;
+                }
+                if (email.indexOf('@spit.ac.in') === -1) {
+                    showToast('Email must be @spit.ac.in', 'error');
+                    return;
+                }
+
+                var url = getApiUrl() + '/auth/register';
+                var response = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name: name, email: email, password: password, year: year, department: department, role: role })
+                });
+                var text = await response.text();
+                var result;
+                try { result = JSON.parse(text); } catch (e) { showToast('Server returned invalid response', 'error'); return; }
+
                 if (result.success && result.token) {
                     authToken = result.token;
                     localStorage.setItem('mentorlink_token', authToken);
-                    document.getElementById('tokenDisplay').style.display = 'block';
-                    document.getElementById('tokenValue').textContent = authToken.substring(0, 50) + '...';
+                    var td = document.getElementById('tokenDisplay');
+                    var tv = document.getElementById('tokenValue');
+                    if (td) td.style.display = 'block';
+                    if (tv) tv.textContent = authToken.substring(0, 50) + '...';
                     showResponse('authResponse', result);
+                    showToast('Registered successfully! User verified in database.', 'success');
                 } else {
+                    var errMsg = (result.errors && result.errors[0] && result.errors[0].msg) ? result.errors[0].msg : (result.message || 'Registration failed');
+                    showToast(errMsg, 'error');
                     showResponse('authResponse', result, true);
                 }
             } catch (error) {
-                showResponse('authResponse', { error: error.message }, true);
+                showToast('Error: ' + error.message, 'error');
+                var ar = document.getElementById('authResponse');
+                if (ar) { ar.style.display = 'block'; ar.className = 'response error'; ar.innerHTML = '<pre>' + error.message + '</pre>'; }
+            } finally {
+                if (btn) btn.disabled = false;
             }
         }
 
         async function login() {
-            const data = {
-                email: document.getElementById('loginEmail').value,
-                password: document.getElementById('loginPassword').value
-            };
-
+            var btn = document.getElementById('loginBtn');
+            if (btn) btn.disabled = true;
             try {
-                const response = await fetch(`${getApiUrl()}/auth/login`, {
+                var email = (document.getElementById('loginEmail') || {}).value || '';
+                var password = (document.getElementById('loginPassword') || {}).value || '';
+                email = String(email).trim();
+                if (!email || !password) {
+                    showToast('Please fill Email and Password', 'error');
+                    return;
+                }
+                var url = getApiUrl() + '/auth/login';
+                var response = await fetch(url, {
                     method: 'POST',
-                    headers: getHeaders(),
-                    body: JSON.stringify(data)
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email: email, password: password })
                 });
-
-                const result = await response.json();
-                
+                var text = await response.text();
+                var result;
+                try { result = JSON.parse(text); } catch (e) { showToast('Server returned invalid response', 'error'); return; }
                 if (result.success && result.token) {
                     authToken = result.token;
                     localStorage.setItem('mentorlink_token', authToken);
-                    document.getElementById('tokenDisplay').style.display = 'block';
-                    document.getElementById('tokenValue').textContent = authToken.substring(0, 50) + '...';
+                    var td = document.getElementById('tokenDisplay');
+                    var tv = document.getElementById('tokenValue');
+                    if (td) td.style.display = 'block';
+                    if (tv) tv.textContent = authToken.substring(0, 50) + '...';
                     showResponse('authResponse', result);
+                    showToast('Login successful!', 'success');
                 } else {
+                    showToast(result.message || 'Login failed', 'error');
                     showResponse('authResponse', result, true);
                 }
             } catch (error) {
-                showResponse('authResponse', { error: error.message }, true);
+                showToast('Error: ' + error.message, 'error');
+                var ar = document.getElementById('authResponse');
+                if (ar) { ar.style.display = 'block'; ar.className = 'response error'; ar.innerHTML = '<pre>' + error.message + '</pre>'; }
+            } finally {
+                if (btn) btn.disabled = false;
             }
         }
 
@@ -509,9 +598,13 @@
         }
 
         async function requestMentorship() {
-            const mentorId = document.getElementById('mentorId').value;
+            const mentorId = document.getElementById('mentorId').value.trim();
             if (!mentorId) {
-                alert('Please enter Mentor ID');
+                showToast('Please enter Mentor ID', 'error');
+                return;
+            }
+            if (!authToken) {
+                showToast('Please login first', 'error');
                 return;
             }
 
@@ -522,8 +615,11 @@
                     body: JSON.stringify({ mentorId })
                 });
                 const result = await response.json();
+                if (result.success) showToast('Mentorship request sent!', 'success');
+                else showToast(result.message || 'Request failed', 'error');
                 showResponse('mentorshipResponse', result, !result.success);
             } catch (error) {
+                showToast('Network error: ' + error.message, 'error');
                 showResponse('mentorshipResponse', { error: error.message }, true);
             }
         }
@@ -553,15 +649,24 @@
         }
 
         async function logInteraction() {
-            const data = {
-                mentorId: document.getElementById('interactionMentorId').value,
-                mentorshipId: document.getElementById('interactionMentorshipId').value,
-                topic: document.getElementById('interactionTopic').value,
-                subjectTag: document.getElementById('interactionSubjectTag').value,
-                interactionType: document.getElementById('interactionType').value,
-                duration: parseInt(document.getElementById('interactionDuration').value) || null,
-                satisfactionRating: parseInt(document.getElementById('interactionRating').value) || null
-            };
+            const mentorId = document.getElementById('interactionMentorId').value.trim();
+            const mentorshipId = document.getElementById('interactionMentorshipId').value.trim();
+            const topic = document.getElementById('interactionTopic').value.trim();
+            const subjectTag = document.getElementById('interactionSubjectTag').value;
+            const interactionType = document.getElementById('interactionType').value;
+            const duration = parseInt(document.getElementById('interactionDuration').value) || null;
+            const satisfactionRating = parseInt(document.getElementById('interactionRating').value) || null;
+
+            if (!mentorId || !mentorshipId || !topic) {
+                showToast('Please fill Mentor ID, Mentorship ID, and Topic', 'error');
+                return;
+            }
+            if (!authToken) {
+                showToast('Please login first', 'error');
+                return;
+            }
+
+            const data = { mentorId, mentorshipId, topic, subjectTag, interactionType, duration, satisfactionRating };
 
             try {
                 const response = await fetch(`${getApiUrl()}/interactions`, {
@@ -570,8 +675,11 @@
                     body: JSON.stringify(data)
                 });
                 const result = await response.json();
+                if (result.success) showToast('Interaction logged! Saved to database.', 'success');
+                else showToast(result.message || 'Failed', 'error');
                 showResponse('interactionResponse', result, !result.success);
             } catch (error) {
+                showToast('Network error: ' + error.message, 'error');
                 showResponse('interactionResponse', { error: error.message }, true);
             }
         }
@@ -601,21 +709,30 @@
         }
 
         async function createDiscussion() {
-            const data = {
-                title: document.getElementById('discussionTitle').value,
-                content: document.getElementById('discussionContent').value,
-                subjectTag: document.getElementById('discussionSubjectTag').value
-            };
+            const title = document.getElementById('discussionTitle').value.trim();
+            const content = document.getElementById('discussionContent').value.trim();
+            const subjectTag = document.getElementById('discussionSubjectTag').value;
+            if (!title || !content) {
+                showToast('Please fill Title and Content', 'error');
+                return;
+            }
+            if (!authToken) {
+                showToast('Please login first', 'error');
+                return;
+            }
 
             try {
                 const response = await fetch(`${getApiUrl()}/discussions`, {
                     method: 'POST',
                     headers: getHeaders(),
-                    body: JSON.stringify(data)
+                    body: JSON.stringify({ title, content, subjectTag })
                 });
                 const result = await response.json();
+                if (result.success) showToast('Discussion created! Saved to database.', 'success');
+                else showToast(result.message || 'Failed', 'error');
                 showResponse('discussionResponse', result, !result.success);
             } catch (error) {
+                showToast('Network error: ' + error.message, 'error');
                 showResponse('discussionResponse', { error: error.message }, true);
             }
         }

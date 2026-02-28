@@ -14,20 +14,7 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Serve static files (frontend)
-app.use(express.static('public'));
-
-// Rate limiting
-app.use('/api/', apiLimiter);
-
-// Routes
-app.use('/api/auth', require('./routes/auth'));
-app.use('/api/users', require('./routes/users'));
-app.use('/api/mentorship', require('./routes/mentorship'));
-app.use('/api/interactions', require('./routes/interactions'));
-app.use('/api/discussions', require('./routes/discussions'));
-
-// Health check endpoint
+// Health check - BEFORE rate limiting so Check Connection always works
 app.get('/api/health', (req, res) => {
   res.json({
     success: true,
@@ -36,7 +23,20 @@ app.get('/api/health', (req, res) => {
   });
 });
 
-// Root endpoint
+// Rate limiting for API routes
+app.use('/api/', apiLimiter);
+
+// API Routes
+app.use('/api/auth', require('./routes/auth'));
+app.use('/api/users', require('./routes/users'));
+app.use('/api/mentorship', require('./routes/mentorship'));
+app.use('/api/interactions', require('./routes/interactions'));
+app.use('/api/discussions', require('./routes/discussions'));
+
+// Serve static files (frontend dashboard) - after API routes
+app.use(express.static('public'));
+
+// Root API info (for clients hitting / directly)
 app.get('/', (req, res) => {
   res.json({
     success: true,
