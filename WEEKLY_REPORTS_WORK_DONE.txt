@@ -1,0 +1,130 @@
+================================================================================
+MENTORLINK - WEEKLY REPORTS - WORK DONE (Based on Actual Implementation)
+================================================================================
+
+🔹 WEEK 1 PROGRESS REPORT (Planning & Requirement Analysis Phase)
+Review Date: ___________
+
+Details of Work Done and Review of Meeting:
+--------------------------------------------------------------------------------
+1. Conducted detailed problem analysis to understand limitations of existing 
+   informal mentoring platforms such as lack of structure, verification, and 
+   analytics.
+
+2. Finalized the project scope and objectives of MentorLink as an institute-
+   exclusive mentoring and academic analytics platform.
+
+3. Identified and documented user types: Junior, Senior, Faculty, and Admin with 
+   role-based permissions and access levels.
+
+4. Prepared a structured list of functionalities per user type including 
+   mentorship requests, discussions, moderation, and analytics access.
+
+5. Documented AI and data analytics components: structured interaction logging, 
+   mentor recommendation, clustering, and trend analysis (as per README and 
+   API_DOCUMENTATION.md).
+
+6. Designed a high-level system architecture covering frontend, backend, 
+   database, and analytics layers (documented in README.md).
+
+7. Created initial project timeline with week-wise milestones for development, 
+   analytics, testing, and deployment.
+
+8. Documented API endpoints and data models in API_DOCUMENTATION.md and README.md.
+
+9. Conducted a review meeting with the project guide and incorporated suggested 
+   refinements in objectives and scope.
+
+Remarks by Supervisor: ___________
+
+--------------------------------------------------------------------------------
+
+🔹 WEEK 2 PROGRESS REPORT (Backend Setup & Database Design Phase)
+Review Date: ___________
+
+Details of Work Done and Review of Meeting:
+--------------------------------------------------------------------------------
+1. Set up the backend development environment using Node.js and Express.js with 
+   CORS, security headers (Helmet), and rate limiting.
+
+2. Designed and implemented database schemas for core entities:
+   - User model: name, email, password, year, department, role, skills, interests, CGPA
+   - Mentorship model: mentorId, menteeId, status (Pending/Accepted/Rejected/Terminated)
+   - Discussion model: authorId, title, content, subjectTag, votes, isResolved
+   - Interaction model: mentorId, menteeId, topic, subjectTag, interactionType, duration
+
+3. Finalized usage of MongoDB as the operational database with Mongoose ODM.
+
+4. Planned and implemented data storage strategy for structured interaction 
+   logging required for analytics and data mining.
+
+5. Defined relationships between entities (ObjectId references) to ensure 
+   scalability and future analytics integration.
+
+6. Configured database connection (config/database.js) with MongoDB Atlas/local 
+   support and TLS options.
+
+7. Implemented route structure: /api/auth, /api/users, /api/mentorship, 
+   /api/interactions, /api/discussions.
+
+8. Discussed data consistency, indexing, and access control strategies.
+
+9. Reviewed backend architecture and database design with the project guide and 
+   obtained approval for implementation approach.
+
+Remarks by Supervisor: ___________
+
+--------------------------------------------------------------------------------
+
+🔹 WEEK 3 PROGRESS REPORT (Authentication & Access Control Phase)
+Review Date: ___________
+
+Details of Work Done and Review of Meeting:
+--------------------------------------------------------------------------------
+1. Implemented user authentication using JWT (jsonwebtoken) with configurable 
+   secret and expiration (JWT_EXPIRE=7d).
+
+2. Integrated institute email-based registration with domain validation 
+   (ALLOWED_DOMAINS) to ensure verified and institute-exclusive access.
+
+3. Implemented secure password handling using bcrypt hashing (User model 
+   pre-save hook and comparePassword method).
+
+4. Designed and implemented role-based access control (RBAC) middleware:
+   - checkRole(...roles) for granular permission control
+   - isMentor / isMentee for mentorship-specific routes
+   - Applied to users, mentorship, interactions, and discussions routes
+
+5. Implemented login flow (POST /api/auth/login) with email/password validation 
+   and token generation.
+
+6. Implemented register flow (POST /api/auth/register) with role, year, and 
+   email domain validation.
+
+7. Implemented protected routes using verifyToken middleware; unauthorized 
+   requests return 401.
+
+8. Verified authentication flows through API testing dashboard at 
+   http://localhost:5000 (Register, Login, and protected endpoint testing).
+
+9. Discussed security considerations: token expiration, protected routes, 
+   unauthorized access prevention, and input validation (express-validator).
+
+10. Conducted a progress review meeting and received feedback on security 
+    and session handling.
+
+Remarks by Supervisor: ___________
+
+--------------------------------------------------------------------------------
+
+SUMMARY - IMPLEMENTATION STATUS:
+--------------------------------------------------------------------------------
+Week 1: Planning docs, API specs, user types, analytics plans - COMPLETED
+Week 2: Node/Express backend, MongoDB models, routes - COMPLETED
+Week 3: JWT auth, bcrypt, institute email validation, RBAC, login/register, 
+        protected routes - COMPLETED
+
+Note: Logout is handled client-side (discard token) for stateless JWT; no 
+dedicated backend endpoint required.
+
+================================================================================

@@ -1,14 +1,16 @@
 const rateLimit = require('express-rate-limit');
 const helmet = require('helmet');
 
-// Security headers
+// Security headers (allow inline scripts for dashboard)
 exports.securityHeaders = helmet({
   contentSecurityPolicy: {
     directives: {
       defaultSrc: ["'self'"],
       styleSrc: ["'self'", "'unsafe-inline'"],
-      scriptSrc: ["'self'"],
+      scriptSrc: ["'self'", "'unsafe-inline'"],
+      scriptSrcAttr: ["'unsafe-inline'"],
       imgSrc: ["'self'", "data:", "https:"],
+      connectSrc: ["'self'"],
     },
   },
 });

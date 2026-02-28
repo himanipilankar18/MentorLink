@@ -4,70 +4,80 @@ A Data-Driven Interaction and Academic Analytics Platform Backend
 
 ## 🎯 Overview
 
-MentorLink is a comprehensive mentorship platform designed to facilitate structured mentor-mentee relationships while generating clean, analytics-ready data for academic insights and data mining.
+MentorLink is a web-based, institute-exclusive mentoring and academic analytics platform.
+It enables structured interaction between juniors and seniors while capturing every
+mentoring and discussion event as clean, analytics-ready data.
+
+## 🎯 Project Objectives
+
+- Provide a **verified, institute-only platform** for academic mentoring (no outside users).
+- Enable **structured interaction** between juniors and seniors for guidance and collaboration.
+- Capture mentoring and discussion activity as **structured transactional data**.
+- Apply **data mining and analytics** (clustering, recommendations, association rules, trends).
+- Support **faculty/admin dashboards** for data-driven academic decision‑making.
 
 ## ⚠️ Critical Backend Focus
 
 **This backend is designed with analytics and data mining in mind.**
-- Clean, structured data schemas
-- Proper relationships using MongoDB ObjectId references
-- Comprehensive interaction logging
-- Role-based access control
-- Secure transactional data handling
+- Clean, structured data schemas (users, mentorships, interactions, discussions).
+- Proper relationships using MongoDB ObjectId references.
+- Comprehensive interaction logging for every mentorship event.
+- Role-based access control (junior, senior, faculty, admin).
+- Secure transactional data handling and API hardening.
 
-**Frontend UI can be fixed anytime. Backend architecture cannot be easily changed later.**
+**Frontend UI can be replaced later. Backend data quality is the priority.**
 
-## 🚀 Features
+## 🚀 Features (Implemented in Backend)
 
-### 1. Institute Email-Based Registration & Authentication
-- Email domain validation (configurable via `ALLOWED_DOMAINS`)
-- Secure password hashing with bcrypt
-- JWT token-based authentication
-- Token expiration handling
-- Protected routes with middleware
+### A. Core Platform & Security
+- Institute email-based registration with domain validation (`ALLOWED_DOMAINS`).
+- Secure password hashing with **bcrypt**.
+- **JWT** authentication with token expiry and protected routes.
+- Helmet-based security headers, rate limiting, and input validation/sanitization.
 
-### 2. Structured Student Profiles
-- Standardized academic identity
-- Skills and interests arrays
-- CGPA tracking
-- Department and year validation
-- Role-based profiles (junior/senior/faculty/admin)
+### B. Student & Account Features
+- Account management: register, login, and get current user (`/api/auth/me`).
+- Structured academic profile:
+  - Year, department, role (junior/senior/faculty/admin).
+  - Skills, interests, optional CGPA.
+- APIs to fetch mentors and juniors with filters.
 
-### 3. Mentorship Request & Acceptance System
-- Junior can request mentorship from seniors/faculty
-- Mentor can accept/reject requests
-- Prevents duplicate requests
-- Status tracking (Pending/Accepted/Rejected/Terminated)
-- Transactional dataset for future ETL
+### C. Mentorship Module
+- Juniors can request mentorship from seniors/faculty.
+- Mentors can accept/reject/terminate requests.
+- Duplicate requests prevented via compound index.
+- Status tracking: **Pending / Accepted / Rejected / Terminated**.
+- Endpoints for "my requests" and "active mentorships" for dashboards.
 
-### 4. Structured Interaction Logging (MOST CRITICAL)
-- Every interaction stored with structured metadata:
-  - mentorId, menteeId, mentorshipId
-  - topic, subjectTag, interactionType
-  - timestamp, duration, satisfactionRating
-- Designed for clustering, trend analysis, and recommendation engines
-- Proper indexes for analytics queries
+### D. Structured Interaction Logging (MOST CRITICAL)
+- Every interaction stored with:
+  - `mentorId`, `menteeId`, `mentorshipId`
+  - `topic`, `subjectTag`, `interactionType`
+  - `timestamp`, `duration`, `satisfactionRating`, `notes`
+- Indexes optimized for analytics queries (by subject, interactionType, mentor/mentee).
+- Designed to feed clustering, recommendation, trend analysis, and association rule mining.
 
-### 5. Discussion & Doubt Forum
-- Subject-tagged discussions
-- Upvote/downvote system
-- Comments and replies
-- Resolved/unresolved tracking
-- Data for association rule mining
+### E. Discussion & Doubt Forum
+- Subject-tagged discussions with title, content, and subjectTag.
+- Nested comments with voting.
+- Upvote/downvote on discussions.
+- Resolved/unresolved tracking with `isResolved` and `resolvedAt`.
+- Statistics endpoint for subject-wise engagement.
 
-### 6. Role-Based Access Control
-- Middleware-enforced permissions
-- Juniors can request mentorships
-- Seniors/faculty can accept requests
-- Faculty can view analytics
-- Admin controls (extensible)
+### F. Role-Based Access Control
+- JWT verification middleware plus role checks:
+  - Juniors can request mentorships.
+  - Seniors/faculty can accept/reject mentorships.
+  - Faculty/admin endpoints can be restricted via `checkRole`.
+- Designed to align with **Student / Admin / Faculty** roles from the project plan.
 
-### 7. Secure Transactional Data Handling
-- Input sanitization
-- SQL injection prevention
-- Rate limiting
-- Security headers
-- Proper error handling
+### G. Analytics-Ready Data & Hardening
+- All schemas include timestamps (`createdAt`, `updatedAt`) for time-series analysis.
+- Interaction and discussion data structured for future:
+  - ETL to a warehouse (PostgreSQL/MySQL).
+  - Clustering & recommendation models.
+  - Trend analysis and academic reporting dashboards.
+- Input sanitization, rate limiting, and centralized error handling.
 
 ## 📋 Prerequisites
 

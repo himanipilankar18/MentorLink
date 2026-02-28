@@ -71,6 +71,20 @@ const userSchema = new mongoose.Schema({
     max: [10, 'CGPA cannot exceed 10'],
     default: null
   },
+  isVerified: {
+    type: Boolean,
+    default: false
+  },
+  emailVerificationToken: {
+    type: String,
+    default: null,
+    select: false
+  },
+  emailVerificationExpires: {
+    type: Date,
+    default: null,
+    select: false
+  },
   isActive: {
     type: Boolean,
     default: true
