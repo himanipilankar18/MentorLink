@@ -24,9 +24,10 @@ const userSchema = new mongoose.Schema({
   },
   year: {
     type: Number,
-    required: [true, 'Year is required'],
+    required: false,
     min: [1, 'Year must be at least 1'],
-    max: [4, 'Year cannot exceed 4']
+    max: [5, 'Year cannot exceed 5'],
+    default: null
   },
   department: {
     type: String,
@@ -65,6 +66,31 @@ const userSchema = new mongoose.Schema({
       message: 'Interests must be non-empty strings'
     }
   },
+  bio: {
+    type: String,
+    trim: true,
+    maxlength: [1000, 'Bio cannot exceed 1000 characters'],
+    default: ''
+  },
+  projects: {
+    type: [{
+      title: {
+        type: String,
+        required: true,
+        trim: true
+      },
+      description: {
+        type: String,
+        required: true,
+        trim: true
+      },
+      technologies: {
+        type: [String],
+        default: []
+      }
+    }],
+    default: []
+  },
   cgpa: {
     type: Number,
     min: [0, 'CGPA cannot be negative'],
@@ -91,6 +117,16 @@ const userSchema = new mongoose.Schema({
     select: false
   },
   otpExpires: {
+    type: Date,
+    default: null,
+    select: false
+  },
+  resetPasswordToken: {
+    type: String,
+    default: null,
+    select: false
+  },
+  resetPasswordExpires: {
     type: Date,
     default: null,
     select: false

@@ -57,7 +57,8 @@ exports.validateRegistration = [
     .withMessage('Password must contain at least one uppercase letter, one lowercase letter, and one number'),
   
   body('year')
-    .isInt({ min: 1, max: 4 }).withMessage('Year must be between 1 and 4'),
+    .optional()
+    .isInt({ min: 1, max: 5 }).withMessage('Year must be between 1 and 5 (or leave blank for alumni)'),
   
   body('department')
     .trim()
