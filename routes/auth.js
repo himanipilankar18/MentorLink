@@ -2,12 +2,16 @@ const express = require('express');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const User = require('../models/User');
-const { verifyToken } = require('../middleware/auth');
+const { verifyToken, checkRole } = require('../middleware/auth');
 const { validateRegistration, validateLogin, handleValidationErrors, validateEmailDomain } = require('../middleware/validation');
 const { authLimiter } = require('../middleware/security');
 const sendEmail = require('../utils/sendEmail');
 
 const router = express.Router();
+
+// Security: Whitelist of roles allowed for public registration
+// Admin role can only be created through protected endpoint
+const ALLOWED_REGISTRATION_ROLES = ['junior', 'senior', 'faculty'];
 
 // Generate JWT Token
 const generateToken = (id) => {
@@ -40,6 +44,10 @@ router.post('/register',
       // No year/role restrictions - anyone with SPIT email can register
       // (including alumni, faculty, etc.)
 
+      // Security: Sanitize role - only allow whitelisted roles for public registration
+      // Admin role can only be created through protected /create-admin endpoint
+      const sanitizedRole = ALLOWED_REGISTRATION_ROLES.includes(role) ? role : 'junior';
+
       // Create user (unverified initially)
       const user = await User.create({
         name,
@@ -47,7 +55,7 @@ router.post('/register',
         password,
         year,
         department,
-        role,
+        role: sanitizedRole,
         skills: skills || [],
         interests: interests || [],
         cgpa: cgpa || null,
@@ -91,6 +99,93 @@ router.post('/register',
       res.status(500).json({
         success: false,
         message: 'Registration failed',
+        error: error.message
+      });
+    }
+  }
+);
+
+// @route   POST /api/auth/create-admin
+// @desc    Create a new admin user (protected endpoint - only existing admins can create new admins)
+// @access  Private (Admin only)
+router.post('/create-admin',
+  verifyToken,
+  checkRole('admin'),
+  async (req, res) => {
+    try {
+      const { name, email, password, department } = req.body;
+
+      // Validate required fields
+      if (!name || !email || !password || !department) {
+        return res.status(400).json({
+          success: false,
+          message: 'Please provide name, email, password, and department'
+        });
+      }
+
+      // Validate email domain (must be SPIT email)
+      if (!email.endsWith('@spit.ac.in')) {
+        return res.status(400).json({
+          success: false,
+          message: 'Admin must have a valid SPIT email address'
+        });
+      }
+
+      // Check if user already exists
+      const existingUser = await User.findOne({ email });
+      if (existingUser) {
+        return res.status(400).json({
+          success: false,
+          message: 'User with this email already exists'
+        });
+      }
+
+      // Create admin user (auto-verified)
+      const admin = await User.create({
+        name,
+        email,
+        password,
+        department,
+        role: 'admin',
+        isVerified: true,
+        profileComplete: true
+      });
+
+      // Send welcome email to new admin
+      const html = `
+        <h2>Welcome to MentorLink Admin Team</h2>
+        <p>Hello ${admin.name},</p>
+        <p>An admin account has been created for you on MentorLink with the following credentials:</p>
+        <ul>
+          <li><strong>Email:</strong> ${admin.email}</li>
+          <li><strong>Role:</strong> Administrator</li>
+        </ul>
+        <p><strong>⚠️ IMPORTANT:</strong> Please log in and change your password immediately for security reasons.</p>
+        <p>As an admin, you have full access to the system and can manage users, mentorships, and create other admin accounts.</p>
+        <p>Login at: <a href="${process.env.APP_URL || 'http://localhost:5000'}/login.html">${process.env.APP_URL || 'http://localhost:5000'}/login.html</a></p>
+      `;
+
+      sendEmail({ 
+        to: admin.email, 
+        subject: 'MentorLink Admin Account Created', 
+        html 
+      }).catch(console.error);
+
+      res.status(201).json({
+        success: true,
+        message: 'Admin user created successfully',
+        admin: {
+          id: admin._id,
+          name: admin.name,
+          email: admin.email,
+          role: admin.role,
+          department: admin.department
+        }
+      });
+    } catch (error) {
+      res.status(500).json({
+        success: false,
+        message: 'Error creating admin user',
         error: error.message
       });
     }

@@ -237,6 +237,8 @@
                     <option value="senior">Student (Senior)</option>
                     <option value="senior">Alumni/Mentor</option>
                     <option value="faculty">Faculty</option>
+                    <!-- SECURITY: Admin role NOT allowed in public registration -->
+                    <!-- Admin users can only be created via protected /api/auth/create-admin endpoint -->
                 </select>
                 <div class="helper-text">Choose your current status</div>
             </div>
