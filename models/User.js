@@ -58,6 +58,12 @@ const userSchema = new mongoose.Schema({
     maxlength: [200, 'Website URL cannot exceed 200 characters'],
     default: ''
   },
+  githubUrl: {
+    type: String,
+    trim: true,
+    maxlength: [200, 'GitHub URL cannot exceed 200 characters'],
+    default: ''
+  },
   password: {
     type: String,
     required: function() {

@@ -5,6 +5,8 @@ const cors = require('cors');
 const connectDB = require('./config/database');
 const { errorHandler, notFound } = require('./middleware/errorHandler');
 const { securityHeaders, apiLimiter } = require('./middleware/security');
+const { verifyToken } = require('./middleware/auth');
+const Group = require('./models/Group');
 
 const app = express();
 
@@ -34,6 +36,36 @@ app.use('/api/interactions', require('./routes/interactions'));
 app.use('/api/discussions', require('./routes/discussions'));
 app.use('/api/posts', require('./routes/posts'));
 app.use('/api/communities', require('./routes/communities'));
+app.use('/api/groups', require('./routes/groups'));
+app.use('/api/chat', require('./routes/chat'));
+
+// Fallback handler for /api/groups/my to ensure the
+// "Your groups" view works reliably.
+app.get('/api/groups/my', verifyToken, apiLimiter, async (req, res) => {
+  try {
+    const groups = await Group.find({
+      isActive: true,
+      $or: [
+        { 'members.userId': req.user._id },
+        { creatorId: req.user._id },
+      ],
+    })
+      .sort({ updatedAt: -1 })
+      .lean();
+
+    res.json({
+      success: true,
+      count: groups.length,
+      groups,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch your groups',
+      error: error.message,
+    });
+  }
+});
 
 // Serve uploaded profile images
 app.use('/uploads', express.static('uploads'));
