@@ -459,6 +459,12 @@
                     <input type="number" id="cgpa" name="cgpa" step="0.01" min="0" max="10" placeholder="e.g., 8.5">
                 </div>
 
+                <div class="form-group">
+                    <label for="githubUrl">GitHub Profile (Optional)</label>
+                    <input type="url" id="githubUrl" name="githubUrl" placeholder="https://github.com/your-username">
+                    <div class="helper-text">Paste your GitHub profile link to show it on your profile tab</div>
+                </div>
+
                 <button type="submit" class="btn" id="submitBtn">Complete Profile</button>
                 
                 <div class="skip-link">
@@ -568,6 +574,11 @@
             const cgpa = document.getElementById('cgpa').value;
             if (cgpa) {
                 formData.append('cgpa', parseFloat(cgpa));
+            }
+
+            const githubUrl = document.getElementById('githubUrl').value.trim();
+            if (githubUrl) {
+                formData.append('githubUrl', githubUrl);
             }
             
             // Add profile picture if uploaded

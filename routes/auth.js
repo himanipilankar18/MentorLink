@@ -379,6 +379,7 @@ router.get('/me', verifyToken, async (req, res) => {
         bio: user.bio,
         projects: user.projects,
         profilePicture: user.profilePicture,
+        githubUrl: user.githubUrl,
         isVerified: user.isVerified,
         createdAt: user.createdAt
       }
@@ -559,6 +560,7 @@ router.post('/complete-profile',
         skills, 
         projects, 
         cgpa, 
+        githubUrl,
         skipProfile 
       } = req.body;
 
@@ -622,6 +624,7 @@ router.post('/complete-profile',
         if (lastName) user.lastName = lastName;
         if (displayName) user.displayName = displayName;
         if (bio) user.bio = bio;
+        if (githubUrl) user.githubUrl = githubUrl;
         
         // Parse JSON arrays from FormData
         if (interests) {
