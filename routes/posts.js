@@ -73,8 +73,12 @@ router.get('/feed', verifyToken, apiLimiter, async (req, res) => {
       .populate('comments.authorId', 'name profilePicture')
       .lean();
 
+    // Filter out posts whose author no longer exists to avoid
+    // showing legacy "Anonymous" entries from deleted users.
+    const visiblePosts = posts.filter(post => post.authorId && post.authorId._id);
+
     // Add like count and format data
-    const formattedPosts = posts.map(post => ({
+    const formattedPosts = visiblePosts.map(post => ({
       ...post,
       likeCount: post.likes.length,
       commentCount: post.comments.length,

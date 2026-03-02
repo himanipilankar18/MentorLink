@@ -12,15 +12,17 @@ router.post('/', verifyToken, apiLimiter, async (req, res) => {
   try {
     const { name, displayName, description, type = 'public', category = 'General', tags = [] } = req.body;
 
-    if (!name || !displayName || !description) {
+    if (!name || !displayName) {
       return res.status(400).json({
         success: false,
-        message: 'Name, display name, and description are required'
+        message: 'Name and display name are required'
       });
     }
 
+    const normalizedName = name.toLowerCase().replace(/\s+/g, '-');
+
     // Check if community name already exists
-    const existing = await Community.findOne({ name: name.toLowerCase().replace(/\s+/g, '-') });
+    const existing = await Community.findOne({ name: normalizedName });
     if (existing) {
       return res.status(400).json({
         success: false,
@@ -29,7 +31,7 @@ router.post('/', verifyToken, apiLimiter, async (req, res) => {
     }
 
     const community = await Community.create({
-      name: name.toLowerCase().replace(/\s+/g, '-'),
+      name: normalizedName,
       displayName,
       description,
       type,

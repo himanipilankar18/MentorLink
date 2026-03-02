@@ -279,10 +279,10 @@
         .modal-card {
             width: 100%;
             max-width: 420px;
-            background: radial-gradient(circle at top, rgba(76, 29, 149, 0.5), #020617);
+            background: #020617;
             border-radius: 18px;
-            border: 1px solid rgba(148, 163, 184, 0.4);
-            box-shadow: 0 22px 60px rgba(15, 23, 42, 0.9);
+            border: 1px solid rgba(167, 139, 250, 0.7);
+            box-shadow: 0 22px 60px rgba(0, 0, 0, 0.9);
             padding: 20px 22px 18px;
         }
 
@@ -868,9 +868,10 @@
             color: white;
             font-weight: 700;
             font-size: 0.9rem;
+            cursor: pointer;
         }
 
-        .suggestion-item .info { flex: 1; }
+        .suggestion-item .info { flex: 1; cursor: pointer; }
         .suggestion-item .info .name { font-weight: 600; font-size: 0.95rem; color: var(--text-primary); }
         .suggestion-item .btn-follow {
             padding: 8px 16px;
@@ -1129,7 +1130,7 @@
                 </div>
 
                 <!-- Create Post from Profile (same as feed composer) -->
-                <div class="share-box" style="margin-bottom:24px;">
+                <div class="share-box" id="profile-share-box" style="margin-bottom:24px;">
                     <div class="avatar-sm" id="profile-share-avatar">U</div>
                     <div style="flex:1;display:flex;flex-direction:column;gap:8px;">
                         <input type="text" id="profile-post-input" placeholder="Create a post..." style="width:100%;">
@@ -1158,7 +1159,7 @@
             <!-- Messages View - Group chat (separate from communities) -->
             <div id="messages-view" style="display:none;">
                 <h2 style="font-size:1.6rem;margin-bottom:16px;color:var(--text-primary);">Group Chat</h2>
-                <div class="post-card" style="display:flex;gap:16px;min-height:360px;">
+                <div class="post-card" style="display:flex;gap:16px;min-height:420px;">
                     <!-- Left column: group list & actions (WhatsApp-style) -->
                     <div style="width:260px;border-right:1px solid rgba(148,163,184,0.35);padding-right:12px;display:flex;flex-direction:column;gap:8px;">
                         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
@@ -1179,11 +1180,11 @@
                         <div id="chat-header" style="font-size:0.9rem;color:var(--text-secondary);">
                             Select a group to start chatting.
                         </div>
-                        <div id="chat-messages-container" style="flex:1;max-height:360px;overflow-y:auto;border-radius:var(--radius-lg);border:1px solid rgba(148,163,184,0.25);padding:12px;background:rgba(15,23,42,0.9);margin-bottom:4px;font-size:0.85rem;color:var(--text-secondary);">
+                        <div id="chat-messages-container" style="flex:1;max-height:460px;overflow-y:auto;border-radius:var(--radius-lg);border:1px solid rgba(148,163,184,0.25);padding:14px;background:rgba(15,23,42,0.9);margin-bottom:6px;font-size:0.9rem;color:var(--text-secondary);">
                             <div style="text-align:center;padding:12px;">Select a group to start chatting.</div>
                         </div>
                         <div style="display:flex;gap:8px;align-items:center;">
-                            <input id="chat-input" type="text" placeholder="Select a group to start chatting." disabled style="flex:1;padding:10px 14px;border-radius:999px;border:1px solid rgba(148,163,184,0.7);background:rgba(15,23,42,0.6);color:var(--text-primary);font-size:0.9rem;cursor:not-allowed;" />
+                            <input id="chat-input" type="text" placeholder="Select a group to start chatting." disabled style="flex:1;padding:14px 18px;border-radius:999px;border:1px solid rgba(148,163,184,0.7);background:rgba(15,23,42,0.6);color:var(--text-primary);font-size:0.95rem;cursor:not-allowed;" />
                             <button id="chat-send-btn" class="btn-send" disabled style="padding:10px 18px;opacity:0.6;cursor:not-allowed;">Send</button>
                         </div>
                     </div>
@@ -1232,6 +1233,13 @@
         </main>
 
         <aside class="right-sidebar">
+            <div class="section-title">People</div>
+            <div style="margin-bottom:12px;">
+                <input id="user-search-input" type="text" placeholder="Search by name..." 
+                    style="width:100%;padding:8px 10px;border-radius:999px;border:1px solid var(--border-subtle);background:rgba(15,23,42,0.9);color:var(--text-primary);font-size:0.85rem;" />
+            </div>
+            <div id="user-search-results" class="suggestion-list" style="margin-bottom:20px;"></div>
+
             <div class="section-title">Suggestions</div>
             <div class="suggestion-list" id="suggestions-container">
                 <div class="loading" style="text-align:center;padding:20px;color:var(--text-secondary);font-size:0.85rem;">
@@ -1264,6 +1272,69 @@
             <div class="modal-actions">
                 <button type="button" class="btn-ghost" data-close-modal="join-group-modal">Cancel</button>
                 <button type="button" id="join-group-submit" class="btn-send" style="padding:8px 18px;font-size:0.85rem;">Join</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Dialog: Create Community -->
+    <div id="create-community-modal" class="modal-overlay modal-hidden">
+        <div class="modal-card">
+            <div class="modal-title">Create community</div>
+            <div class="modal-subtitle">Choose a unique handle (no spaces, lowercase) and a display name. Everyone will be able to discover this community.</div>
+            <input id="community-name-input" class="modal-input" type="text" placeholder="e.g. spit-general" autocomplete="off" />
+            <input id="community-display-name-input" class="modal-input" type="text" placeholder="Community display name" autocomplete="off" />
+            <input id="community-description-input" class="modal-input" type="text" placeholder="Short description (optional)" autocomplete="off" />
+            <div class="modal-actions">
+                <button type="button" class="btn-ghost" data-close-modal="create-community-modal">Cancel</button>
+                <button type="button" id="create-community-submit" class="btn-send" style="padding:8px 18px;font-size:0.85rem;">Create</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Dialog: Group Created (shows join code) -->
+    <div id="group-created-modal" class="modal-overlay modal-hidden">
+        <div class="modal-card" style="max-width:440px;">
+            <div class="modal-title">Group created</div>
+            <div class="modal-subtitle" id="group-created-description">
+                Share this join code with your friends so they can join this chat.
+            </div>
+            <div style="margin-top:12px;margin-bottom:16px;">
+                <div style="font-size:0.8rem;color:var(--text-tertiary);margin-bottom:4px;">Group</div>
+                <div id="group-created-title" style="font-weight:600;color:var(--text-primary);"></div>
+            </div>
+            <div style="margin-bottom:16px;">
+                <div style="font-size:0.8rem;color:var(--text-tertiary);margin-bottom:4px;">Join code</div>
+                <div id="group-created-code" style="font-size:1.3rem;font-weight:700;letter-spacing:0.18em;color:var(--accent-purple);padding:8px 12px;border-radius:999px;border:1px solid rgba(167,139,250,0.8);background:rgba(15,23,42,0.9);display:inline-block;"></div>
+            </div>
+            <div class="modal-actions" style="justify-content:flex-end;">
+                <button type="button" class="btn-send" data-close-modal="group-created-modal" style="padding:8px 20px;font-size:0.85rem;">OK</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Dialog: View User Profile -->
+    <div id="user-profile-modal" class="modal-overlay modal-hidden">
+        <div class="modal-card" style="max-width:520px;">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px;">
+                <div style="display:flex;align-items:center;gap:14px;">
+                    <div id="user-profile-avatar" class="avatar" style="width:60px;height:60px;font-size:1.4rem;"></div>
+                    <div>
+                        <div id="user-profile-name" style="font-weight:600;font-size:1rem;"></div>
+                        <div id="user-profile-handle" style="font-size:0.85rem;color:var(--text-secondary);"></div>
+                        <div id="user-profile-meta" style="font-size:0.8rem;color:var(--text-tertiary);margin-top:2px;"></div>
+                    </div>
+                </div>
+                <button id="user-profile-close" class="btn-ghost" style="padding:4px 10px;font-size:0.8rem;">Close</button>
+            </div>
+
+            <div id="user-profile-counts" style="font-size:0.8rem;color:var(--text-secondary);margin-bottom:10px;"></div>
+
+            <div id="user-profile-bio" style="font-size:0.9rem;color:var(--text-primary);margin-bottom:12px;line-height:1.4;"></div>
+
+            <div id="user-profile-links" style="font-size:0.85rem;color:var(--text-secondary);margin-bottom:14px;"></div>
+
+            <div style="display:flex;justify-content:flex-end;">
+                <button id="user-profile-follow-btn" class="btn-follow" style="padding:7px 14px;font-size:0.85rem;">Follow</button>
             </div>
         </div>
     </div>
@@ -1847,10 +1918,8 @@
             list.innerHTML = '<div style="text-align:center;padding:12px;">Loading your groups...</div>';
 
             try {
-                // Use the generic groups endpoint and filter client-side to
-                // only show groups you created or joined. This avoids any
-                // issues if /api/groups/my is not available in some setups.
-                const response = await fetch(API_BASE + '/groups', {
+                // Fetch only the groups you are part of (created or joined)
+                const response = await fetch(API_BASE + '/groups/my', {
                     headers: { 'Authorization': 'Bearer ' + token }
                 });
                 const data = await response.json();
@@ -1864,17 +1933,7 @@
                     return;
                 }
 
-                let groups = Array.isArray(data.groups) ? data.groups : [];
-
-                // If currentUser is known, filter to "your" groups
-                if (currentUser && currentUser._id) {
-                    const myId = String(currentUser._id);
-                    groups = groups.filter(g => {
-                        const createdByMe = g.creatorId && String(g.creatorId) === myId;
-                        const hasMembership = Array.isArray(g.members) && g.members.some(m => String(m.userId) === myId);
-                        return createdByMe || hasMembership;
-                    });
-                }
+                const groups = Array.isArray(data.groups) ? data.groups : [];
 
                 if (groups.length > 0) {
                     chatGroups = groups;
@@ -1933,7 +1992,28 @@
             const group = chatGroups.find((g) => String(g._id) === String(groupId));
 
             if (group && header) {
-                header.textContent = group.displayName || group.name || 'Group chat';
+                const title = group.displayName || group.name || 'Group chat';
+
+                let memberLine = '';
+                if (Array.isArray(group.members) && group.members.length) {
+                    const memberNames = group.members
+                        .map((m) => m.userId && m.userId.name)
+                        .filter(Boolean);
+
+                    const total = group.members.length;
+                    if (memberNames.length) {
+                        const visibleNames = memberNames.slice(0, 3).join(', ');
+                        const extra = total - memberNames.length > 0 ? `, +${total - memberNames.length} more` : '';
+                        memberLine = `${total} member${total !== 1 ? 's' : ''} · ${visibleNames}${extra}`;
+                    } else {
+                        memberLine = `${total} member${total !== 1 ? 's' : ''}`;
+                    }
+                }
+
+                header.innerHTML = `
+                    <div style="font-size:0.95rem;color:var(--text-primary);font-weight:500;">${title}</div>
+                    ${memberLine ? `<div style=\"font-size:0.8rem;color:var(--text-tertiary);margin-top:2px;\">${memberLine}</div>` : ''}
+                `;
             }
 
             if (group && codeHint) {
@@ -2098,8 +2178,17 @@
                 }
 
                 const group = data.group;
-                if (group && group.joinCode) {
-                    alert(`Group created! Share this code with friends to join: ${group.joinCode}`);
+
+                const modal = document.getElementById('group-created-modal');
+                const codeEl = document.getElementById('group-created-code');
+                const titleEl = document.getElementById('group-created-title');
+                const descEl = document.getElementById('group-created-description');
+
+                if (modal && codeEl && titleEl && descEl && group) {
+                    titleEl.textContent = group.displayName || group.name || 'New group created';
+                    descEl.textContent = group.description || 'Share this join code with your friends so they can join this chat.';
+                    codeEl.textContent = group.joinCode || '—';
+                    openModal('group-created-modal');
                 } else {
                     alert('Group created successfully');
                 }
@@ -2270,6 +2359,13 @@
                         btn.textContent = isMember ? 'Join' : 'Joined';
                         btn.classList.toggle('joined');
                     }
+
+                    const detailBtn = document.getElementById(`community-detail-btn-${communityId}`);
+                    if (detailBtn) {
+                        detailBtn.textContent = isMember ? 'Join' : 'Joined';
+                        detailBtn.classList.toggle('joined');
+                    }
+
                     loadCommunitiesDropdown();
                     loadMyCommunities();
                 } else {
@@ -2281,23 +2377,20 @@
             }
         }
 
-        // View community detail
-        async function viewCommunityDetail(communityId) {
+        // Load posts for a single community into the detail view
+        async function loadCommunityPosts(communityId) {
+            const postsContainer = document.getElementById('community-posts-container');
+            if (!postsContainer) return;
+
             try {
                 const response = await fetch(API_BASE + `/communities/${communityId}/posts`, {
                     headers: { 'Authorization': 'Bearer ' + token }
                 });
                 const data = await response.json();
-                
-                document.getElementById('communities-view').style.display = 'none';
-                document.getElementById('community-detail-view').style.display = 'block';
-                
-                const container = document.getElementById('community-detail-content');
-                
+
                 if (data.success && data.posts && data.posts.length > 0) {
-                    container.innerHTML = data.posts.map(post => createPostHTML(post)).join('');
-                    
-                    // Add like event listeners
+                    postsContainer.innerHTML = data.posts.map(post => createPostHTML(post)).join('');
+
                     document.querySelectorAll('.post-stats .like').forEach(btn => {
                         btn.addEventListener('click', function() {
                             const postId = this.dataset.postId;
@@ -2305,14 +2398,140 @@
                         });
                     });
                 } else {
-                    container.innerHTML = '<p style="text-align:center;color:var(--text-secondary);">No posts in this community yet</p>';
+                    postsContainer.innerHTML = '<p style="text-align:center;color:var(--text-secondary);">No posts in this community yet</p>';
                 }
             } catch (error) {
                 console.error('Error loading community posts:', error);
+                const postsContainer = document.getElementById('community-posts-container');
+                if (postsContainer) {
+                    postsContainer.innerHTML = '<p style="text-align:center;color:#ff6b6b;">Failed to load community posts</p>';
+                }
+            }
+        }
+
+        // View community detail with header and create-post box
+        async function viewCommunityDetail(communityId) {
+            try {
+                const response = await fetch(API_BASE + `/communities/${communityId}`, {
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+                const data = await response.json();
+
+                if (!data.success || !data.community) {
+                    alert(data.message || 'Failed to load community');
+                    return;
+                }
+
+                const community = data.community;
+
+                document.getElementById('communities-view').style.display = 'none';
+                document.getElementById('community-detail-view').style.display = 'block';
+
+                const container = document.getElementById('community-detail-content');
+                const memberCount = (community.members && community.members.length) || community.memberCount || 0;
+                const description = community.description || 'No description yet';
+                const initials = community.displayName 
+                    ? community.displayName.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase() 
+                    : 'C';
+
+                container.innerHTML = `
+                    <div class="post-card" style="margin-bottom:20px;">
+                        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:16px;">
+                            <div style="display:flex;gap:16px;align-items:flex-start;">
+                                <div class="avatar" style="width:56px;height:56px;font-size:1.4rem;display:flex;align-items:center;justify-content:center;">
+                                    ${initials}
+                                </div>
+                                <div>
+                                    <h2 style="font-size:1.5rem;margin-bottom:4px;">${community.displayName}</h2>
+                                    <p style="color:var(--text-secondary);font-size:0.9rem;margin-bottom:4px;">r/${community.name}</p>
+                                    <p style="color:var(--text-secondary);font-size:0.9rem;margin-bottom:8px;">${description}</p>
+                                    <div style="display:flex;gap:12px;font-size:0.8rem;color:var(--text-tertiary);">
+                                        <span>👥 ${memberCount} members</span>
+                                        <span>📂 ${community.category || 'General'}</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <button 
+                                class="btn-follow ${community.isMember ? 'joined' : ''}" 
+                                id="community-detail-btn-${community._id}"
+                                onclick="toggleCommunityMembership('${community._id}', ${community.isMember})">
+                                ${community.isMember ? 'Joined' : 'Join'}
+                            </button>
+                        </div>
+                    </div>
+
+                    ${community.isMember ? `
+                    <div class="post-card" style="margin-bottom:20px;">
+                        <div style="display:flex;align-items:flex-start;gap:12px;">
+                            <div class="avatar" style="width:40px;height:40px;font-size:1rem;">
+                                ${currentUser ? getInitials(currentUser.name) : 'U'}
+                            </div>
+                            <div style="flex:1;">
+                                <input id="community-post-title" class="modal-input" type="text" placeholder="Post title (optional)" style="margin-bottom:8px;" />
+                                <textarea id="community-post-body" placeholder="Create a post for this community" style="width:100%;min-height:80px;border-radius:12px;border:1px solid rgba(148,163,184,0.4);background:rgba(15,23,42,0.9);color:var(--text-primary);padding:10px;font-size:0.9rem;resize:vertical;"></textarea>
+                                <div style="display:flex;justify-content:flex-end;margin-top:8px;">
+                                    <button type="button" class="btn-send" style="padding:8px 18px;font-size:0.85rem;" onclick="createCommunityPost('${community._id}')">Post</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    ` : ''}
+
+                    <div id="community-posts-container"></div>
+                `;
+
+                await loadCommunityPosts(communityId);
+            } catch (error) {
+                console.error('Error loading community detail:', error);
+            }
+        }
+
+        // Create post inside a community detail view
+        async function createCommunityPost(communityId) {
+            const titleInput = document.getElementById('community-post-title');
+            const bodyInput = document.getElementById('community-post-body');
+            if (!bodyInput) return;
+
+            const title = titleInput ? titleInput.value.trim() : '';
+            const content = bodyInput.value.trim();
+
+            if (!content) {
+                alert('Please enter some content');
+                return;
+            }
+
+            try {
+                const postData = { content, visibility: 'public', communityId };
+                if (title) postData.title = title;
+
+                const response = await fetch(API_BASE + '/posts', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': 'Bearer ' + token,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(postData)
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    if (titleInput) titleInput.value = '';
+                    bodyInput.value = '';
+                    await loadCommunityPosts(communityId);
+                    loadAllCommunities();
+                    loadMyCommunities();
+                } else {
+                    alert(data.message || 'Failed to create post');
+                }
+            } catch (error) {
+                console.error('Error creating community post:', error);
+                alert('Failed to create post');
             }
         }
 
         // Load user profile
+        // Load logged-in user's own profile
         async function loadUserProfile() {
             try {
                 const profileAvatar = document.getElementById('profile-avatar');
@@ -2323,6 +2542,7 @@
                 const profileInterests = document.getElementById('profile-interests');
                 const profileProjects = document.getElementById('profile-projects');
                 const profileLinks = document.getElementById('profile-links');
+                const profileShareBox = document.getElementById('profile-share-box');
                 
                 if (currentUser) {
                     const initials = getInitials(currentUser.name);
@@ -2366,6 +2586,11 @@
                     }
                     profileMeta.textContent = parts.length ? parts.join(' · ') : '';
 
+                    // Ensure create-post box is visible on own profile
+                    if (profileShareBox) {
+                        profileShareBox.style.display = 'flex';
+                    }
+
                     // Interests
                     if (currentUser.interests && currentUser.interests.length) {
                         profileInterests.innerHTML = currentUser.interests.map(i => `
@@ -2389,16 +2614,32 @@
                         profileProjects.innerHTML = '<li style="opacity:0.7;">No projects added yet</li>';
                     }
 
-                    // Links (GitHub)
+                    // Links (GitHub, Projects)
                     if (profileLinks) {
+                        const links = [];
+
                         if (currentUser.githubUrl) {
                             const safeUrl = currentUser.githubUrl;
-                            profileLinks.innerHTML = `
+                            links.push(`
                                 <a href="${safeUrl}" target="_blank" rel="noopener noreferrer" style="display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:999px;background:rgba(15,23,42,0.9);border:1px solid rgba(148,163,184,0.6);color:var(--accent-purple);text-decoration:none;">
                                     <span style="font-weight:600;">GitHub</span>
                                     <span style="font-size:0.75rem;color:var(--text-tertiary);">View profile</span>
                                 </a>
-                            `;
+                            `);
+                        }
+
+                        if (currentUser.projectLink) {
+                            const safeProjectUrl = currentUser.projectLink;
+                            links.push(`
+                                <a href="${safeProjectUrl}" target="_blank" rel="noopener noreferrer" style="display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:999px;background:rgba(15,23,42,0.9);border:1px solid rgba(52,211,153,0.6);color:#6ee7b7;text-decoration:none;">
+                                    <span style="font-weight:600;">Project</span>
+                                    <span style="font-size:0.75rem;color:var(--text-tertiary);">View work</span>
+                                </a>
+                            `);
+                        }
+
+                        if (links.length) {
+                            profileLinks.innerHTML = links.join(' ');
                         } else {
                             profileLinks.innerHTML = '<span style="opacity:0.7;">No links added yet</span>';
                         }
@@ -2431,41 +2672,251 @@
             }
         }
 
-        // Create community
-        document.getElementById('create-community-btn')?.addEventListener('click', () => {
-            const name = prompt('Community name (no spaces, lowercase):');
-            if (!name) return;
-            
-            const displayName = prompt('Display name:');
-            if (!displayName) return;
-            
-            const description = prompt('Description:');
-            if (!description) return;
+        // Load another user's profile in the main Profile view
+        async function loadOtherUserProfile(userId) {
+            if (!userId) return;
+            try {
+                const profileAvatar = document.getElementById('profile-avatar');
+                const profileName = document.getElementById('profile-name');
+                const profileHandle = document.getElementById('profile-handle');
+                const profileBio = document.getElementById('profile-bio');
+                const profileMeta = document.getElementById('profile-meta');
+                const profileInterests = document.getElementById('profile-interests');
+                const profileProjects = document.getElementById('profile-projects');
+                const profileLinks = document.getElementById('profile-links');
+                const profileShareBox = document.getElementById('profile-share-box');
 
-            fetch(API_BASE + '/communities', {
-                method: 'POST',
-                headers: {
-                    'Authorization': 'Bearer ' + token,
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ name, displayName, description })
-            })
-            .then(r => r.json())
-            .then(data => {
+                const res = await fetch(API_BASE + '/users/profile/' + userId, {
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+                const data = await res.json();
+                if (!data.success || !data.user) {
+                    console.error('Failed to load user profile', data.message);
+                    return;
+                }
+
+                const user = data.user;
+
+                if (user) {
+                    const initials = getInitials(user.name || 'User');
+
+                    if (user.profilePicture) {
+                        profileAvatar.style.backgroundImage = `url(${user.profilePicture})`;
+                        profileAvatar.style.backgroundSize = 'cover';
+                        profileAvatar.style.backgroundPosition = 'center';
+                        profileAvatar.textContent = '';
+                    } else {
+                        profileAvatar.style.backgroundImage = '';
+                        profileAvatar.textContent = initials;
+                    }
+
+                    profileName.textContent = user.name || 'User';
+                    profileHandle.textContent = '@' + (user.email || 'user').split('@')[0];
+                    profileBio.textContent = user.bio || 'No bio yet';
+
+                    const parts = [];
+                    if (user.year) {
+                        let yearLabel = `Year ${user.year}`;
+                        switch (user.year) {
+                            case 1:
+                            case '1':
+                                yearLabel = '1st year';
+                                break;
+                            case 2:
+                            case '2':
+                                yearLabel = '2nd year';
+                                break;
+                            case 3:
+                            case '3':
+                                yearLabel = '3rd year';
+                                break;
+                            case 4:
+                            case '4':
+                                yearLabel = '4th year';
+                                break;
+                        }
+                        parts.push(yearLabel);
+                    }
+                    if (user.department) {
+                        parts.push(user.department);
+                    }
+                    profileMeta.textContent = parts.length ? parts.join(' · ') : '';
+
+                    // Hide create-post box when viewing another user's profile
+                    if (profileShareBox) {
+                        profileShareBox.style.display = 'none';
+                    }
+
+                    // Interests
+                    if (user.interests && user.interests.length) {
+                        profileInterests.innerHTML = user.interests.map(i => `
+                            <span style="padding:4px 10px;border-radius:999px;background:rgba(167,139,250,0.12);border:1px solid rgba(167,139,250,0.35);color:var(--accent-purple);">
+                                ${i}
+                            </span>
+                        `).join('');
+                    } else {
+                        profileInterests.innerHTML = '<span style="opacity:0.7;">No interests added yet</span>';
+                    }
+
+                    // Projects
+                    if (user.projects && user.projects.length) {
+                        profileProjects.innerHTML = user.projects.map(p => `
+                            <li style="margin-bottom:4px;">
+                                <span style="color:var(--text-primary);font-weight:500;">${p.title}</span>
+                                ${p.description ? `<span style=\"opacity:0.75;\"> – ${p.description}</span>` : ''}
+                            </li>
+                        `).join('');
+                    } else {
+                        profileProjects.innerHTML = '<li style="opacity:0.7;">No projects added yet</li>';
+                    }
+
+                    if (profileLinks) {
+                        const links = [];
+
+                        if (user.githubUrl) {
+                            links.push(`
+                                <a href="${user.githubUrl}" target="_blank" rel="noopener noreferrer" style="display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:999px;background:rgba(15,23,42,0.9);border:1px solid rgba(148,163,184,0.6);color:var(--accent-purple);text-decoration:none;">
+                                    <span style="font-weight:600;">GitHub</span>
+                                    <span style="font-size:0.75rem;color:var(--text-tertiary);">View profile</span>
+                                </a>
+                            `);
+                        }
+
+                        if (user.projectLink) {
+                            links.push(`
+                                <a href="${user.projectLink}" target="_blank" rel="noopener noreferrer" style="display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:999px;background:rgba(15,23,42,0.9);border:1px solid rgba(52,211,153,0.6);color:#6ee7b7;text-decoration:none;">
+                                    <span style="font-weight:600;">Project</span>
+                                    <span style="font-size:0.75rem;color:var(--text-tertiary);">View work</span>
+                                </a>
+                            `);
+                        }
+
+                        if (links.length) {
+                            profileLinks.innerHTML = links.join(' ');
+                        } else {
+                            profileLinks.innerHTML = '<span style="opacity:0.7;">No links added yet</span>';
+                        }
+                    }
+                }
+
+                const response = await fetch(API_BASE + `/posts/user/${userId}`, {
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+                const postsData = await response.json();
+
+                const container = document.getElementById('profile-posts-container');
+
+                if (postsData.success && postsData.posts && postsData.posts.length > 0) {
+                    container.innerHTML = postsData.posts.map(post => createPostHTML(post)).join('');
+
+                    document.querySelectorAll('.post-stats .like').forEach(btn => {
+                        btn.addEventListener('click', function() {
+                            const postId = this.dataset.postId;
+                            toggleLike(postId, this);
+                        });
+                    });
+                } else {
+                    container.innerHTML = '<p style="text-align:center;color:var(--text-secondary);">This user hasn\'t posted anything yet</p>';
+                }
+            } catch (error) {
+                console.error('Error loading other user profile:', error);
+            }
+        }
+
+        // Create community (modal dialog)
+        async function handleCreateCommunity() {
+            const nameInput = document.getElementById('community-name-input');
+            const displayNameInput = document.getElementById('community-display-name-input');
+            const descriptionInput = document.getElementById('community-description-input');
+
+            if (!nameInput || !displayNameInput || !descriptionInput) return;
+
+            let name = (nameInput.value || '').trim();
+            const displayName = (displayNameInput.value || '').trim();
+            const description = (descriptionInput.value || '').trim();
+
+            if (!name || !displayName) {
+                alert('Please fill in both community handle and display name.');
+                return;
+            }
+
+            // Enforce lowercase, no spaces for the handle
+            name = name.toLowerCase().replace(/\s+/g, '');
+
+            try {
+                const response = await fetch(API_BASE + '/communities', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': 'Bearer ' + token,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ name, displayName, description })
+                });
+
+                const data = await response.json();
                 if (data.success) {
-                    alert('Community created successfully!');
+                    closeModal('create-community-modal');
+                    nameInput.value = '';
+                    displayNameInput.value = '';
+                    descriptionInput.value = '';
+
                     loadAllCommunities();
                     loadMyCommunities();
                     loadCommunitiesDropdown();
                 } else {
                     alert(data.message || 'Failed to create community');
                 }
-            })
-            .catch(error => {
+            } catch (error) {
                 console.error('Error creating community:', error);
                 alert('Failed to create community');
+            }
+        }
+
+        const createCommunityBtn = document.getElementById('create-community-btn');
+        const createCommunityNameInput = document.getElementById('community-name-input');
+        const createCommunityDisplayNameInput = document.getElementById('community-display-name-input');
+
+        if (createCommunityBtn && createCommunityNameInput) {
+            createCommunityBtn.addEventListener('click', () => openModal('create-community-modal', createCommunityNameInput));
+        }
+
+        const createCommunitySubmitBtn = document.getElementById('create-community-submit');
+        if (createCommunitySubmitBtn) {
+            createCommunitySubmitBtn.addEventListener('click', handleCreateCommunity);
+        }
+
+        if (createCommunityNameInput) {
+            createCommunityNameInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    handleCreateCommunity();
+                }
             });
-        });
+        }
+        if (createCommunityDisplayNameInput) {
+            createCommunityDisplayNameInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    handleCreateCommunity();
+                }
+            });
+        }
+
+        function openUserProfilePage(userId) {
+            if (!userId) return;
+            if (currentUser && String(currentUser.id || currentUser._id) === String(userId)) {
+                // If it's me, just show my normal profile view
+                showProfileView();
+                return;
+            }
+            hideAllViews();
+            const profileView = document.getElementById('profile-view');
+            if (profileView) {
+                profileView.style.display = 'block';
+            }
+            resetNavActive('profile');
+            loadOtherUserProfile(userId);
+        }
 
         // Load user suggestions
         async function loadSuggestions() {
@@ -2479,19 +2930,50 @@
                 
                 if (data.success && data.users && data.users.length > 0) {
                     const suggestionsHTML = data.users.map(user => {
-                        const initials = getInitials(user.name);
+                        const initials = getInitials(user.name || 'User');
+                        const isFollowing = !!user.isFollowing;
+                        const userId = user.id || user._id;
                         return `
-                            <div class="suggestion-item">
-                                <div class="avatar-sm">${initials}</div>
-                                <div class="info">
+                            <div class="suggestion-item" data-user-id="${userId}">
+                                <div class="avatar-sm" data-user-id="${userId}">${initials}</div>
+                                <div class="info" data-user-id="${userId}">
                                     <div class="name">${user.name || 'Anonymous'}</div>
                                 </div>
-                                <button class="btn-follow">Follow</button>
+                                <button class="btn-follow ${isFollowing ? 'joined' : ''}" data-user-id="${userId}">${isFollowing ? 'Following' : 'Follow'}</button>
                             </div>
                         `;
                     }).join('');
                     
                     container.innerHTML = suggestionsHTML + '<span class="see-all">See all</span>';
+
+                    // Enhance avatars with profile pictures when available and wire up events
+                    data.users.forEach(user => {
+                        const userId = user.id || user._id;
+                        const item = container.querySelector(`.suggestion-item[data-user-id="${userId}"]`);
+                        if (!item) return;
+
+                        const avatarEl = item.querySelector('.avatar-sm');
+                        const infoEl = item.querySelector('.info');
+                        const followBtn = item.querySelector('.btn-follow');
+
+                        if (user.profilePicture && avatarEl) {
+                            avatarEl.style.backgroundImage = `url(${user.profilePicture})`;
+                            avatarEl.style.backgroundSize = 'cover';
+                            avatarEl.style.backgroundPosition = 'center';
+                            avatarEl.textContent = '';
+                        }
+
+                        if (avatarEl) {
+                            avatarEl.addEventListener('click', () => openUserProfilePage(userId));
+                        }
+                        if (infoEl) {
+                            infoEl.addEventListener('click', () => openUserProfilePage(userId));
+                        }
+
+                        if (followBtn) {
+                            followBtn.addEventListener('click', () => handleFollowToggle(user, followBtn));
+                        }
+                    });
                 } else {
                     container.innerHTML = `
                         <div style="text-align:center;padding:20px;color:var(--text-secondary);font-size:0.85rem;">
@@ -2504,6 +2986,250 @@
                 document.getElementById('suggestions-container').innerHTML = `
                     <div style="text-align:center;padding:20px;color:#ff6b6b;font-size:0.85rem;">
                         Failed to load suggestions
+                    </div>
+                `;
+            }
+        }
+
+        async function openUserProfileModal(userId) {
+            if (!userId) return;
+            try {
+                const response = await fetch(API_BASE + '/users/profile/' + userId, {
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+                const data = await response.json();
+                if (!data.success || !data.user) {
+                    console.error('Failed to load user profile', data.message);
+                    return;
+                }
+                renderUserProfileModal(data.user);
+                openModal('user-profile-modal');
+            } catch (err) {
+                console.error('Error loading user profile:', err);
+            }
+        }
+
+        function renderUserProfileModal(user) {
+            const avatarEl = document.getElementById('user-profile-avatar');
+            const nameEl = document.getElementById('user-profile-name');
+            const handleEl = document.getElementById('user-profile-handle');
+            const metaEl = document.getElementById('user-profile-meta');
+            const bioEl = document.getElementById('user-profile-bio');
+            const linksEl = document.getElementById('user-profile-links');
+            const countsEl = document.getElementById('user-profile-counts');
+            const followBtn = document.getElementById('user-profile-follow-btn');
+
+            if (!user || !avatarEl || !nameEl || !handleEl || !metaEl || !bioEl || !linksEl || !countsEl || !followBtn) {
+                return;
+            }
+
+            const initials = getInitials(user.name || 'User');
+
+            if (user.profilePicture) {
+                avatarEl.style.backgroundImage = `url(${user.profilePicture})`;
+                avatarEl.style.backgroundSize = 'cover';
+                avatarEl.style.backgroundPosition = 'center';
+                avatarEl.textContent = '';
+            } else {
+                avatarEl.style.backgroundImage = '';
+                avatarEl.textContent = initials;
+            }
+
+            nameEl.textContent = user.name || 'User';
+            handleEl.textContent = '@' + (user.email || 'user').split('@')[0];
+
+            const metaParts = [];
+            if (user.year) metaParts.push(user.year);
+            if (user.department) metaParts.push(user.department);
+            metaEl.textContent = metaParts.join(' • ');
+
+            bioEl.textContent = user.bio && user.bio.trim().length > 0 ? user.bio : 'No bio added yet.';
+
+            const followerCount = (user.followers || []).length;
+            const followingCount = (user.following || []).length;
+            countsEl.textContent = `${followerCount} followers • ${followingCount} following`;
+
+            const links = [];
+            if (user.githubUrl) {
+                links.push(`<a href="${user.githubUrl}" target="_blank" style="color:var(--accent-purple);text-decoration:none;">GitHub · View profile</a>`);
+            }
+            if (user.projectLink) {
+                links.push(`<a href="${user.projectLink}" target="_blank" style="color:var(--accent-purple);text-decoration:none;display:block;margin-top:4px;">Project · View work</a>`);
+            }
+            linksEl.innerHTML = links.length > 0 ? links.join('') : '<span style="color:var(--text-tertiary);">No links added yet.</span>';
+
+            // Hide follow button on own profile
+            if (currentUser && String(currentUser.id || currentUser._id) === String(user._id)) {
+                followBtn.style.display = 'none';
+                return;
+            }
+
+            followBtn.style.display = 'inline-block';
+
+            let isFollowing = false;
+            if (Array.isArray(currentUser?.following)) {
+                isFollowing = currentUser.following.some(id => String(id) === String(user._id));
+            }
+
+            if (isFollowing) {
+                followBtn.classList.add('joined');
+                followBtn.textContent = 'Following';
+            } else {
+                followBtn.classList.remove('joined');
+                followBtn.textContent = 'Follow';
+            }
+
+            followBtn.onclick = () => {
+                const target = { id: user._id, isFollowing };
+                handleFollowToggle(target, followBtn, {
+                    updateProfileCounts: true,
+                    countsElement: countsEl
+                });
+            };
+        }
+
+        async function handleFollowToggle(targetUser, button, options = {}) {
+            if (!currentUser || !targetUser || !button) return;
+
+            const userId = targetUser.id || targetUser._id;
+            if (!userId) return;
+
+            const isCurrentlyFollowing = button.classList.contains('joined') || !!targetUser.isFollowing;
+
+            button.disabled = true;
+
+            try {
+                const endpoint = isCurrentlyFollowing
+                    ? `/users/${userId}/unfollow`
+                    : `/users/${userId}/follow`;
+
+                const response = await fetch(API_BASE + endpoint, {
+                    method: 'POST',
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+
+                const data = await response.json();
+                if (!data.success) {
+                    console.error('Failed to toggle follow state', data.message);
+                    return;
+                }
+
+                const nowFollowing = !!data.isFollowing;
+                targetUser.isFollowing = nowFollowing;
+
+                if (!Array.isArray(currentUser.following)) {
+                    currentUser.following = [];
+                }
+                if (nowFollowing) {
+                    if (!currentUser.following.includes(userId)) {
+                        currentUser.following.push(userId);
+                    }
+                } else {
+                    currentUser.following = currentUser.following.filter(id => String(id) !== String(userId));
+                }
+
+                if (nowFollowing) {
+                    button.classList.add('joined');
+                    button.textContent = 'Following';
+                } else {
+                    button.classList.remove('joined');
+                    button.textContent = 'Follow';
+                }
+
+                if (options.updateProfileCounts && options.countsElement && typeof data.followerCount === 'number' && typeof data.followingCount === 'number') {
+                    options.countsElement.textContent = `${data.followerCount} followers • ${data.followingCount} following`;
+                }
+            } catch (err) {
+                console.error('Error toggling follow state:', err);
+            } finally {
+                button.disabled = false;
+            }
+        }
+
+        // User search by name
+        const userSearchInput = document.getElementById('user-search-input');
+        const userSearchResults = document.getElementById('user-search-results');
+
+        async function searchUsersByName(query) {
+            if (!userSearchResults) return;
+
+            const trimmed = (query || '').trim();
+            if (!trimmed) {
+                userSearchResults.innerHTML = '';
+                return;
+            }
+
+            try {
+                const response = await fetch(API_BASE + '/users/search?q=' + encodeURIComponent(trimmed), {
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+                const data = await response.json();
+
+                if (!data.success || !Array.isArray(data.users) || data.users.length === 0) {
+                    userSearchResults.innerHTML = `
+                        <div style="text-align:center;padding:10px 0;color:var(--text-secondary);font-size:0.8rem;">
+                            No users found
+                        </div>
+                    `;
+                    return;
+                }
+
+                const html = data.users.map(user => {
+                    const initials = getInitials(user.name || 'User');
+                    const isFollowing = !!user.isFollowing;
+                    const userId = user.id || user._id;
+                    return `
+                        <div class="suggestion-item" data-user-id="${userId}">
+                            <div class="avatar-sm" data-user-id="${userId}">${initials}</div>
+                            <div class="info" data-user-id="${userId}">
+                                <div class="name">${user.name || 'Anonymous'}</div>
+                            </div>
+                            <button class="btn-follow ${isFollowing ? 'joined' : ''}" data-user-id="${userId}">${isFollowing ? 'Following' : 'Follow'}</button>
+                        </div>
+                    `;
+                }).join('');
+
+                userSearchResults.innerHTML = html;
+
+                data.users.forEach(user => {
+                    const userId = user.id || user._id;
+                    const item = userSearchResults.querySelector(`.suggestion-item[data-user-id="${userId}"]`);
+                    if (!item) return;
+
+                    const avatarEl = item.querySelector('.avatar-sm');
+                    const infoEl = item.querySelector('.info');
+                    const followBtn = item.querySelector('.btn-follow');
+
+                    const isSelf = currentUser && String(currentUser.id || currentUser._id) === String(userId);
+
+                    if (user.profilePicture && avatarEl) {
+                        avatarEl.style.backgroundImage = `url(${user.profilePicture})`;
+                        avatarEl.style.backgroundSize = 'cover';
+                        avatarEl.style.backgroundPosition = 'center';
+                        avatarEl.textContent = '';
+                    }
+
+                    if (avatarEl) {
+                        avatarEl.addEventListener('click', () => openUserProfilePage(userId));
+                    }
+                    if (infoEl) {
+                        infoEl.addEventListener('click', () => openUserProfilePage(userId));
+                    }
+
+                    if (followBtn) {
+                        if (isSelf) {
+                            // Don't show follow button for yourself
+                            followBtn.style.display = 'none';
+                        } else {
+                            followBtn.addEventListener('click', () => handleFollowToggle(user, followBtn));
+                        }
+                    }
+                });
+            } catch (err) {
+                console.error('Error searching users:', err);
+                userSearchResults.innerHTML = `
+                    <div style="text-align:center;padding:10px 0;color:#ff6b6b;font-size:0.8rem;">
+                        Search failed
                     </div>
                 `;
             }
@@ -2577,6 +3303,29 @@
             })
             .catch((err) => {
                 console.error('Auth error:', err);
+            });
+        }
+
+        // User profile modal close handlers
+        const userProfileModal = document.getElementById('user-profile-modal');
+        const userProfileCloseBtn = document.getElementById('user-profile-close');
+        if (userProfileModal) {
+            userProfileModal.addEventListener('click', (e) => {
+                if (e.target === userProfileModal) {
+                    closeModal('user-profile-modal');
+                }
+            });
+        }
+        if (userProfileCloseBtn) {
+            userProfileCloseBtn.addEventListener('click', () => closeModal('user-profile-modal'));
+        }
+
+        if (userSearchInput) {
+            let searchTimeout = null;
+            userSearchInput.addEventListener('input', (e) => {
+                const value = e.target.value;
+                clearTimeout(searchTimeout);
+                searchTimeout = setTimeout(() => searchUsersByName(value), 250);
             });
         }
 
