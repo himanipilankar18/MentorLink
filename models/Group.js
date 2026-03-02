@@ -60,7 +60,4 @@ const groupSchema = new mongoose.Schema({
   timestamps: true,
 });
 
-groupSchema.index({ name: 1 });
-groupSchema.index({ joinCode: 1 });
-
 module.exports = mongoose.model('Group', groupSchema);

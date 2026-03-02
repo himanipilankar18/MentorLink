@@ -1,6 +1,10 @@
 require('dotenv').config();
 const mongoose = require('mongoose');
 const User = require('../models/User');
+const Post = require('../models/Post');
+const ChatMessage = require('../models/ChatMessage');
+const { Discussion, Comment } = require('../models/Discussion');
+const Interaction = require('../models/Interaction');
 
 async function deleteAllUsers() {
   try {
@@ -23,9 +27,22 @@ async function deleteAllUsers() {
 
     await new Promise(resolve => setTimeout(resolve, 3000));
 
-    // Delete all users
-    const result = await User.deleteMany({});
-    console.log(`✅ Successfully deleted ${result.deletedCount} users from database`);
+    // Delete all users and their related content
+    const userResult = await User.deleteMany({});
+    console.log(`✅ Deleted ${userResult.deletedCount} users`);
+
+    const postResult = await Post.deleteMany({});
+    console.log(`🧹 Deleted ${postResult.deletedCount} posts`);
+
+    const chatResult = await ChatMessage.deleteMany({});
+    console.log(`🧹 Deleted ${chatResult.deletedCount} chat messages`);
+
+    const discussionResult = await Discussion.deleteMany({});
+    const commentResult = await Comment.deleteMany({});
+    console.log(`🧹 Deleted ${discussionResult.deletedCount} discussions and ${commentResult.deletedCount} discussion comments`);
+
+    const interactionResult = await Interaction.deleteMany({});
+    console.log(`🧹 Deleted ${interactionResult.deletedCount} interactions`);
 
     // Verify deletion
     const countAfter = await User.countDocuments();

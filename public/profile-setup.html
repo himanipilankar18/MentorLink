@@ -455,6 +455,12 @@
                 </div>
 
                 <div class="form-group">
+                    <label for="projectLink">Project Link (Optional)</label>
+                    <input type="url" id="projectLink" name="projectLink" placeholder="e.g., https://github.com/your-username/resume-analyzer or portfolio link">
+                    <div class="helper-text">Paste the main link where your projects live</div>
+                </div>
+
+                <div class="form-group">
                     <label for="cgpa">CGPA (Optional)</label>
                     <input type="number" id="cgpa" name="cgpa" step="0.01" min="0" max="10" placeholder="e.g., 8.5">
                 </div>
@@ -574,6 +580,11 @@
             const cgpa = document.getElementById('cgpa').value;
             if (cgpa) {
                 formData.append('cgpa', parseFloat(cgpa));
+            }
+
+            const projectLink = document.getElementById('projectLink').value.trim();
+            if (projectLink) {
+                formData.append('projectLink', projectLink);
             }
 
             const githubUrl = document.getElementById('githubUrl').value.trim();

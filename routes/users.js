@@ -226,6 +226,103 @@ router.get('/mentors', verifyToken, apiLimiter, async (req, res) => {
   }
 });
 
+// @route   POST /api/users/:id/follow
+// @desc    Follow a user
+// @access  Private
+router.post('/:id/follow', verifyToken, apiLimiter, async (req, res) => {
+  try {
+    const targetId = req.params.id;
+
+    if (targetId === String(req.user._id)) {
+      return res.status(400).json({
+        success: false,
+        message: 'You cannot follow yourself'
+      });
+    }
+
+    const targetUser = await User.findById(targetId);
+    if (!targetUser) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    await Promise.all([
+      User.updateOne(
+        { _id: req.user._id },
+        { $addToSet: { following: targetUser._id } },
+      ),
+      User.updateOne(
+        { _id: targetUser._id },
+        { $addToSet: { followers: req.user._id } },
+      ),
+    ]);
+
+    const updatedMe = await User.findById(req.user._id).select('followers following');
+    const updatedTarget = await User.findById(targetUser._id).select('followers following');
+
+    return res.json({
+      success: true,
+      message: 'Now following user',
+      isFollowing: true,
+      followerCount: updatedTarget.followers.length,
+      followingCount: updatedMe.following.length,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Failed to follow user',
+      error: error.message,
+    });
+  }
+});
+
+// @route   POST /api/users/:id/unfollow
+// @desc    Unfollow a user
+// @access  Private
+router.post('/:id/unfollow', verifyToken, apiLimiter, async (req, res) => {
+  try {
+    const targetId = req.params.id;
+
+    const targetUser = await User.findById(targetId);
+    if (!targetUser) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    await Promise.all([
+      User.updateOne(
+        { _id: req.user._id },
+        { $pull: { following: targetUser._id } },
+      ),
+      User.updateOne(
+        { _id: targetUser._id },
+        { $pull: { followers: req.user._id } },
+      ),
+    ]);
+
+    const updatedMe = await User.findById(req.user._id).select('followers following');
+    const updatedTarget = await User.findById(targetUser._id).select('followers following');
+
+    return res.json({
+      success: true,
+      message: 'Unfollowed user',
+      isFollowing: false,
+      followerCount: updatedTarget.followers.length,
+      followingCount: updatedMe.following.length,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Failed to unfollow user',
+      error: error.message,
+    });
+  }
+});
+
 // @route   GET /api/users/juniors
 // @desc    Get all juniors (for mentors to see potential mentees)
 // @access  Private (Mentors only)
@@ -332,48 +429,98 @@ router.get('/profile-completion', verifyToken, apiLimiter, async (req, res) => {
   }
 });
 
+// @route   GET /api/users/search
+// @desc    Search users by name (partial, case-insensitive)
+// @access  Private
+router.get('/search', verifyToken, apiLimiter, async (req, res) => {
+  try {
+    const { q = '', limit = 10 } = req.query;
+    const query = (q || '').trim();
+
+    if (!query) {
+      return res.json({ success: true, count: 0, users: [] });
+    }
+
+    const currentUser = await User.findById(req.user._id).select('following');
+    const regex = new RegExp(query, 'i');
+
+    const users = await User.find({
+      isVerified: true,
+      name: regex,
+    })
+      .select('name email department year role profilePicture bio followers following')
+      .limit(parseInt(limit));
+
+    const followingSet = new Set((currentUser.following || []).map((id) => String(id)));
+
+    const enriched = users.map((u) => ({
+      id: u._id,
+      _id: u._id,
+      name: u.name,
+      email: u.email,
+      department: u.department,
+      year: u.year,
+      role: u.role,
+      bio: u.bio,
+      profilePicture: u.profilePicture,
+      followersCount: (u.followers || []).length,
+      followingCount: (u.following || []).length,
+      isFollowing: followingSet.has(String(u._id)),
+    }));
+
+    res.json({ success: true, count: enriched.length, users: enriched });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Failed to search users',
+      error: error.message,
+    });
+  }
+});
+
 // @route   GET /api/users/suggestions
-// @desc    Get suggested users to follow/connect with
+// @desc    Get suggested users to follow/connect with, based only on shared interests
 // @access  Private
 router.get('/suggestions', verifyToken, apiLimiter, async (req, res) => {
   try {
     const { limit = 10 } = req.query;
 
-    // Get random users excluding the current user
-    // Prioritize users with similar interests or from same department
-    const currentUser = await User.findById(req.user._id);
-    
+    const currentUser = await User.findById(req.user._id).select('interests following');
+    const myInterests = currentUser?.interests || [];
+
+    // If user has no interests, we can't match on them – return empty list
+    if (!myInterests.length) {
+      return res.json({ success: true, count: 0, users: [] });
+    }
+
+    // Only suggest users that share at least one interest
     const suggestions = await User.find({
       _id: { $ne: req.user._id },
       isVerified: true,
-      $or: [
-        { department: currentUser.department },
-        { interests: { $in: currentUser.interests || [] } },
-        { skills: { $in: currentUser.skills || [] } }
-      ]
+      interests: { $in: myInterests },
     })
       .select('name email department year role profilePicture bio')
       .limit(parseInt(limit));
 
-    // If we don't have enough suggestions, get random verified users
-    if (suggestions.length < limit) {
-      const randomUsers = await User.find({
-        _id: { 
-          $ne: req.user._id,
-          $nin: suggestions.map(s => s._id)
-        },
-        isVerified: true
-      })
-        .select('name email department year role profilePicture bio')
-        .limit(parseInt(limit) - suggestions.length);
+    const followingSet = new Set((currentUser.following || []).map(id => String(id)));
 
-      suggestions.push(...randomUsers);
-    }
+    const enriched = suggestions.map((u) => ({
+      id: u._id,
+      _id: u._id,
+      name: u.name,
+      email: u.email,
+      department: u.department,
+      year: u.year,
+      role: u.role,
+      bio: u.bio,
+      profilePicture: u.profilePicture,
+      isFollowing: followingSet.has(String(u._id)),
+    }));
 
     res.json({
       success: true,
-      count: suggestions.length,
-      users: suggestions
+      count: enriched.length,
+      users: enriched,
     });
   } catch (error) {
     res.status(500).json({

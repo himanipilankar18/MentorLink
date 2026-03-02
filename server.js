@@ -67,11 +67,16 @@ app.get('/api/groups/my', verifyToken, apiLimiter, async (req, res) => {
   }
 });
 
-// Serve uploaded profile images
-app.use('/uploads', express.static('uploads'));
+// Serve uploaded profile images (stored under public/uploads)
+app.use('/uploads', express.static('public/uploads'));
 
 // Serve static files (frontend dashboard) - after API routes
 app.use(express.static('public'));
+
+// Ignore Chrome DevTools well-known probe to avoid noisy 404 logs
+app.get('/.well-known/appspecific/com.chrome.devtools.json', (req, res) => {
+  res.status(204).end();
+});
 
 // Handle favicon.ico requests gracefully
 app.get('/favicon.ico', (req, res) => {

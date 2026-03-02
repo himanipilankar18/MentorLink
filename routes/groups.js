@@ -108,7 +108,7 @@ router.get('/', verifyToken, apiLimiter, async (req, res) => {
 });
 
 // @route   GET /api/groups/my
-// @desc    Get groups current user is a member of or has created
+// @desc    Get groups current user is a member of or has created (with basic member info)
 // @access  Private
 router.get('/my', verifyToken, apiLimiter, async (req, res) => {
   try {
@@ -120,6 +120,7 @@ router.get('/my', verifyToken, apiLimiter, async (req, res) => {
       ],
     })
       .sort({ updatedAt: -1 })
+      .populate('members.userId', 'name')
       .lean();
 
     res.json({

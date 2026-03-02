@@ -143,6 +143,12 @@ const userSchema = new mongoose.Schema({
     }],
     default: []
   },
+  projectLink: {
+    type: String,
+    trim: true,
+    maxlength: [300, 'Project link cannot exceed 300 characters'],
+    default: ''
+  },
   cgpa: {
     type: Number,
     min: [0, 'CGPA cannot be negative'],
@@ -153,6 +159,14 @@ const userSchema = new mongoose.Schema({
     type: String,
     default: null
   },
+  followers: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+  }],
+  following: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+  }],
   profileComplete: {
     type: Boolean,
     default: false

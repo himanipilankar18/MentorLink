@@ -378,6 +378,7 @@ router.get('/me', verifyToken, async (req, res) => {
         cgpa: user.cgpa,
         bio: user.bio,
         projects: user.projects,
+        projectLink: user.projectLink,
         profilePicture: user.profilePicture,
         githubUrl: user.githubUrl,
         isVerified: user.isVerified,
@@ -414,6 +415,8 @@ router.get('/verify-email', async (req, res) => {
 
     if (!user) {
       return res.status(400).json({
+        followers: user.followers || [],
+        following: user.following || [],
         success: false,
         message: 'Invalid or expired verification token'
       });
@@ -560,6 +563,7 @@ router.post('/complete-profile',
         skills, 
         projects, 
         cgpa, 
+        projectLink,
         githubUrl,
         skipProfile 
       } = req.body;
@@ -624,6 +628,7 @@ router.post('/complete-profile',
         if (lastName) user.lastName = lastName;
         if (displayName) user.displayName = displayName;
         if (bio) user.bio = bio;
+        if (projectLink) user.projectLink = projectLink;
         if (githubUrl) user.githubUrl = githubUrl;
         
         // Parse JSON arrays from FormData
