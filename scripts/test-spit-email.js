@@ -7,7 +7,7 @@ const testEmail = async () => {
   try {
     await sendEmail({
       to: 'tithi.talele24@spit.ac.in',
-      subject: 'Test Email from PingMe',
+      subject: 'Test Email from MentorLink',
       html: `
         <h2>Test Email</h2>
         <p>This is a test email to verify that emails are reaching your SPIT email address.</p>

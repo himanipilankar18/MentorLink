@@ -1,9 +1,42 @@
 const express = require('express');
+const fs = require('fs');
+const path = require('path');
+const multer = require('multer');
 const Community = require('../models/Community');
 const Post = require('../models/Post');
 const { verifyToken } = require('../middleware/auth');
 const { apiLimiter } = require('../middleware/security');
 const router = express.Router();
+
+// Multer setup for community icon/banner uploads
+const communityStorage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    const uploadDir = path.join('public', 'uploads', 'communities');
+    if (!fs.existsSync(uploadDir)) {
+      fs.mkdirSync(uploadDir, { recursive: true });
+    }
+    cb(null, uploadDir);
+  },
+  filename: function (req, file, cb) {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+    cb(null, 'community-' + uniqueSuffix + path.extname(file.originalname));
+  }
+});
+
+const communityUpload = multer({
+  storage: communityStorage,
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
+  fileFilter: function (req, file, cb) {
+    const filetypes = /jpeg|jpg|png|gif|webp/;
+    const mimetype = filetypes.test(file.mimetype);
+    const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
+
+    if (mimetype && extname) {
+      return cb(null, true);
+    }
+    cb(new Error('Only image files are allowed (jpeg, jpg, png, gif, webp)'));
+  }
+});
 
 // @route   POST /api/communities
 // @desc    Create a new community
@@ -141,34 +174,43 @@ router.get('/my', verifyToken, apiLimiter, async (req, res) => {
 // @access  Private
 router.get('/:id', verifyToken, apiLimiter, async (req, res) => {
   try {
-    const community = await Community.findById(req.params.id)
-      .populate('creatorId', 'name email profilePicture')
-      .populate('moderators', 'name profilePicture')
-      .populate('members.userId', 'name profilePicture');
+    // First load the community without population so membership checks work
+    const community = await Community.findById(req.params.id);
 
     if (!community) {
       return res.status(404).json({
         success: false,
-        message: 'Community not found'
+        message: 'Community not found',
       });
     }
 
     const isMember = community.isMember(req.user._id);
     const isModerator = community.isModerator(req.user._id);
+    const isCreator = community.creatorId && community.creatorId.toString
+      ? community.creatorId.toString() === req.user._id.toString()
+      : false;
+
+    // Now populate related user fields for display
+    await community.populate([
+      { path: 'creatorId', select: 'name email profilePicture' },
+      { path: 'moderators', select: 'name profilePicture' },
+      { path: 'members.userId', select: 'name profilePicture' },
+    ]);
 
     res.json({
       success: true,
       community: {
         ...community.toJSON(),
         isMember,
-        isModerator
-      }
+        isModerator,
+        isCreator,
+      },
     });
   } catch (error) {
     res.status(500).json({
       success: false,
       message: 'Failed to fetch community',
-      error: error.message
+      error: error.message,
     });
   }
 });
@@ -308,6 +350,126 @@ router.get('/:id/posts', verifyToken, apiLimiter, async (req, res) => {
   }
 });
 
+// @route   POST /api/communities/:id/moderators/:userId
+// @desc    Promote a member to moderator
+// @access  Private (Creator only)
+router.post('/:id/moderators/:userId', verifyToken, apiLimiter, async (req, res) => {
+  try {
+    const community = await Community.findById(req.params.id);
+
+    if (!community) {
+      return res.status(404).json({
+        success: false,
+        message: 'Community not found'
+      });
+    }
+
+    if (!community.creatorId || community.creatorId.toString() !== req.user._id.toString()) {
+      return res.status(403).json({
+        success: false,
+        message: 'Only the community owner can manage moderators'
+      });
+    }
+
+    const userId = req.params.userId;
+
+    const member = community.members.find(m => m.userId.toString() === userId.toString());
+    if (!member) {
+      return res.status(400).json({
+        success: false,
+        message: 'User must be a member of the community to become a moderator'
+      });
+    }
+
+    member.role = 'moderator';
+
+    if (!community.moderators.some(m => m.toString() === userId.toString())) {
+      community.moderators.push(userId);
+    }
+
+    await community.save();
+
+    await community.populate([
+      { path: 'creatorId', select: 'name email profilePicture' },
+      { path: 'moderators', select: 'name profilePicture' },
+      { path: 'members.userId', select: 'name profilePicture' },
+    ]);
+
+    res.json({
+      success: true,
+      message: 'User promoted to moderator',
+      community,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Failed to promote moderator',
+      error: error.message,
+    });
+  }
+});
+
+// @route   DELETE /api/communities/:id/moderators/:userId
+// @desc    Remove a moderator back to regular member
+// @access  Private (Creator only)
+router.delete('/:id/moderators/:userId', verifyToken, apiLimiter, async (req, res) => {
+  try {
+    const community = await Community.findById(req.params.id);
+
+    if (!community) {
+      return res.status(404).json({
+        success: false,
+        message: 'Community not found'
+      });
+    }
+
+    if (!community.creatorId || community.creatorId.toString() !== req.user._id.toString()) {
+      return res.status(403).json({
+        success: false,
+        message: 'Only the community owner can manage moderators'
+      });
+    }
+
+    const userId = req.params.userId;
+
+    // Do not allow removing the creator from moderator/admin role
+    if (community.creatorId.toString() === userId.toString()) {
+      return res.status(400).json({
+        success: false,
+        message: 'Community owner cannot be removed as moderator'
+      });
+    }
+
+    // Update member role back to regular member
+    const member = community.members.find(m => m.userId.toString() === userId.toString());
+    if (member) {
+      member.role = 'member';
+    }
+
+    community.moderators = community.moderators.filter(m => m.toString() !== userId.toString());
+
+    await community.save();
+
+    await community.populate([
+      { path: 'creatorId', select: 'name email profilePicture' },
+      { path: 'moderators', select: 'name profilePicture' },
+      { path: 'members.userId', select: 'name profilePicture' },
+    ]);
+
+    res.json({
+      success: true,
+      message: 'Moderator removed successfully',
+      community,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Failed to remove moderator',
+      error: error.message,
+    });
+  }
+});
+
 // @route   PUT /api/communities/:id
 // @desc    Update community
 // @access  Private (Moderator only)
@@ -340,6 +502,61 @@ router.put('/:id', verifyToken, apiLimiter, async (req, res) => {
     if (rules) community.rules = rules;
     if (tags) community.tags = tags;
     if (settings) community.settings = { ...community.settings, ...settings };
+
+    await community.save();
+
+    res.json({
+      success: true,
+      message: 'Community updated successfully',
+      community
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Failed to update community',
+      error: error.message
+    });
+  }
+});
+
+// @route   PUT /api/communities/:id/assets
+// @desc    Update community icon/banner (and optional text fields) with file uploads
+// @access  Private (Moderator only)
+router.put('/:id/assets', verifyToken, apiLimiter, communityUpload.fields([
+  { name: 'icon', maxCount: 1 },
+  { name: 'banner', maxCount: 1 }
+]), async (req, res) => {
+  try {
+    const community = await Community.findById(req.params.id);
+
+    if (!community) {
+      return res.status(404).json({
+        success: false,
+        message: 'Community not found'
+      });
+    }
+
+    if (!community.isModerator(req.user._id)) {
+      return res.status(403).json({
+        success: false,
+        message: 'Only moderators can update the community'
+      });
+    }
+
+    const { displayName, description } = req.body;
+
+    if (displayName) community.displayName = displayName;
+    if (description) community.description = description;
+
+    if (req.files && req.files.icon && req.files.icon[0]) {
+      const iconFile = req.files.icon[0];
+      community.icon = `/uploads/communities/${iconFile.filename}`;
+    }
+
+    if (req.files && req.files.banner && req.files.banner[0]) {
+      const bannerFile = req.files.banner[0];
+      community.banner = `/uploads/communities/${bannerFile.filename}`;
+    }
 
     await community.save();
 

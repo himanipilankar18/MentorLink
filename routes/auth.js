@@ -123,9 +123,9 @@ router.post('/register',
       });
 
       const html = `
-        <h2>Verify your PingMe account</h2>
+        <h2>Verify your MentorLink account</h2>
         <p>Hello ${name || ''},</p>
-        <p>Thank you for registering on PingMe. Please verify that this is your official SPIT email by entering the OTP below:</p>
+        <p>Thank you for registering on MentorLink. Please verify that this is your official SPIT email by entering the OTP below:</p>
         <h1 style="color: #4F46E5; font-size: 32px; letter-spacing: 5px; font-family: monospace;">${otp}</h1>
         <p><strong>This OTP will expire in 15 minutes.</strong></p>
         <p>If you did not request this, please ignore this email.</p>
@@ -134,7 +134,7 @@ router.post('/register',
       // Send email with better error handling
       console.log(`📧 Sending OTP to ${email.toLowerCase()}, OTP: ${otp}`);
       try {
-        await sendEmail({ to: email.toLowerCase(), subject: 'Verify your PingMe email', html });
+        await sendEmail({ to: email.toLowerCase(), subject: 'Verify your MentorLink email', html });
         console.log(`✅ OTP email sent successfully to ${email.toLowerCase()}`);
       } catch (emailError) {
         console.error(`❌ Failed to send OTP email to ${email.toLowerCase()}:`, emailError);
@@ -501,9 +501,9 @@ router.post('/verify-otp',
 
       // Send welcome email
       const welcomeHtml = `
-        <h2>Welcome to PingMe! 🎉</h2>
+        <h2>Welcome to MentorLink! 🎉</h2>
         <p>Hello ${user.name},</p>
-        <p>Your email has been successfully verified! Welcome to the PingMe community at SPIT.</p>
+        <p>Your email has been successfully verified! Welcome to the MentorLink community at SPIT.</p>
         <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 20px; border-radius: 10px; color: white; margin: 20px 0;">
           <h3 style="margin: 0 0 10px 0; color: white;">What's Next?</h3>
           <ul style="margin: 10px 0; padding-left: 20px;">
@@ -516,12 +516,12 @@ router.post('/verify-otp',
         <p><a href="${process.env.BACKEND_BASE_URL || 'http://localhost:5000'}/profile-setup.html" style="display: inline-block; padding: 12px 24px; background: #667eea; color: white; text-decoration: none; border-radius: 5px; margin: 10px 0;">Complete Your Profile</a></p>
         <p>If you have any questions, feel free to reach out to our support team.</p>
         <hr style="margin: 20px 0; border: none; border-top: 1px solid #e0e0e0;">
-        <p style="color: #666; font-size: 0.9em;">You're receiving this email because you registered for PingMe at SPIT.</p>
+        <p style="color: #666; font-size: 0.9em;">You're receiving this email because you registered for MentorLink at SPIT.</p>
       `;
 
       sendEmail({ 
         to: user.email, 
-        subject: 'Welcome to PingMe! 🎓', 
+        subject: 'Welcome to MentorLink! 🎓', 
         html: welcomeHtml 
       }).catch(console.error);
 

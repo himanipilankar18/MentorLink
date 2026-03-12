@@ -9,13 +9,11 @@ const postSchema = new mongoose.Schema({
   content: {
     type: String,
     required: [true, 'Content is required'],
-    trim: true,
-    maxlength: [2000, 'Content cannot exceed 2000 characters']
+    trim: true
   },
   title: {
     type: String,
-    trim: true,
-    maxlength: [200, 'Title cannot exceed 200 characters']
+    trim: true
   },
   communityId: {
     type: mongoose.Schema.Types.ObjectId,
@@ -40,8 +38,7 @@ const postSchema = new mongoose.Schema({
     content: {
       type: String,
       required: true,
-      trim: true,
-      maxlength: 500
+      trim: true
     },
     createdAt: {
       type: Date,

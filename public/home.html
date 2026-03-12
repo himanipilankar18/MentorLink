@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>News Feed · PingMe</title>
+    <title>News Feed · MentorLink</title>
     <style>
         :root {
             --bg-dark: #0a0a0a;
@@ -388,6 +388,29 @@
 
         .feed-tab:hover { color: var(--text-primary); }
         .feed-tab.active { color: var(--accent-purple); border-bottom-color: var(--accent-purple); }
+
+        .community-tabs {
+            display: inline-flex;
+            gap: 24px;
+            margin-bottom: 20px;
+            border-bottom: 1px solid var(--border-subtle);
+        }
+
+        .community-tab {
+            padding-bottom: 10px;
+            font-weight: 600;
+            font-size: 0.95rem;
+            color: var(--text-secondary);
+            cursor: pointer;
+            border: none;
+            background: transparent;
+            border-bottom: 3px solid transparent;
+            margin-bottom: -1px;
+            transition: all 0.2s;
+        }
+
+        .community-tab:hover { color: var(--text-primary); }
+        .community-tab.active { color: var(--accent-purple); border-bottom-color: var(--accent-purple); }
 
         .post-card {
             background: rgba(10, 10, 10, 0.9);
@@ -873,7 +896,7 @@
 
         .suggestion-item .info { flex: 1; cursor: pointer; }
         .suggestion-item .info .name { font-weight: 600; font-size: 0.95rem; color: var(--text-primary); }
-        .suggestion-item .btn-follow {
+        .btn-follow {
             padding: 8px 16px;
             background: rgba(167, 139, 250, 0.15);
             color: var(--accent-purple);
@@ -885,9 +908,38 @@
             transition: all 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
         }
 
-        .suggestion-item .btn-follow:hover { 
+        .btn-follow:hover { 
             background: rgba(167, 139, 250, 0.25);
             transform: scale(1.02); 
+        }
+
+        .stat-icon {
+            width: 14px;
+            height: 14px;
+            border-radius: 4px;
+            display: inline-block;
+            background: rgba(148, 163, 184, 0.25);
+            position: relative;
+        }
+
+        .stat-icon::before {
+            content: '';
+            position: absolute;
+            inset: 3px;
+            border-radius: 3px;
+            border: 1px solid rgba(148, 163, 184, 0.8);
+        }
+
+        .stat-icon-members {
+            background: radial-gradient(circle at 30% 30%, rgba(96,165,250,0.9), rgba(15,23,42,0.9));
+        }
+
+        .stat-icon-posts {
+            background: linear-gradient(135deg, rgba(251,191,36,0.9), rgba(248,250,252,0.05));
+        }
+
+        .stat-icon-category {
+            background: linear-gradient(135deg, rgba(52,211,153,0.9), rgba(15,23,42,0.9));
         }
 
         .suggestion-item .btn-follow.joined,
@@ -952,7 +1004,7 @@
 <body>
         <header class="app-header">
             <div class="app-header-inner">
-                <div class="app-logo">PingMe</div>
+                <div class="app-logo">MentorLink</div>
             </div>
         </header>
     <div class="app">
@@ -1066,10 +1118,15 @@
                     <h2 style="font-size:1.8rem;color:var(--text-primary);">Communities</h2>
                     <button class="btn-send" id="create-community-btn">Create Community</button>
                 </div>
+                <div style="margin-bottom:24px;display:flex;justify-content:space-between;align-items:flex-end;">
+                    <div class="community-tabs">
+                        <button type="button" class="community-tab active" data-community-tab="joined">Joined</button>
+                        <button type="button" class="community-tab" data-community-tab="discover">Discover</button>
+                    </div>
+                </div>
 
-                <!-- My Communities -->
-                <div style="margin-bottom:32px;">
-                    <h3 style="font-size:1.2rem;margin-bottom:16px;color:var(--text-primary);">My Communities</h3>
+                <!-- Joined (My) Communities -->
+                <div id="joined-communities-section" style="margin-bottom:32px;">
                     <div id="my-communities-container">
                         <div class="loading" style="text-align:center;padding:20px;color:var(--text-secondary);">
                             Loading your communities...
@@ -1077,9 +1134,8 @@
                     </div>
                 </div>
 
-                <!-- All Communities -->
-                <div>
-                    <h3 style="font-size:1.2rem;margin-bottom:16px;color:var(--text-primary);">Discover Communities</h3>
+                <!-- Discover Communities -->
+                <div id="discover-communities-section">
                     <div id="all-communities-container">
                         <div class="loading" style="text-align:center;padding:20px;color:var(--text-secondary);">
                             Loading communities...
@@ -1291,6 +1347,93 @@
         </div>
     </div>
 
+    <!-- Dialog: Community Post (with optional image upload) -->
+    <div id="community-post-modal" class="modal-overlay modal-hidden">
+        <div class="modal-card" style="max-width:640px;">
+            <div class="modal-title">Create post</div>
+            <p class="modal-subtitle">Share something with this community.</p>
+            <div class="form-group">
+                <label for="community-modal-post-title" style="display:block;font-size:0.8rem;color:var(--text-tertiary);margin-bottom:4px;">Title (optional)</label>
+                <input type="text" id="community-modal-post-title" class="modal-input" placeholder="Give your post a title" />
+            </div>
+            <div class="form-group">
+                <label for="community-modal-post-body" style="display:block;font-size:0.8rem;color:var(--text-tertiary);margin-bottom:4px;">Body</label>
+                <textarea id="community-modal-post-body" rows="5" placeholder="Write your post..." style="width:100%;min-height:100px;border-radius:12px;border:1px solid rgba(148,163,184,0.4);background:rgba(15,23,42,0.95);color:var(--text-primary);padding:10px;font-size:0.9rem;resize:vertical;"></textarea>
+            </div>
+            <div class="form-group" style="margin-top:8px;">
+                <label for="community-modal-post-image" style="display:block;font-size:0.8rem;color:var(--text-tertiary);margin-bottom:4px;">Image (optional)</label>
+                <label class="attach-pill" style="margin-top:2px;display:inline-flex;">
+                    Choose image
+                    <input type="file" id="community-modal-post-image" accept="image/*" />
+                </label>
+                <small style="display:block;margin-top:4px;color:var(--text-tertiary);font-size:0.75rem;">Up to 5MB. JPEG, PNG, GIF, WEBP.</small>
+                <div id="community-modal-post-image-preview" style="margin-top:8px;display:none;">
+                    <div style="font-size:0.75rem;color:var(--text-tertiary);margin-bottom:4px;">Preview</div>
+                    <div style="border-radius:12px;overflow:hidden;border:1px solid rgba(148,163,184,0.4);max-height:260px;">
+                        <img id="community-modal-post-image-preview-img" src="" alt="Selected image preview" style="width:100%;display:block;object-fit:cover;" />
+                    </div>
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button type="button" class="btn-ghost" data-close-modal="community-post-modal">Cancel</button>
+                <button type="button" id="community-modal-post-submit" class="btn-send" style="padding:8px 18px;font-size:0.85rem;">Post</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Dialog: Edit Community (upload icon & banner, no URLs) -->
+    <div id="community-edit-modal" class="modal-overlay modal-hidden">
+        <div class="modal-card" style="max-width:640px;">
+            <div class="modal-title">Edit community</div>
+            <p class="modal-subtitle">Update how your community looks and what it says.</p>
+
+            <div class="form-group">
+                <label for="community-edit-modal-displayName" style="display:block;font-size:0.8rem;color:var(--text-tertiary);margin-bottom:4px;">Display name</label>
+                <input type="text" id="community-edit-modal-displayName" class="modal-input" placeholder="Community display name" />
+            </div>
+
+            <div class="form-group">
+                <label for="community-edit-modal-description" style="display:block;font-size:0.8rem;color:var(--text-tertiary);margin-bottom:4px;">Description</label>
+                <textarea id="community-edit-modal-description" rows="4" placeholder="Describe your community" style="width:100%;min-height:80px;border-radius:12px;border:1px solid rgba(148,163,184,0.4);background:rgba(15,23,42,0.95);color:var(--text-primary);padding:10px;font-size:0.9rem;resize:vertical;"></textarea>
+            </div>
+
+            <div class="form-group" style="margin-top:8px;">
+                <label for="community-edit-modal-banner" style="display:block;font-size:0.8rem;color:var(--text-tertiary);margin-bottom:4px;">Banner image (optional)</label>
+                <label class="attach-pill" style="margin-top:2px;display:inline-flex;">
+                    Choose banner image
+                    <input type="file" id="community-edit-modal-banner" accept="image/*" />
+                </label>
+                <small style="display:block;margin-top:4px;color:var(--text-tertiary);font-size:0.75rem;">Up to 5MB. JPEG, PNG, GIF, WEBP.</small>
+            </div>
+
+            <div class="form-group" style="margin-top:8px;">
+                <label for="community-edit-modal-icon" style="display:block;font-size:0.8rem;color:var(--text-tertiary);margin-bottom:4px;">Avatar image (optional)</label>
+                <label class="attach-pill" style="margin-top:2px;display:inline-flex;">
+                    Choose avatar image
+                    <input type="file" id="community-edit-modal-icon" accept="image/*" />
+                </label>
+                <small style="display:block;margin-top:4px;color:var(--text-tertiary);font-size:0.75rem;">Up to 5MB. JPEG, PNG, GIF, WEBP.</small>
+            </div>
+
+            <div class="modal-actions">
+                <button type="button" class="btn-ghost" data-close-modal="community-edit-modal">Cancel</button>
+                <button type="button" id="community-edit-modal-save" class="btn-send" style="padding:8px 18px;font-size:0.85rem;">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Dialog: Delete Post Confirmation -->
+    <div id="post-delete-modal" class="modal-overlay modal-hidden">
+        <div class="modal-card" style="max-width:420px;">
+            <div class="modal-title">Delete post</div>
+            <p id="post-delete-message" class="modal-subtitle">Are you sure you want to delete this post? This action cannot be undone.</p>
+            <div class="modal-actions">
+                <button type="button" id="post-delete-cancel" class="btn-ghost" data-close-modal="post-delete-modal">Cancel</button>
+                <button type="button" id="post-delete-confirm" class="btn-send" style="background:#ef4444;border-color:#ef4444;">Delete</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Dialog: Group Created (shows join code) -->
     <div id="group-created-modal" class="modal-overlay modal-hidden">
         <div class="modal-card" style="max-width:440px;">
@@ -1347,6 +1490,7 @@
         let currentChatGroupId = null;
         let chatPollIntervalId = null;
         let chatGroups = [];
+        let activeCommunityForPost = null;
 
         // Initialize custom dropdowns backed by hidden native selects
         function rebuildCustomDropdown(selectId) {
@@ -1492,7 +1636,7 @@
                                 <div class="time">${timeAgo(post.createdAt)}</div>
                             </div>
                         </div>
-                        <div class="post-options">⋯</div>
+                        <div class="post-options" data-post-id="${post._id}">⋯</div>
                     </div>
                     <div class="post-content">${post.content}</div>
                     ${imageHtml}
@@ -1558,6 +1702,16 @@
                                 const postId = this.dataset.postId;
                                 submitComment(postId, this);
                             }
+                        });
+                    });
+
+                    // Add options (three-dots) listeners for delete
+                    document.querySelectorAll('.post-options').forEach(el => {
+                        el.addEventListener('click', function (e) {
+                            e.stopPropagation();
+                            const postId = this.dataset.postId;
+                            if (!postId) return;
+                            openPostDeleteModal(postId, 'feed');
                         });
                     });
                 } else {
@@ -1771,36 +1925,137 @@
             }
         }
 
+        const NAV_STATE_KEY = 'mentorlink_last_view';
+
+        function saveNavState(view, extra) {
+            const state = Object.assign({ view }, extra || {});
+            try {
+                localStorage.setItem(NAV_STATE_KEY, JSON.stringify(state));
+            } catch (e) {
+                console.warn('Failed to save nav state', e);
+            }
+            return state;
+        }
+
+        function getSavedNavState() {
+            try {
+                const raw = localStorage.getItem(NAV_STATE_KEY);
+                if (!raw) return null;
+                return JSON.parse(raw);
+            } catch (e) {
+                console.warn('Failed to read nav state', e);
+                return null;
+            }
+        }
+
+        function applyView(view, extra) {
+            switch (view) {
+                case 'feed':
+                    showFeedView();
+                    break;
+                case 'communities':
+                    showCommunitiesView();
+                    break;
+                case 'profile':
+                    showProfileView();
+                    break;
+                case 'messages':
+                    showMessagesView();
+                    break;
+                case 'forums':
+                    showForumsView();
+                    break;
+                case 'friends':
+                    showFriendsView();
+                    break;
+                case 'media':
+                    showMediaView();
+                    break;
+                case 'settings':
+                    showSettingsView();
+                    break;
+                case 'communityDetail':
+                    if (extra && extra.communityId) {
+                        viewCommunityDetail(extra.communityId);
+                    } else {
+                        showCommunitiesView();
+                    }
+                    break;
+                default:
+                    showFeedView();
+            }
+        }
+
+        function navigateTo(view, extra, options) {
+            const fromPopState = options && options.fromPopState;
+            const replace = options && options.replace;
+
+            if (!fromPopState && window.history && window.history.pushState) {
+                const state = Object.assign({ view }, extra || {});
+                const method = replace ? 'replaceState' : 'pushState';
+                let hash = '#' + view;
+                if (view === 'communityDetail' && extra && extra.communityId) {
+                    hash = '#community:' + extra.communityId;
+                }
+
+                try {
+                    window.history[method](state, '', hash);
+                } catch (e) {
+                    console.warn('Failed to update history state', e);
+                }
+            }
+
+            applyView(view, extra || {});
+        }
+
+        function navigateToCommunity(communityId) {
+            if (!communityId) return;
+            navigateTo('communityDetail', { communityId });
+        }
+
         function showFeedView() {
             hideAllViews();
             document.getElementById('feed-view').style.display = 'block';
+            const rightSidebar = document.querySelector('.right-sidebar');
+            if (rightSidebar) rightSidebar.style.display = 'block';
             resetNavActive('feed');
             loadPosts();
+            saveNavState('feed');
         }
 
         function showCommunitiesView() {
             hideAllViews();
             document.getElementById('communities-view').style.display = 'block';
+            const rightSidebar = document.querySelector('.right-sidebar');
+            if (rightSidebar) rightSidebar.style.display = 'block';
             resetNavActive('communities');
             loadAllCommunities();
             loadMyCommunities();
+            saveNavState('communities');
+            initCommunityTabs();
         }
 
         function showProfileView() {
             hideAllViews();
             document.getElementById('profile-view').style.display = 'block';
+            const rightSidebar = document.querySelector('.right-sidebar');
+            if (rightSidebar) rightSidebar.style.display = 'block';
             resetNavActive('profile');
             loadUserProfile();
+            saveNavState('profile');
         }
 
         function showMessagesView() {
             hideAllViews();
             document.getElementById('messages-view').style.display = 'block';
+            const rightSidebar = document.querySelector('.right-sidebar');
+            if (rightSidebar) rightSidebar.style.display = 'block';
             resetNavActive('messages');
             if (!messagesViewInitialized) {
                 initMessagesView();
                 messagesViewInitialized = true;
             }
+            saveNavState('messages');
         }
 
         // --- Group Chat (Messages View) ---
@@ -1859,7 +2114,7 @@
                 });
 
             // Click outside card closes modal
-            ['create-group-modal', 'join-group-modal'].forEach((id) => {
+            ['create-group-modal', 'join-group-modal', 'create-community-modal', 'group-created-modal', 'community-post-modal'].forEach((id) => {
                 const overlay = document.getElementById(id);
                 if (!overlay) return;
                 overlay.addEventListener('click', (e) => {
@@ -2255,25 +2510,110 @@
         function showForumsView() {
             hideAllViews();
             document.getElementById('forums-view').style.display = 'block';
+            const rightSidebar = document.querySelector('.right-sidebar');
+            if (rightSidebar) rightSidebar.style.display = 'block';
             resetNavActive('forums');
+            saveNavState('forums');
         }
 
         function showFriendsView() {
             hideAllViews();
             document.getElementById('friends-view').style.display = 'block';
+            const rightSidebar = document.querySelector('.right-sidebar');
+            if (rightSidebar) rightSidebar.style.display = 'block';
             resetNavActive('friends');
+            saveNavState('friends');
         }
 
         function showMediaView() {
             hideAllViews();
             document.getElementById('media-view').style.display = 'block';
+            const rightSidebar = document.querySelector('.right-sidebar');
+            if (rightSidebar) rightSidebar.style.display = 'block';
             resetNavActive('media');
+            saveNavState('media');
         }
 
         function showSettingsView() {
             hideAllViews();
             document.getElementById('settings-view').style.display = 'block';
+            const rightSidebar = document.querySelector('.right-sidebar');
+            if (rightSidebar) rightSidebar.style.display = 'block';
             resetNavActive('settings');
+            saveNavState('settings');
+        }
+
+        function initCommunityTabs() {
+            const tabs = document.querySelectorAll('.community-tab');
+            if (!tabs || !tabs.length) return;
+
+            const joinedSection = document.getElementById('joined-communities-section');
+            const discoverSection = document.getElementById('discover-communities-section');
+
+            tabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    const target = tab.getAttribute('data-community-tab');
+
+                    tabs.forEach(t => t.classList.remove('active'));
+                    tab.classList.add('active');
+
+                    if (target === 'discover') {
+                        if (joinedSection) joinedSection.style.display = 'none';
+                        if (discoverSection) discoverSection.style.display = 'block';
+                    } else {
+                        if (joinedSection) joinedSection.style.display = 'block';
+                        if (discoverSection) discoverSection.style.display = 'none';
+                    }
+                });
+            });
+
+            // Default state: show joined, hide discover
+            if (joinedSection) joinedSection.style.display = 'block';
+            if (discoverSection) discoverSection.style.display = 'none';
+        }
+
+        // Helper: safely truncate long text for previews
+        function truncateText(text, maxLength) {
+            if (!text) return '';
+            const clean = String(text).trim();
+            if (clean.length <= maxLength) return clean;
+
+            const truncated = clean.slice(0, maxLength);
+            const lastSpace = truncated.lastIndexOf(' ');
+            const safeCut = lastSpace > 40 ? truncated.slice(0, lastSpace) : truncated;
+            return safeCut.trim() + '...';
+        }
+
+        // Helper: escape HTML entities to avoid injecting markup
+        function escapeHtml(str) {
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
+        // Helper: format community description as bullet points when there
+        // are multiple lines; otherwise keep it as a single paragraph.
+        function formatCommunityDescription(text) {
+            if (!text) {
+                return '<p style="margin:0;">No description yet</p>';
+            }
+
+            const raw = String(text).trim();
+            const lines = raw.split(/\r?\n/).map(line => line.trim()).filter(Boolean);
+
+            if (lines.length <= 1) {
+                return `<p style="margin:0;">${escapeHtml(raw)}</p>`;
+            }
+
+            const items = lines.map(line => {
+                const cleaned = line.replace(/^[-•\u2022]\s*/, '');
+                return `<li>${escapeHtml(cleaned)}</li>`;
+            }).join('');
+
+            return `<ul style="margin:0;padding-left:1.1rem;list-style:disc;">${items}</ul>`;
         }
 
         // Load all communities
@@ -2288,19 +2628,28 @@
                 
                 if (data.success && data.communities && data.communities.length > 0) {
                     container.innerHTML = data.communities.map(community => `
-                        <div class="post-card" style="margin-bottom:16px;">
+                        <div class="post-card" style="margin-bottom:16px;cursor:pointer;" onclick="navigateToCommunity('${community._id}')">
                             <div style="display:flex;justify-content:space-between;align-items:start;">
                                 <div>
                                     <h3 style="font-size:1.2rem;margin-bottom:8px;">◐ ${community.displayName}</h3>
-                                    <p style="color:var(--text-secondary);font-size:0.9rem;margin-bottom:12px;">${community.description}</p>
+                                    <p style="color:var(--text-secondary);font-size:0.9rem;margin-bottom:12px;">${truncateText(community.description || 'No description yet', 160)}</p>
                                     <div style="display:flex;gap:16px;font-size:0.85rem;color:var(--text-secondary);">
-                                        <span>👥 ${community.memberCount || 0} members</span>
-                                        <span>📝 ${community.postCount || 0} posts</span>
-                                        <span>📂 ${community.category}</span>
+                                        <span style="display:flex;align-items:center;gap:4px;">
+                                            <span class="stat-icon stat-icon-members"></span>
+                                            <span>${community.memberCount || 0} members</span>
+                                        </span>
+                                        <span style="display:flex;align-items:center;gap:4px;">
+                                            <span class="stat-icon stat-icon-posts"></span>
+                                            <span>${community.postCount || 0} posts</span>
+                                        </span>
+                                        <span style="display:flex;align-items:center;gap:4px;">
+                                            <span class="stat-icon stat-icon-category"></span>
+                                            <span>${community.category}</span>
+                                        </span>
                                     </div>
                                 </div>
                                 <button class="btn-follow ${community.isMember ? 'joined' : ''}" 
-                                        onclick="toggleCommunityMembership('${community._id}', ${community.isMember})"
+                                    onclick="event.stopPropagation(); toggleCommunityMembership('${community._id}')"
                                         id="community-btn-${community._id}">
                                     ${community.isMember ? 'Joined' : 'Join'}
                                 </button>
@@ -2330,7 +2679,7 @@
                 if (data.success && data.communities && data.communities.length > 0) {
                     container.innerHTML = data.communities.map(community => `
                         <div class="post-card" style="margin-bottom:16px;cursor:pointer;" 
-                             onclick="viewCommunityDetail('${community._id}')">
+                             onclick="navigateToCommunity('${community._id}')">
                             <h3 style="font-size:1.1rem;margin-bottom:8px;">◐ ${community.displayName}</h3>
                             <p style="color:var(--text-secondary);font-size:0.85rem;">${community.memberCount || 0} members • ${community.postCount || 0} posts</p>
                         </div>
@@ -2344,8 +2693,14 @@
         }
 
         // Toggle community membership
-        async function toggleCommunityMembership(communityId, isMember) {
+        async function toggleCommunityMembership(communityId) {
             try {
+                const btn = document.getElementById(`community-btn-${communityId}`);
+                const detailBtn = document.getElementById(`community-detail-btn-${communityId}`);
+
+                const isMember = (btn && btn.classList.contains('joined')) ||
+                                 (detailBtn && detailBtn.classList.contains('joined'));
+
                 const endpoint = isMember ? 'leave' : 'join';
                 const response = await fetch(API_BASE + `/communities/${communityId}/${endpoint}`, {
                     method: 'POST',
@@ -2354,13 +2709,11 @@
                 const data = await response.json();
                 
                 if (data.success) {
-                    const btn = document.getElementById(`community-btn-${communityId}`);
                     if (btn) {
                         btn.textContent = isMember ? 'Join' : 'Joined';
                         btn.classList.toggle('joined');
                     }
 
-                    const detailBtn = document.getElementById(`community-detail-btn-${communityId}`);
                     if (detailBtn) {
                         detailBtn.textContent = isMember ? 'Join' : 'Joined';
                         detailBtn.classList.toggle('joined');
@@ -2397,6 +2750,16 @@
                             toggleLike(postId, this);
                         });
                     });
+
+                    // Three-dots delete for posts in this community
+                    document.querySelectorAll('.post-options').forEach(el => {
+                        el.addEventListener('click', function (e) {
+                            e.stopPropagation();
+                            const postId = this.dataset.postId;
+                            if (!postId) return;
+                            openPostDeleteModal(postId, 'community', communityId);
+                        });
+                    });
                 } else {
                     postsContainer.innerHTML = '<p style="text-align:center;color:var(--text-secondary);">No posts in this community yet</p>';
                 }
@@ -2409,7 +2772,106 @@
             }
         }
 
-        // View community detail with header and create-post box
+        // Community admin helpers
+        let currentCommunityDetail = null;
+
+        function openCommunityEditModal() {
+            if (!currentCommunityDetail) return;
+
+            const c = currentCommunityDetail;
+            const nameInput = document.getElementById('community-edit-modal-displayName');
+            const descInput = document.getElementById('community-edit-modal-description');
+            const bannerInput = document.getElementById('community-edit-modal-banner');
+            const iconInput = document.getElementById('community-edit-modal-icon');
+
+            if (nameInput) nameInput.value = c.displayName || '';
+            if (descInput) descInput.value = c.description || '';
+            if (bannerInput) bannerInput.value = '';
+            if (iconInput) iconInput.value = '';
+
+            openModal('community-edit-modal', nameInput);
+        }
+
+        async function saveCommunityEdits(communityId) {
+            const nameInput = document.getElementById('community-edit-displayName');
+            const descInput = document.getElementById('community-edit-description');
+            const iconInput = document.getElementById('community-edit-icon');
+            const bannerInput = document.getElementById('community-edit-banner');
+
+            if (!nameInput || !descInput) return;
+
+            const payload = {
+                displayName: nameInput.value.trim(),
+                description: descInput.value.trim(),
+                icon: iconInput ? iconInput.value.trim() : '',
+                banner: bannerInput ? bannerInput.value.trim() : ''
+            };
+
+            try {
+                const response = await fetch(API_BASE + `/communities/${communityId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': 'Bearer ' + token,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                const data = await response.json();
+                if (!data.success) {
+                    alert(data.message || 'Failed to update community');
+                    return;
+                }
+
+                // Refresh detail view with updated data
+                await viewCommunityDetail(communityId);
+            } catch (error) {
+                console.error('Error updating community:', error);
+                alert('Failed to update community');
+            }
+        }
+
+        function toggleCommunityEditPanel() {
+            openCommunityEditModal();
+        }
+
+        async function promoteToModerator(communityId, userId) {
+            try {
+                const response = await fetch(API_BASE + `/communities/${communityId}/moderators/${userId}`, {
+                    method: 'POST',
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+                const data = await response.json();
+                if (!data.success) {
+                    alert(data.message || 'Failed to promote moderator');
+                    return;
+                }
+                await viewCommunityDetail(communityId);
+            } catch (error) {
+                console.error('Error promoting moderator:', error);
+                alert('Failed to promote moderator');
+            }
+        }
+
+        async function removeModerator(communityId, userId) {
+            try {
+                const response = await fetch(API_BASE + `/communities/${communityId}/moderators/${userId}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+                const data = await response.json();
+                if (!data.success) {
+                    alert(data.message || 'Failed to remove moderator');
+                    return;
+                }
+                await viewCommunityDetail(communityId);
+            } catch (error) {
+                console.error('Error removing moderator:', error);
+                alert('Failed to remove moderator');
+            }
+        }
+
+        // View community detail with header
         async function viewCommunityDetail(communityId) {
             try {
                 const response = await fetch(API_BASE + `/communities/${communityId}`, {
@@ -2423,62 +2885,199 @@
                 }
 
                 const community = data.community;
-
-                document.getElementById('communities-view').style.display = 'none';
-                document.getElementById('community-detail-view').style.display = 'block';
+                currentCommunityDetail = community;
+                hideAllViews();
+                const communitiesView = document.getElementById('communities-view');
+                const detailView = document.getElementById('community-detail-view');
+                const rightSidebar = document.querySelector('.right-sidebar');
+                if (detailView) {
+                    detailView.style.display = 'block';
+                }
+                if (rightSidebar) {
+                    rightSidebar.style.display = 'none';
+                }
+                resetNavActive('communities');
+                saveNavState('communityDetail', { communityId: community._id });
 
                 const container = document.getElementById('community-detail-content');
                 const memberCount = (community.members && community.members.length) || community.memberCount || 0;
                 const description = community.description || 'No description yet';
+                const descriptionHtml = formatCommunityDescription(description);
                 const initials = community.displayName 
                     ? community.displayName.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase() 
                     : 'C';
 
-                container.innerHTML = `
-                    <div class="post-card" style="margin-bottom:20px;">
-                        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:16px;">
-                            <div style="display:flex;gap:16px;align-items:flex-start;">
-                                <div class="avatar" style="width:56px;height:56px;font-size:1.4rem;display:flex;align-items:center;justify-content:center;">
-                                    ${initials}
-                                </div>
-                                <div>
-                                    <h2 style="font-size:1.5rem;margin-bottom:4px;">${community.displayName}</h2>
-                                    <p style="color:var(--text-secondary);font-size:0.9rem;margin-bottom:4px;">r/${community.name}</p>
-                                    <p style="color:var(--text-secondary);font-size:0.9rem;margin-bottom:8px;">${description}</p>
-                                    <div style="display:flex;gap:12px;font-size:0.8rem;color:var(--text-tertiary);">
-                                        <span>👥 ${memberCount} members</span>
-                                        <span>📂 ${community.category || 'General'}</span>
-                                    </div>
-                                </div>
-                            </div>
+                const avatarStyleExtra = community.icon
+                    ? `background-image:url(${community.icon});background-size:cover;background-position:center;`
+                    : '';
+
+                const isCreator = !!community.isCreator;
+                const isModerator = !!community.isModerator;
+
+                const moderators = (community.moderators || []).map(mod => ({
+                    id: mod._id || mod.id || mod,
+                    name: mod.name || 'Moderator',
+                    avatar: mod.profilePicture || ''
+                }));
+
+                const creatorId = community.creatorId && (community.creatorId._id || community.creatorId.id || community.creatorId.toString());
+
+                const members = (community.members || []).map(m => ({
+                    id: m.userId && (m.userId._id || m.userId.id || m.userId.toString()),
+                    name: m.userId && m.userId.name ? m.userId.name : 'Member',
+                    avatar: m.userId && m.userId.profilePicture ? m.userId.profilePicture : '',
+                    role: m.role || 'member'
+                }));
+
+                const nonModeratorMembers = members
+                    .filter(m => m.id && m.id !== creatorId && !moderators.some(mod => String(mod.id) === String(m.id)))
+                    .slice(0, 5);
+
+                const joinButtonHtml = `
                             <button 
                                 class="btn-follow ${community.isMember ? 'joined' : ''}" 
                                 id="community-detail-btn-${community._id}"
-                                onclick="toggleCommunityMembership('${community._id}', ${community.isMember})">
+                                onclick="toggleCommunityMembership('${community._id}')">
                                 ${community.isMember ? 'Joined' : 'Join'}
-                            </button>
-                        </div>
-                    </div>
+                            </button>`;
 
-                    ${community.isMember ? `
-                    <div class="post-card" style="margin-bottom:20px;">
-                        <div style="display:flex;align-items:flex-start;gap:12px;">
-                            <div class="avatar" style="width:40px;height:40px;font-size:1rem;">
-                                ${currentUser ? getInitials(currentUser.name) : 'U'}
+                const createPostButtonHtml = community.isMember
+                    ? `<button type="button" class="btn-send" style="padding:8px 18px;font-size:0.85rem;" onclick="openCommunityPostModal('${community._id}')">+ Create post</button>`
+                    : '';
+
+                const actionButtonsHtml = `<div style="display:flex;gap:8px;align-items:center;">${joinButtonHtml}${createPostButtonHtml}</div>`;
+
+                const bannerStyle = community.banner
+                    ? `height:140px;margin:-16px -16px 16px -16px;background-image:url(${community.banner});background-size:cover;background-position:center;`
+                    : 'height:140px;margin:-16px -16px 16px -16px;background:linear-gradient(90deg, rgba(167,139,250,0.5), rgba(56,189,248,0.2));';
+
+                const moderatorsListHtml = moderators.length
+                    ? moderators.map(mod => `
+                            <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
+                                <div style="display:flex;align-items:center;gap:8px;">
+                                    <div class="avatar" style="width:28px;height:28px;font-size:0.75rem;${mod.avatar ? `background-image:url(${mod.avatar});background-size:cover;background-position:center;` : ''}">
+                                        ${mod.avatar ? '' : (mod.name ? getInitials(mod.name) : 'M')}
+                                    </div>
+                                    <span style="font-size:0.85rem;">${mod.name}</span>
+                                </div>
+                                ${isCreator && String(mod.id) !== String(creatorId)
+                                    ? `<button type="button" class="btn-send" style="padding:4px 8px;font-size:0.7rem;" onclick="removeModerator('${community._id}', '${mod.id}')">Remove</button>`
+                                    : ''}
                             </div>
-                            <div style="flex:1;">
-                                <input id="community-post-title" class="modal-input" type="text" placeholder="Post title (optional)" style="margin-bottom:8px;" />
-                                <textarea id="community-post-body" placeholder="Create a post for this community" style="width:100%;min-height:80px;border-radius:12px;border:1px solid rgba(148,163,184,0.4);background:rgba(15,23,42,0.9);color:var(--text-primary);padding:10px;font-size:0.9rem;resize:vertical;"></textarea>
-                                <div style="display:flex;justify-content:flex-end;margin-top:8px;">
-                                    <button type="button" class="btn-send" style="padding:8px 18px;font-size:0.85rem;" onclick="createCommunityPost('${community._id}')">Post</button>
+                        `).join('')
+                    : '<p style="color:var(--text-secondary);font-size:0.85rem;">No moderators yet</p>';
+
+                const promoteCandidatesHtml = isCreator && nonModeratorMembers.length
+                    ? `
+                        <div style="margin-top:12px;">
+                            <p style="color:var(--text-tertiary);font-size:0.8rem;margin-bottom:6px;">Make a member moderator</p>
+                            <div style="display:flex;flex-direction:column;gap:6px;">
+                                ${nonModeratorMembers.map(m => `
+                                    <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
+                                        <div style="display:flex;align-items:center;gap:8px;">
+                                            <div class="avatar" style="width:24px;height:24px;font-size:0.7rem;${m.avatar ? `background-image:url(${m.avatar});background-size:cover;background-position:center;` : ''}">
+                                                ${m.avatar ? '' : (m.name ? getInitials(m.name) : 'U')}
+                                            </div>
+                                            <span style="font-size:0.8rem;">${m.name}</span>
+                                        </div>
+                                        <button type="button" class="btn-send" style="padding:4px 10px;font-size:0.7rem;" onclick="promoteToModerator('${community._id}', '${m.id}')">Make moderator</button>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>`
+                    : '';
+
+                const aboutCardEditControls = (isCreator || isModerator)
+                    ? `<button id="community-edit-toggle-btn" type="button" class="btn-send" style="padding:4px 10px;font-size:0.75rem;">Edit</button>`
+                    : '';
+
+                const aboutCardEditPanel = (isCreator || isModerator)
+                    ? `
+                        <div id="community-edit-panel" style="margin-top:12px;display:none;border-top:1px solid rgba(148,163,184,0.3);padding-top:12px;">
+                            <div style="display:flex;flex-direction:column;gap:8px;">
+                                <div>
+                                    <label style="display:block;font-size:0.75rem;color:var(--text-tertiary);margin-bottom:4px;">Display name</label>
+                                    <input id="community-edit-displayName" class="modal-input" type="text" />
+                                </div>
+                                <div>
+                                    <label style="display:block;font-size:0.75rem;color:var(--text-tertiary);margin-bottom:4px;">Description</label>
+                                    <textarea id="community-edit-description" rows="4" style="width:100%;border-radius:8px;border:1px solid rgba(148,163,184,0.4);background:rgba(15,23,42,0.9);color:var(--text-primary);padding:8px;font-size:0.85rem;resize:vertical;"></textarea>
+                                </div>
+                                <div>
+                                    <label style="display:block;font-size:0.75rem;color:var(--text-tertiary);margin-bottom:4px;">Banner image URL</label>
+                                    <input id="community-edit-banner" class="modal-input" type="text" />
+                                </div>
+                                <div>
+                                    <label style="display:block;font-size:0.75rem;color:var(--text-tertiary);margin-bottom:4px;">Avatar image URL</label>
+                                    <input id="community-edit-icon" class="modal-input" type="text" />
+                                </div>
+                                <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:4px;">
+                                    <button type="button" class="btn-send" style="padding:6px 14px;font-size:0.8rem;background:transparent;border:1px solid rgba(148,163,184,0.6);color:var(--text-secondary);" onclick="toggleCommunityEditPanel(false)">Cancel</button>
+                                    <button type="button" class="btn-send" style="padding:6px 14px;font-size:0.8rem;" onclick="saveCommunityEdits('${community._id}')">Save</button>
                                 </div>
                             </div>
+                        </div>`
+                    : '';
+
+                container.innerHTML = `
+                    <div class="post-card" style="margin-bottom:20px;overflow:hidden;">
+                        <div style="${bannerStyle}"></div>
+                        <div style="padding-bottom:4px;display:flex;align-items:flex-end;gap:16px;justify-content:space-between;">
+                            <div style="display:flex;align-items:flex-end;gap:12px;">
+                                <div class="avatar" style="width:64px;height:64px;font-size:1.6rem;display:flex;align-items:center;justify-content:center;${avatarStyleExtra}">
+                                    ${community.icon ? '' : initials}
+                                </div>
+                                <div>
+                                    <h1 style="font-size:1.6rem;margin-bottom:2px;">${community.displayName}</h1>
+                                    <p style="color:var(--text-secondary);font-size:0.9rem;">c/${community.name}</p>
+                                </div>
+                            </div>
+                            ${actionButtonsHtml}
                         </div>
                     </div>
-                    ` : ''}
 
-                    <div id="community-posts-container"></div>
+                    <div style="display:flex;gap:20px;align-items:flex-start;">
+                        <div style="flex:2;min-width:0;display:flex;flex-direction:column;gap:16px;">
+                            <div class="post-card" style="margin-bottom:4px;">
+                                <div style="color:var(--text-secondary);font-size:0.9rem;margin-bottom:8px;">${descriptionHtml}</div>
+                                <div style="display:flex;gap:12px;font-size:0.8rem;color:var(--text-tertiary);margin-top:4px;">
+                                    <span>👥 ${memberCount} members</span>
+                                    <span>📂 ${community.category || 'General'}</span>
+                                </div>
+                            </div>
+
+                            <div id="community-posts-container"></div>
+                        </div>
+
+                        <div style="flex:1;min-width:260px;display:flex;flex-direction:column;gap:12px;">
+                            <div class="post-card" style="padding:16px;">
+                                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+                                    <h3 style="font-size:1rem;">About community</h3>
+                                    ${aboutCardEditControls}
+                                </div>
+                                <p style="color:var(--text-secondary);font-size:0.85rem;margin-bottom:6px;">Created ${community.createdAt ? new Date(community.createdAt).toLocaleDateString() : ''}</p>
+                                <p style="color:var(--text-secondary);font-size:0.85rem;margin-bottom:6px;">Type: ${community.type || 'public'}</p>
+                                <p style="color:var(--text-secondary);font-size:0.85rem;margin-bottom:6px;">Category: ${community.category || 'General'}</p>
+                                ${aboutCardEditPanel}
+                            </div>
+
+                            <div class="post-card" style="padding:16px;">
+                                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+                                    <h3 style="font-size:1rem;">Moderators</h3>
+                                </div>
+                                <div style="display:flex;flex-direction:column;gap:8px;">
+                                    ${moderatorsListHtml}
+                                </div>
+                                ${promoteCandidatesHtml}
+                            </div>
+                        </div>
+                    </div>
                 `;
+
+                const editToggleBtn = document.getElementById('community-edit-toggle-btn');
+                if (editToggleBtn && (isCreator || isModerator)) {
+                    editToggleBtn.addEventListener('click', () => toggleCommunityEditPanel());
+                }
 
                 await loadCommunityPosts(communityId);
             } catch (error) {
@@ -2486,48 +3085,155 @@
             }
         }
 
-        // Create post inside a community detail view
-        async function createCommunityPost(communityId) {
-            const titleInput = document.getElementById('community-post-title');
-            const bodyInput = document.getElementById('community-post-body');
+        function openCommunityPostModal(communityId) {
+            activeCommunityForPost = communityId;
+
+            const titleInput = document.getElementById('community-modal-post-title');
+            const bodyInput = document.getElementById('community-modal-post-body');
+            const fileInput = document.getElementById('community-modal-post-image');
+            const previewWrapper = document.getElementById('community-modal-post-image-preview');
+            const previewImg = document.getElementById('community-modal-post-image-preview-img');
+
+            if (titleInput) titleInput.value = '';
+            if (bodyInput) bodyInput.value = '';
+            if (fileInput) fileInput.value = '';
+            if (previewWrapper) previewWrapper.style.display = 'none';
+            if (previewImg) previewImg.src = '';
+
+            openModal('community-post-modal', titleInput);
+        }
+
+        function updateCommunityPostImagePreview() {
+            const fileInput = document.getElementById('community-modal-post-image');
+            const previewWrapper = document.getElementById('community-modal-post-image-preview');
+            const previewImg = document.getElementById('community-modal-post-image-preview-img');
+
+            if (!previewWrapper || !previewImg) return;
+
+            if (!fileInput || !fileInput.files || !fileInput.files[0]) {
+                previewWrapper.style.display = 'none';
+                previewImg.src = '';
+                return;
+            }
+
+            const file = fileInput.files[0];
+            const url = URL.createObjectURL(file);
+            previewImg.src = url;
+            previewWrapper.style.display = 'block';
+        }
+
+        async function submitCommunityPostFromModal() {
+            if (!activeCommunityForPost) {
+                alert('Something went wrong. Please reopen the community and try again.');
+                return;
+            }
+
+            const titleInput = document.getElementById('community-modal-post-title');
+            const bodyInput = document.getElementById('community-modal-post-body');
+            const fileInput = document.getElementById('community-modal-post-image');
+
             if (!bodyInput) return;
 
             const title = titleInput ? titleInput.value.trim() : '';
             const content = bodyInput.value.trim();
+            const hasImage = fileInput && fileInput.files && fileInput.files[0];
 
-            if (!content) {
-                alert('Please enter some content');
+            if (!content && !hasImage) {
+                alert('Please add some text or select an image for your post.');
+                return;
+            }
+
+            const authToken = localStorage.getItem('mentorlink_token');
+            if (!authToken) {
+                alert('You must be logged in to create a post.');
                 return;
             }
 
             try {
-                const postData = { content, visibility: 'public', communityId };
-                if (title) postData.title = title;
+                const payload = {
+                    content: content || '',
+                    visibility: 'public',
+                    communityId: activeCommunityForPost
+                };
+                if (title) {
+                    payload.title = title;
+                }
+
+                if (hasImage) {
+                    const uploadData = new FormData();
+                    uploadData.append('image', fileInput.files[0]);
+
+                    const uploadResponse = await fetch(API_BASE + '/posts/upload-image', {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': 'Bearer ' + authToken
+                        },
+                        body: uploadData
+                    });
+
+                    const uploadJson = await uploadResponse.json();
+                    if (!uploadResponse.ok || !uploadJson.success) {
+                        throw new Error(uploadJson.message || 'Failed to upload image');
+                    }
+
+                    if (uploadJson.imageUrl) {
+                        payload.imageUrl = uploadJson.imageUrl;
+                    }
+                }
 
                 const response = await fetch(API_BASE + '/posts', {
                     method: 'POST',
                     headers: {
-                        'Authorization': 'Bearer ' + token,
-                        'Content-Type': 'application/json'
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + authToken
                     },
-                    body: JSON.stringify(postData)
+                    body: JSON.stringify(payload)
                 });
 
                 const data = await response.json();
 
-                if (data.success) {
-                    if (titleInput) titleInput.value = '';
-                    bodyInput.value = '';
-                    await loadCommunityPosts(communityId);
-                    loadAllCommunities();
-                    loadMyCommunities();
-                } else {
-                    alert(data.message || 'Failed to create post');
+                if (!response.ok || !data.success) {
+                    throw new Error(data.message || 'Failed to create post');
                 }
+
+                // Clear and close modal
+                if (titleInput) titleInput.value = '';
+                if (bodyInput) bodyInput.value = '';
+                if (fileInput) fileInput.value = '';
+                const previewWrapper = document.getElementById('community-modal-post-image-preview');
+                const previewImg = document.getElementById('community-modal-post-image-preview-img');
+                if (previewWrapper) previewWrapper.style.display = 'none';
+                if (previewImg) previewImg.src = '';
+
+                closeModal('community-post-modal');
+
+                const communityId = (data.post && data.post.communityId) || activeCommunityForPost;
+                activeCommunityForPost = null;
+                await loadCommunityPosts(communityId);
+                loadAllCommunities();
+                loadMyCommunities();
             } catch (error) {
                 console.error('Error creating community post:', error);
-                alert('Failed to create post');
+                alert(error.message || 'Failed to create post');
             }
+        }
+
+        // Shared state + helpers for delete-post confirmation dialog
+        let pendingDeletePostId = null;
+        let pendingDeleteContext = null;
+        let pendingDeleteCommunityId = null;
+
+        function openPostDeleteModal(postId, context, communityId) {
+            pendingDeletePostId = postId;
+            pendingDeleteContext = context || 'feed';
+            pendingDeleteCommunityId = communityId || null;
+
+            const messageEl = document.getElementById('post-delete-message');
+            if (messageEl) {
+                messageEl.textContent = 'Are you sure you want to delete this post? This action cannot be undone.';
+            }
+
+            openModal('post-delete-modal');
         }
 
         // Load user profile
@@ -2662,6 +3368,16 @@
                         btn.addEventListener('click', function() {
                             const postId = this.dataset.postId;
                             toggleLike(postId, this);
+                        });
+                    });
+
+                    // Three-dots delete for posts in own profile
+                    document.querySelectorAll('.post-options').forEach(el => {
+                        el.addEventListener('click', function (e) {
+                            e.stopPropagation();
+                            const postId = this.dataset.postId;
+                            if (!postId) return;
+                            openPostDeleteModal(postId, 'profile-self');
                         });
                     });
                 } else {
@@ -2885,6 +3601,64 @@
             createCommunitySubmitBtn.addEventListener('click', handleCreateCommunity);
         }
 
+        const createCommunityCancelBtn = document.querySelector('#create-community-modal [data-close-modal]');
+        if (createCommunityCancelBtn) {
+            createCommunityCancelBtn.addEventListener('click', () => closeModal('create-community-modal'));
+        }
+
+        const communityPostCancelBtn = document.querySelector('#community-post-modal [data-close-modal]');
+        if (communityPostCancelBtn) {
+            communityPostCancelBtn.addEventListener('click', () => closeModal('community-post-modal'));
+        }
+
+        const communityEditSaveBtn = document.getElementById('community-edit-modal-save');
+        if (communityEditSaveBtn) {
+            communityEditSaveBtn.addEventListener('click', async () => {
+                if (!currentCommunityDetail) return;
+
+                const communityId = currentCommunityDetail._id;
+                const nameInput = document.getElementById('community-edit-modal-displayName');
+                const descInput = document.getElementById('community-edit-modal-description');
+                const bannerInput = document.getElementById('community-edit-modal-banner');
+                const iconInput = document.getElementById('community-edit-modal-icon');
+
+                if (!nameInput || !descInput) return;
+
+                const formData = new FormData();
+                formData.append('displayName', nameInput.value.trim());
+                formData.append('description', descInput.value.trim());
+
+                if (bannerInput && bannerInput.files && bannerInput.files[0]) {
+                    formData.append('banner', bannerInput.files[0]);
+                }
+                if (iconInput && iconInput.files && iconInput.files[0]) {
+                    formData.append('icon', iconInput.files[0]);
+                }
+
+                try {
+                    const response = await fetch(API_BASE + `/communities/${communityId}/assets`, {
+                        method: 'PUT',
+                        headers: {
+                            'Authorization': 'Bearer ' + token
+                        },
+                        body: formData
+                    });
+
+                    const data = await response.json();
+                    if (!data.success) {
+                        alert(data.message || 'Failed to update community');
+                        return;
+                    }
+
+                    closeModal('community-edit-modal');
+                    await viewCommunityDetail(communityId);
+                } catch (error) {
+                    console.error('Error updating community:', error);
+                    alert('Failed to update community');
+                }
+            });
+        }
+
         if (createCommunityNameInput) {
             createCommunityNameInput.addEventListener('keypress', (e) => {
                 if (e.key === 'Enter') {
@@ -2898,6 +3672,81 @@
                 if (e.key === 'Enter') {
                     e.preventDefault();
                     handleCreateCommunity();
+                }
+            });
+        }
+
+        const communityPostSubmitBtn = document.getElementById('community-modal-post-submit');
+        if (communityPostSubmitBtn) {
+            communityPostSubmitBtn.addEventListener('click', () => {
+                submitCommunityPostFromModal();
+            });
+        }
+
+        const communityPostImageInput = document.getElementById('community-modal-post-image');
+        if (communityPostImageInput) {
+            communityPostImageInput.addEventListener('change', updateCommunityPostImagePreview);
+        }
+
+        // Delete-post confirmation modal buttons
+        const deletePostCancelBtn = document.getElementById('post-delete-cancel');
+        if (deletePostCancelBtn) {
+            deletePostCancelBtn.addEventListener('click', () => {
+                pendingDeletePostId = null;
+                pendingDeleteContext = null;
+                pendingDeleteCommunityId = null;
+                closeModal('post-delete-modal');
+            });
+        }
+
+        const deletePostConfirmBtn = document.getElementById('post-delete-confirm');
+        if (deletePostConfirmBtn) {
+            deletePostConfirmBtn.addEventListener('click', async () => {
+                if (!pendingDeletePostId) {
+                    closeModal('post-delete-modal');
+                    return;
+                }
+
+                const postId = pendingDeletePostId;
+                const context = pendingDeleteContext;
+                const communityId = pendingDeleteCommunityId;
+
+                try {
+                    const response = await fetch(API_BASE + `/posts/${postId}`, {
+                        method: 'DELETE',
+                        headers: {
+                            'Authorization': 'Bearer ' + token
+                        }
+                    });
+
+                    const data = await response.json();
+                    if (!data.success) {
+                        alert(data.message || 'Failed to delete post');
+                        return;
+                    }
+
+                    const card = document.querySelector(`.post-card[data-post-id="${postId}"]`);
+                    if (card && card.parentNode) {
+                        card.parentNode.removeChild(card);
+                    }
+
+                    // Refresh the relevant view based on where delete was triggered
+                    if (context === 'feed' && typeof loadPosts === 'function') {
+                        loadPosts();
+                    } else if (context === 'community' && communityId && typeof loadCommunityPosts === 'function') {
+                        loadCommunityPosts(communityId);
+                    } else if (context === 'profile-self' && typeof loadUserProfile === 'function') {
+                        loadUserProfile();
+                    }
+
+                    closeModal('post-delete-modal');
+                } catch (err) {
+                    console.error('Error deleting post:', err);
+                    alert('Failed to delete post');
+                } finally {
+                    pendingDeletePostId = null;
+                    pendingDeleteContext = null;
+                    pendingDeleteCommunityId = null;
                 }
             });
         }
@@ -3254,14 +4103,27 @@
                 });
             }
 
-            // Load current user
+            // Load current user (API first, fallback to localStorage)
             fetch(API_BASE + '/auth/me', {
                 headers: { 'Authorization': 'Bearer ' + token }
             })
             .then(r => r.json())
             .then(data => {
-                if (data.success && data.user) {
-                    currentUser = data.user;
+                let userFromApi = (data && data.success && data.user) ? data.user : null;
+
+                if (!userFromApi) {
+                    try {
+                        const storedUser = localStorage.getItem('user');
+                        if (storedUser) {
+                            userFromApi = JSON.parse(storedUser);
+                        }
+                    } catch (e) {
+                        console.warn('Failed to parse stored user from localStorage:', e);
+                    }
+                }
+
+                if (userFromApi) {
+                    currentUser = userFromApi;
                     const initial = getInitials(currentUser.name);
 
                     const userAvatarEl = document.getElementById('user-avatar');
@@ -3332,47 +4194,51 @@
         // Navigation event listeners
         document.getElementById('feed-btn')?.addEventListener('click', (e) => {
             e.preventDefault();
-            showFeedView();
+            navigateTo('feed');
         });
 
         document.getElementById('messages-btn')?.addEventListener('click', (e) => {
             e.preventDefault();
-            showMessagesView();
+            navigateTo('messages');
         });
 
         document.getElementById('forums-btn')?.addEventListener('click', (e) => {
             e.preventDefault();
-            showForumsView();
+            navigateTo('forums');
         });
 
         document.getElementById('communities-btn')?.addEventListener('click', (e) => {
             e.preventDefault();
-            showCommunitiesView();
+            navigateTo('communities');
         });
 
         document.getElementById('profile-btn')?.addEventListener('click', (e) => {
             e.preventDefault();
-            showProfileView();
+            navigateTo('profile');
         });
 
         document.getElementById('friends-btn')?.addEventListener('click', (e) => {
             e.preventDefault();
-            showFriendsView();
+            navigateTo('friends');
         });
 
         document.getElementById('media-btn')?.addEventListener('click', (e) => {
             e.preventDefault();
-            showMediaView();
+            navigateTo('media');
         });
 
         document.getElementById('settings-btn')?.addEventListener('click', (e) => {
             e.preventDefault();
-            showSettingsView();
+            navigateTo('settings');
         });
 
         document.getElementById('back-to-communities')?.addEventListener('click', (e) => {
             e.preventDefault();
-            showCommunitiesView();
+            if (window.history && window.history.length > 1) {
+                window.history.back();
+            } else {
+                navigateTo('communities', null, { replace: true });
+            }
         });
 
         // Event listeners
@@ -3398,6 +4264,33 @@
                 document.querySelectorAll('.feed-tab').forEach(t => t.classList.remove('active'));
                 tab.classList.add('active');
             });
+        });
+
+        // Restore last view on initial load and sync with history
+        (function restoreLastView() {
+            const state = getSavedNavState();
+
+            if (state && state.view) {
+                const extra = state.view === 'communityDetail' && state.communityId
+                    ? { communityId: state.communityId }
+                    : {};
+                navigateTo(state.view, extra, { fromPopState: true, replace: true });
+            } else {
+                navigateTo('feed', null, { fromPopState: true, replace: true });
+            }
+        })();
+
+        // Handle browser back/forward to move between in-app views
+        window.addEventListener('popstate', (event) => {
+            const state = event.state;
+            if (state && state.view) {
+                const extra = state.view === 'communityDetail' && state.communityId
+                    ? { communityId: state.communityId }
+                    : {};
+                navigateTo(state.view, extra, { fromPopState: true, replace: true });
+            } else {
+                navigateTo('feed', null, { fromPopState: true, replace: true });
+            }
         });
 
         // Logout functionality

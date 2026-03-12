@@ -1,8 +1,70 @@
 const express = require('express');
+const fs = require('fs');
+const path = require('path');
+const multer = require('multer');
 const Post = require('../models/Post');
 const { verifyToken } = require('../middleware/auth');
 const { apiLimiter } = require('../middleware/security');
 const router = express.Router();
+
+// Multer setup for post image uploads (used by community create-post modal)
+const postImageStorage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    const uploadDir = path.join('public', 'uploads', 'posts');
+    if (!fs.existsSync(uploadDir)) {
+      fs.mkdirSync(uploadDir, { recursive: true });
+    }
+    cb(null, uploadDir);
+  },
+  filename: function (req, file, cb) {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+    cb(null, 'post-' + uniqueSuffix + path.extname(file.originalname));
+  }
+});
+
+const postImageUpload = multer({
+  storage: postImageStorage,
+  limits: { fileSize: 5 * 1024 * 1024 },
+  fileFilter: function (req, file, cb) {
+    const filetypes = /jpeg|jpg|png|gif|webp/;
+    const mimetype = filetypes.test(file.mimetype);
+    const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
+
+    if (mimetype && extname) {
+      return cb(null, true);
+    }
+    cb(new Error('Only image files are allowed (jpeg, jpg, png, gif, webp)'));
+  }
+});
+
+// Separate image upload endpoint so existing JSON /api/posts stays unchanged
+// @route   POST /api/posts/upload-image
+// @desc    Upload an image for a post and return its URL
+// @access  Private
+router.post('/upload-image', verifyToken, apiLimiter, postImageUpload.single('image'), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({
+        success: false,
+        message: 'No image file provided'
+      });
+    }
+
+    const imageUrl = `/uploads/posts/${req.file.filename}`;
+
+    res.json({
+      success: true,
+      message: 'Image uploaded successfully',
+      imageUrl
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Failed to upload image',
+      error: error.message
+    });
+  }
+});
 
 // @route   POST /api/posts
 // @desc    Create a new post
@@ -47,9 +109,14 @@ router.post('/', verifyToken, apiLimiter, async (req, res) => {
       post
     });
   } catch (error) {
-    res.status(500).json({
+    console.error('Error creating post:', error);
+
+    const status = error.name === 'ValidationError' ? 400 : 500;
+
+    res.status(status).json({
       success: false,
-      message: 'Failed to create post',
+      // Expose the underlying message so the frontend can show it
+      message: error.message || 'Failed to create post',
       error: error.message
     });
   }
