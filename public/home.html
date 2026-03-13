@@ -516,14 +516,78 @@
         .post-stats {
             display: flex;
             align-items: center;
-            gap: 24px;
-            font-size: 0.9rem;
+            gap: 10px;
+            font-size: 0.85rem;
             color: var(--text-secondary);
+            margin-top: 12px;
         }
 
-        .post-stats span { display: flex; align-items: center; gap: 6px; cursor: pointer; transition: color 0.2s; }
-        .post-stats span:hover { color: var(--accent-pink); }
-        .post-stats .like.active { color: var(--accent-pink); }
+        .post-action {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            border-radius: 999px;
+            border: 1px solid rgba(148, 163, 184, 0.4);
+            background: rgba(15, 23, 42, 0.9);
+            cursor: pointer;
+            color: var(--text-secondary);
+            font-size: 0.8rem;
+            transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease, transform 0.1s ease;
+        }
+
+        .post-action .icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .post-action .icon-circle {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 22px;
+            height: 22px;
+            border-radius: 999px;
+            border: 1px solid rgba(148, 163, 184, 0.7);
+            background: rgba(15, 23, 42, 1);
+            font-size: 0.7rem;
+        }
+
+        .post-action .count,
+        .post-action .label {
+            font-size: 0.8rem;
+        }
+
+        .post-action:hover {
+            background: rgba(30, 64, 175, 0.6);
+            border-color: rgba(96, 165, 250, 0.9);
+            color: #e5e7eb;
+            transform: translateY(-1px);
+        }
+
+        .post-action.like.active {
+            background: rgba(52, 211, 153, 0.15);
+            border-color: rgba(52, 211, 153, 0.9);
+            color: #6ee7b7;
+        }
+
+        .post-action.like.active .icon-circle {
+            border-color: rgba(52, 211, 153, 0.9);
+            background: rgba(22, 163, 74, 0.4);
+        }
+
+        .post-action.views {
+            cursor: default;
+            opacity: 0.9;
+        }
+
+        .post-action.views:hover {
+            background: rgba(15, 23, 42, 0.9);
+            border-color: rgba(148, 163, 184, 0.4);
+            color: var(--text-secondary);
+            transform: none;
+        }
 
         .post-comments {
             margin-top: 14px;
@@ -568,6 +632,11 @@
             display: flex;
             align-items: center;
             gap: 8px;
+        }
+
+        .comment-input-row.reply-active .comment-input {
+            border-color: rgba(167, 139, 250, 0.9);
+            box-shadow: 0 0 0 1px rgba(167, 139, 250, 0.8);
         }
 
         .comment-input {
@@ -1594,6 +1663,13 @@
             const author = post.authorId || {};
             const initials = getInitials(author.name);
             const likeClass = post.isLiked ? 'active' : '';
+            const likeIcon = post.isLiked ? '♥' : '♡';
+
+            // Feed avatar: show profile picture when available, otherwise initials
+            const hasAuthorAvatar = !!author.profilePicture;
+            const authorAvatarHtml = hasAuthorAvatar
+                ? `<div class="avatar-sm" style="background-image:url('${author.profilePicture}');background-size:cover;background-position:center;"></div>`
+                : `<div class="avatar-sm">${initials}</div>`;
 
             const imageMedia = (post.media || []).find(m => m.type === 'image' && m.url);
             const imageHtml = imageMedia ? `
@@ -1608,16 +1684,20 @@
                 const cAuthor = c.authorId || {};
                 const cInitials = getInitials(cAuthor.name);
                 const cName = cAuthor.name || 'User';
+                const hasCommentAvatar = !!cAuthor.profilePicture;
+                const commentAvatarHtml = hasCommentAvatar
+                    ? `<div class="comment-avatar" style="background-image:url('${cAuthor.profilePicture}');background-size:cover;background-position:center;"></div>`
+                    : `<div class="comment-avatar">${cInitials}</div>`;
                 commentsItemsHtml += `
                     <div class="comment-item">
-                        <div class="comment-avatar">${cInitials}</div>
+                        ${commentAvatarHtml}
                         <div class="comment-body"><strong>${cName}</strong><span>${c.content}</span></div>
                     </div>
                 `;
             });
 
             const commentsHtml = `
-                <div class="post-comments">
+                <div class="post-comments" data-post-id="${post._id}" style="display:none;">
                     ${comments.length ? `<div class="comment-list">${commentsItemsHtml}</div>` : ''}
                     <div class="comment-input-row">
                         <input type="text" class="comment-input" placeholder="${comments.length ? 'Reply...' : 'Be the first to reply...'}" data-post-id="${post._id}">
@@ -1630,7 +1710,7 @@
                 <div class="post-card" data-post-id="${post._id}">
                     <div class="post-header">
                         <div class="post-author">
-                            <div class="avatar-sm">${initials}</div>
+                            ${authorAvatarHtml}
                             <div class="meta">
                                 <div class="name">${author.name || 'Anonymous'}</div>
                                 <div class="time">${timeAgo(post.createdAt)}</div>
@@ -1641,11 +1721,18 @@
                     <div class="post-content">${post.content}</div>
                     ${imageHtml}
                     <div class="post-stats">
-                        <span>○ ${formatViews(post.views || 0)} views</span>
-                        <span class="like ${likeClass}" data-post-id="${post._id}">
-                            ♡ ${post.likeCount > 0 ? post.likeCount : ''}
-                        </span>
-                        <span class="reply-toggle" data-post-id="${post._id}">● ${post.commentCount > 0 ? post.commentCount + ' replies' : 'Reply'}</span>
+                        <button type="button" class="post-action like ${likeClass}" data-post-id="${post._id}">
+                            <span class="icon-circle"><span class="icon">${likeIcon}</span></span>
+                            <span class="count">${typeof post.likeCount === 'number' ? post.likeCount : 0}</span>
+                        </button>
+                        <button type="button" class="post-action reply-toggle" data-post-id="${post._id}">
+                            <span class="icon-circle"><span class="icon">💬</span></span>
+                            <span class="count">${post.commentCount > 0 ? post.commentCount : 0}</span>
+                        </button>
+                        <button type="button" class="post-action views" disabled>
+                            <span class="icon-circle"><span class="icon">👁</span></span>
+                            <span class="count">${formatViews(post.views || 0)}</span>
+                        </button>
                     </div>
                     ${commentsHtml}
                 </div>
@@ -1673,37 +1760,7 @@
                         });
                     });
 
-                    // Add reply toggle listeners (focus comment input)
-                    document.querySelectorAll('.post-stats .reply-toggle').forEach(span => {
-                        span.addEventListener('click', function() {
-                            const postId = this.dataset.postId;
-                            const input = document.querySelector(`.comment-input[data-post-id="${postId}"]`);
-                            if (input) {
-                                input.focus();
-                            }
-                        });
-                    });
-
-                    // Add comment send listeners
-                    document.querySelectorAll('.comment-send').forEach(btn => {
-                        btn.addEventListener('click', function() {
-                            const postId = this.dataset.postId;
-                            const input = document.querySelector(`.comment-input[data-post-id="${postId}"]`);
-                            if (input && input.value.trim()) {
-                                submitComment(postId, input);
-                            }
-                        });
-                    });
-
-                    // Allow Enter key in comment input
-                    document.querySelectorAll('.comment-input').forEach(input => {
-                        input.addEventListener('keypress', function(e) {
-                            if (e.key === 'Enter' && this.value.trim()) {
-                                const postId = this.dataset.postId;
-                                submitComment(postId, this);
-                            }
-                        });
-                    });
+                    // Comment send + Enter are now handled via global delegated listeners
 
                     // Add options (three-dots) listeners for delete
                     document.querySelectorAll('.post-options').forEach(el => {
@@ -1749,10 +1806,14 @@
                 
                 if (data.success) {
                     likeBtn.classList.toggle('active');
-                    const likeText = data.isLiked 
-                        ? `♥ ${data.likeCount > 0 ? data.likeCount : ''}`
-                        : `♡ ${data.likeCount > 0 ? data.likeCount : ''}`;
-                    likeBtn.innerHTML = likeText;
+                    const countSpan = likeBtn.querySelector('.count');
+                    const iconSpan = likeBtn.querySelector('.icon');
+                    if (countSpan) {
+                        countSpan.textContent = data.likeCount > 0 ? data.likeCount : '';
+                    }
+                    if (iconSpan) {
+                        iconSpan.textContent = data.isLiked ? '♥' : '♡';
+                    }
                 }
             } catch (error) {
                 console.error('Error toggling like:', error);
@@ -1776,14 +1837,72 @@
 
                 const data = await response.json();
                 if (data.success) {
+                    // Clear input
                     inputElement.value = '';
-                    // Reload posts so comments and counts stay in sync
-                    await loadPosts();
+
+                    // Try to update the UI in-place so the reply feels instant
+                    const card = inputElement.closest('.post-card');
+                    if (card) {
+                        // Locate or create the comment list inside this card
+                        const commentsWrapper = card.querySelector('.post-comments');
+                        let list = commentsWrapper ? commentsWrapper.querySelector('.comment-list') : null;
+                        if (commentsWrapper && commentsWrapper.style.display === 'none') {
+                            commentsWrapper.style.display = 'block';
+                        }
+                        if (!list && commentsWrapper) {
+                            list = document.createElement('div');
+                            list.className = 'comment-list';
+                            const row = commentsWrapper.querySelector('.comment-input-row');
+                            if (row) {
+                                commentsWrapper.insertBefore(list, row);
+                            } else {
+                                commentsWrapper.appendChild(list);
+                            }
+                        }
+
+                        // Use the last comment returned from API as the new one
+                        const newComment = Array.isArray(data.comments) && data.comments.length
+                            ? data.comments[data.comments.length - 1]
+                            : null;
+
+                        if (list && newComment) {
+                            const cAuthor = newComment.authorId || {};
+                            const cInitials = getInitials(cAuthor.name || 'User');
+                            const cName = cAuthor.name || 'User';
+                            const hasCommentAvatar = !!cAuthor.profilePicture;
+                            const commentAvatarHtml = hasCommentAvatar
+                                ? `<div class="comment-avatar" style="background-image:url('${cAuthor.profilePicture}');background-size:cover;background-position:center;"></div>`
+                                : `<div class="comment-avatar">${cInitials}</div>`;
+
+                            const wrapper = document.createElement('div');
+                            wrapper.className = 'comment-item';
+                            wrapper.innerHTML = `
+                                ${commentAvatarHtml}
+                                <div class="comment-body"><strong>${cName}</strong><span>${newComment.content}</span></div>
+                            `;
+                            list.appendChild(wrapper);
+                        }
+
+                        // Update reply count on the reply pill for this card
+                        const replyBtn = card.querySelector('.post-stats .reply-toggle');
+                        if (replyBtn) {
+                            const countSpan = replyBtn.querySelector('.count');
+                            if (countSpan) {
+                                const current = parseInt(countSpan.textContent || '0', 10) || 0;
+                                countSpan.textContent = String(current + 1);
+                            }
+                        }
+                    } else {
+                        // Fallback: reload posts if we can't find the card
+                        await loadPosts();
+                    }
                 } else {
                     console.error('Failed to add comment:', data.message);
+                    alert(data.message || 'Failed to add comment');
                 }
             } catch (error) {
                 console.error('Error adding comment:', error);
+                alert('Error adding comment. Please try again.');
             }
         }
 
@@ -3380,6 +3499,8 @@
                             openPostDeleteModal(postId, 'profile-self');
                         });
                     });
+
+                    // Comment send + Enter in profile posts are handled via global delegated listeners
                 } else {
                     container.innerHTML = '<p style="text-align:center;color:var(--text-secondary);">You haven\'t posted anything yet</p>';
                 }
@@ -4238,6 +4359,69 @@
                 window.history.back();
             } else {
                 navigateTo('communities', null, { replace: true });
+            }
+        });
+
+        // Global reply button handler (works for feed + profile posts)
+        document.addEventListener('click', (e) => {
+            const replyBtn = e.target.closest('.reply-toggle');
+            if (!replyBtn) return;
+
+            const card = replyBtn.closest('.post-card');
+            const input = card ? card.querySelector('.comment-input') : null;
+            const postId = replyBtn.dataset.postId || (card && card.dataset.postId);
+            if (!postId || !input) return;
+
+            // Ensure the comments section for this post is visible when replying
+            const commentsWrapper = card.querySelector('.post-comments');
+            if (commentsWrapper && commentsWrapper.style.display === 'none') {
+                commentsWrapper.style.display = 'block';
+            }
+
+            const content = input.value.trim();
+
+            // If there's already text, treat Reply click as send
+            if (content) {
+                submitComment(postId, input);
+                return;
+            }
+
+            // Otherwise, focus + highlight the input so user can type
+            const row = input.closest('.comment-input-row');
+            if (row) {
+                row.classList.add('reply-active');
+                setTimeout(() => row.classList.remove('reply-active'), 800);
+            }
+
+            input.focus();
+            input.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        });
+
+        // Global Send button handler (works for feed + profile posts)
+        document.addEventListener('click', (e) => {
+            const sendBtn = e.target.closest('.comment-send');
+            if (!sendBtn) return;
+
+            const card = sendBtn.closest('.post-card');
+            const input = card ? card.querySelector('.comment-input') : null;
+            const postId = sendBtn.dataset.postId || (card && card.dataset.postId);
+
+            if (postId && input && input.value.trim()) {
+                submitComment(postId, input);
+            }
+        });
+
+        // Global Enter-key handler inside comment inputs
+        document.addEventListener('keypress', (e) => {
+            if (e.key !== 'Enter') return;
+
+            const input = e.target.closest('.comment-input');
+            if (!input || !input.value.trim()) return;
+
+            const card = input.closest('.post-card');
+            const postId = input.dataset.postId || (card && card.dataset.postId);
+            if (postId) {
+                submitComment(postId, input);
             }
         });
 
