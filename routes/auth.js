@@ -363,7 +363,14 @@ router.post('/login',
 router.get('/me', verifyToken, async (req, res) => {
   try {
     const user = await User.findById(req.user._id);
-    
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
     res.json({
       success: true,
       user: {
@@ -415,8 +422,6 @@ router.get('/verify-email', async (req, res) => {
 
     if (!user) {
       return res.status(400).json({
-        followers: user.followers || [],
-        following: user.following || [],
         success: false,
         message: 'Invalid or expired verification token'
       });
