@@ -29,7 +29,8 @@ router.post('/',
         });
       }
 
-      if (mentorship.status !== 'Accepted') {
+      const mentorshipStatus = String(mentorship.status || '').toLowerCase();
+      if (mentorshipStatus !== 'accepted') {
         return res.status(400).json({
           success: false,
           message: 'Can only log interactions for accepted mentorships'
@@ -37,8 +38,14 @@ router.post('/',
       }
 
       // Verify user is part of this mentorship
+      const mentorshipMentorId = mentorship.mentorId || mentorship.recipient;
+      const mentorshipMenteeId = mentorship.menteeId || mentorship.requester;
       const userId = req.user._id.toString();
-      if (mentorship.mentorId.toString() !== mentorId && mentorship.menteeId.toString() !== userId) {
+      if (
+        !mentorshipMentorId ||
+        !mentorshipMenteeId ||
+        (String(mentorshipMentorId) !== String(mentorId) && String(mentorshipMenteeId) !== String(userId))
+      ) {
         return res.status(403).json({
           success: false,
           message: 'You are not authorized to log interactions for this mentorship'
@@ -46,7 +53,7 @@ router.post('/',
       }
 
       // Verify mentorId matches mentorship
-      if (mentorship.mentorId.toString() !== mentorId) {
+      if (String(mentorshipMentorId) !== String(mentorId)) {
         return res.status(400).json({
           success: false,
           message: 'Mentor ID does not match the mentorship'

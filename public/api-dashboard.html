@@ -515,11 +515,17 @@
                 return;
             }
 
+            const reason = prompt('Enter mentorship request reason (minimum 20 characters):', 'I would like guidance on academic planning and project direction.');
+            if (!reason || reason.trim().length < 20) {
+                alert('Reason is required and must be at least 20 characters');
+                return;
+            }
+
             try {
                 const response = await fetch(`${getApiUrl()}/mentorship/request`, {
                     method: 'POST',
                     headers: getHeaders(),
-                    body: JSON.stringify({ mentorId })
+                    body: JSON.stringify({ recipientId: mentorId, reason: reason.trim() })
                 });
                 const result = await response.json();
                 showResponse('mentorshipResponse', result, !result.success);
