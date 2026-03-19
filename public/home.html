@@ -542,18 +542,6 @@
             justify-content: center;
         }
 
-        .post-action .icon-circle {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            width: 22px;
-            height: 22px;
-            border-radius: 999px;
-            border: 1px solid rgba(148, 163, 184, 0.7);
-            background: rgba(15, 23, 42, 1);
-            font-size: 0.7rem;
-        }
-
         .post-action .count,
         .post-action .label {
             font-size: 0.8rem;
@@ -567,14 +555,9 @@
         }
 
         .post-action.like.active {
-            background: rgba(52, 211, 153, 0.15);
-            border-color: rgba(52, 211, 153, 0.9);
-            color: #6ee7b7;
-        }
-
-        .post-action.like.active .icon-circle {
-            border-color: rgba(52, 211, 153, 0.9);
-            background: rgba(22, 163, 74, 0.4);
+            background: rgba(220, 38, 38, 0.18);
+            border-color: rgba(248, 113, 113, 0.9);
+            color: #fecaca;
         }
 
         .post-action.views {
@@ -1722,15 +1705,15 @@
                     ${imageHtml}
                     <div class="post-stats">
                         <button type="button" class="post-action like ${likeClass}" data-post-id="${post._id}">
-                            <span class="icon-circle"><span class="icon">${likeIcon}</span></span>
+                            <span class="icon icon-like">${likeIcon}</span>
                             <span class="count">${typeof post.likeCount === 'number' ? post.likeCount : 0}</span>
                         </button>
                         <button type="button" class="post-action reply-toggle" data-post-id="${post._id}">
-                            <span class="icon-circle"><span class="icon">💬</span></span>
+                            <span class="icon icon-reply">💬</span>
                             <span class="count">${post.commentCount > 0 ? post.commentCount : 0}</span>
                         </button>
                         <button type="button" class="post-action views" disabled>
-                            <span class="icon-circle"><span class="icon">👁</span></span>
+                            <span class="icon icon-views">👁</span>
                             <span class="count">${formatViews(post.views || 0)}</span>
                         </button>
                     </div>
@@ -1807,13 +1790,13 @@
                 if (data.success) {
                     likeBtn.classList.toggle('active');
                     const countSpan = likeBtn.querySelector('.count');
-                    const iconSpan = likeBtn.querySelector('.icon');
-                    if (countSpan) {
-                        countSpan.textContent = data.likeCount > 0 ? data.likeCount : '';
-                    }
-                    if (iconSpan) {
-                        iconSpan.textContent = data.isLiked ? '♥' : '♡';
-                    }
+                                    const iconSpan = likeBtn.querySelector('.icon-like');
+                                    if (countSpan) {
+                                        countSpan.textContent = data.likeCount > 0 ? data.likeCount : '';
+                                    }
+                                    if (iconSpan) {
+                                        iconSpan.textContent = data.isLiked ? '♥' : '♡';
+                                    }
                 }
             } catch (error) {
                 console.error('Error toggling like:', error);
@@ -4372,29 +4355,40 @@
             const postId = replyBtn.dataset.postId || (card && card.dataset.postId);
             if (!postId || !input) return;
 
-            // Ensure the comments section for this post is visible when replying
             const commentsWrapper = card.querySelector('.post-comments');
-            if (commentsWrapper && commentsWrapper.style.display === 'none') {
-                commentsWrapper.style.display = 'block';
-            }
+            const isHidden = commentsWrapper
+                ? (commentsWrapper.style.display === 'none' || window.getComputedStyle(commentsWrapper).display === 'none')
+                : false;
 
             const content = input.value.trim();
 
-            // If there's already text, treat Reply click as send
+            // If there's already text, treat Reply click as send (and keep section open)
             if (content) {
+                if (commentsWrapper && isHidden) {
+                    commentsWrapper.style.display = 'block';
+                }
                 submitComment(postId, input);
                 return;
             }
 
-            // Otherwise, focus + highlight the input so user can type
-            const row = input.closest('.comment-input-row');
-            if (row) {
-                row.classList.add('reply-active');
-                setTimeout(() => row.classList.remove('reply-active'), 800);
-            }
+            // Toggle open/close when there's no text
+            if (commentsWrapper) {
+                if (isHidden) {
+                    commentsWrapper.style.display = 'block';
 
-            input.focus();
-            input.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    const row = input.closest('.comment-input-row');
+                    if (row) {
+                        row.classList.add('reply-active');
+                        setTimeout(() => row.classList.remove('reply-active'), 800);
+                    }
+
+                    input.focus();
+                    input.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                } else {
+                    commentsWrapper.style.display = 'none';
+                    input.blur();
+                }
+            }
         });
 
         // Global Send button handler (works for feed + profile posts)
