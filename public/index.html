@@ -568,6 +568,12 @@
                 showToast('Please enter Mentor ID', 'error');
                 return;
             }
+
+            const reason = prompt('Enter mentorship request reason (minimum 20 characters):', 'I would like guidance on academic planning and project direction.');
+            if (!reason || reason.trim().length < 20) {
+                showToast('Reason is required (min 20 characters)', 'error');
+                return;
+            }
             if (!authToken) {
                 showToast('Please login first', 'error');
                 return;
@@ -577,7 +583,7 @@
                 const response = await fetch(`${getApiUrl()}/mentorship/request`, {
                     method: 'POST',
                     headers: getHeaders(),
-                    body: JSON.stringify({ mentorId })
+                    body: JSON.stringify({ recipientId: mentorId, reason: reason.trim() })
                 });
                 const result = await response.json();
                 if (result.success) showToast('Mentorship request sent!', 'success');

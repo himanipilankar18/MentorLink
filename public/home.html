@@ -1094,7 +1094,7 @@
                 </a></li>
                 <li><a href="#" class="nav-item" id="friends-btn" data-nav="friends">
                     <span class="icon">☆</span>
-                    <span>Friends</span>
+                    <span>Requests</span>
                     <span class="badge">3</span>
                 </a></li>
                 <li><a href="#" class="nav-item" id="media-btn" data-nav="media">
@@ -1212,6 +1212,9 @@
                             <p style="color:var(--text-secondary);margin-bottom:8px;" id="profile-handle">@user</p>
                             <p style="color:var(--text-secondary);font-size:0.9rem;margin-bottom:8px;" id="profile-bio">No bio yet</p>
                             <p style="color:var(--text-secondary);font-size:0.85rem;" id="profile-meta"></p>
+                            <div id="profile-user-actions" style="display:none;gap:8px;margin-top:10px;">
+                                <button id="profile-request-mentorship-btn" class="btn-follow" style="padding:7px 14px;font-size:0.85rem;">Request Mentorship</button>
+                            </div>
                         </div>
                     </div>
 
@@ -1311,10 +1314,23 @@
 
             <!-- Friends View -->
             <div id="friends-view" style="display:none;">
-                <h2 style="font-size:1.6rem;margin-bottom:16px;color:var(--text-primary);">Friends</h2>
+                <h2 style="font-size:1.6rem;margin-bottom:16px;color:var(--text-primary);">Mentorship Requests</h2>
+
+                <div class="post-card" style="margin-bottom:16px;">
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+                        <h3 style="font-size:1rem;color:var(--text-primary);">Incoming Requests</h3>
+                    </div>
+                    <div id="incoming-requests-container" style="display:flex;flex-direction:column;gap:10px;">
+                        <div style="color:var(--text-secondary);font-size:0.9rem;">Loading incoming requests...</div>
+                    </div>
+                </div>
+
                 <div class="post-card">
-                    <div class="post-content" style="color:var(--text-secondary);">
-                        Your friends list and requests will show up in this space.
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+                        <h3 style="font-size:1rem;color:var(--text-primary);">Outgoing Requests</h3>
+                    </div>
+                    <div id="outgoing-requests-container" style="display:flex;flex-direction:column;gap:10px;">
+                        <div style="color:var(--text-secondary);font-size:0.9rem;">Loading outgoing requests...</div>
                     </div>
                 </div>
             </div>
@@ -1528,8 +1544,37 @@
 
             <div id="user-profile-links" style="font-size:0.85rem;color:var(--text-secondary);margin-bottom:14px;"></div>
 
-            <div style="display:flex;justify-content:flex-end;">
+            <div style="display:flex;justify-content:flex-end;gap:8px;">
+                <button id="user-profile-request-btn" class="btn-follow" style="padding:7px 14px;font-size:0.85rem;">Request Mentorship</button>
                 <button id="user-profile-follow-btn" class="btn-follow" style="padding:7px 14px;font-size:0.85rem;">Follow</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Dialog: Request Mentorship -->
+    <div id="mentorship-request-modal" class="modal-overlay modal-hidden">
+        <div class="modal-card" style="max-width:520px;">
+            <div class="modal-title">Request mentorship</div>
+            <div class="modal-subtitle" id="mentorship-request-modal-subtitle">Share why you want mentorship.</div>
+            <textarea id="mentorship-request-reason" rows="5" placeholder="Explain your mentorship request (minimum 20 characters)" style="width:100%;min-height:120px;border-radius:12px;border:1px solid rgba(148,163,184,0.4);background:rgba(15,23,42,0.95);color:var(--text-primary);padding:10px;font-size:0.9rem;resize:vertical;"></textarea>
+            <div style="font-size:0.75rem;color:var(--text-tertiary);margin-top:6px;">Minimum 20 characters required.</div>
+            <div class="modal-actions" style="margin-top:12px;">
+                <button type="button" class="btn-ghost" data-close-modal="mentorship-request-modal">Cancel</button>
+                <button type="button" id="mentorship-request-submit" class="btn-send" style="padding:8px 18px;font-size:0.85rem;">Submit</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Dialog: Reject Mentorship Request -->
+    <div id="mentorship-reject-modal" class="modal-overlay modal-hidden">
+        <div class="modal-card" style="max-width:520px;">
+            <div class="modal-title">Reject mentorship request</div>
+            <div class="modal-subtitle" id="mentorship-reject-modal-subtitle">Please provide a reason for rejection.</div>
+            <textarea id="mentorship-reject-reason" rows="4" placeholder="Write a brief rejection reason" style="width:100%;min-height:100px;border-radius:12px;border:1px solid rgba(148,163,184,0.4);background:rgba(15,23,42,0.95);color:var(--text-primary);padding:10px;font-size:0.9rem;resize:vertical;"></textarea>
+            <div style="font-size:0.75rem;color:var(--text-tertiary);margin-top:6px;">Reason is required.</div>
+            <div class="modal-actions" style="margin-top:12px;">
+                <button type="button" class="btn-ghost" data-close-modal="mentorship-reject-modal">Cancel</button>
+                <button type="button" id="mentorship-reject-submit" class="btn-send" style="padding:8px 18px;font-size:0.85rem;background:#ef4444;border-color:#ef4444;">Reject</button>
             </div>
         </div>
     </div>
@@ -1543,6 +1588,14 @@
         let chatPollIntervalId = null;
         let chatGroups = [];
         let activeCommunityForPost = null;
+        let mentorshipIncomingRequests = [];
+        let mentorshipOutgoingRequests = [];
+        let mentorshipStateByUserId = {};
+        let activeProfileViewUserId = null;
+        let activeProfileViewUser = null;
+        let activeUserProfileModalUser = null;
+        let mentorshipRequestTargetUser = null;
+        let pendingRejectMentorshipRequestId = null;
 
         // Initialize custom dropdowns backed by hidden native selects
         function rebuildCustomDropdown(selectId) {
@@ -2143,6 +2196,8 @@
             const rightSidebar = document.querySelector('.right-sidebar');
             if (rightSidebar) rightSidebar.style.display = 'block';
             resetNavActive('profile');
+            activeProfileViewUser = null;
+            activeProfileViewUserId = getEntityId(currentUser);
             loadUserProfile();
             saveNavState('profile');
         }
@@ -2212,11 +2267,13 @@
             // Close buttons for modals
             document.querySelectorAll('[data-close-modal]')
                 .forEach(btn => {
+                    if (btn.dataset.modalCloseBound === '1') return;
+                    btn.dataset.modalCloseBound = '1';
                     btn.addEventListener('click', () => closeModal(btn.getAttribute('data-close-modal')));
                 });
 
             // Click outside card closes modal
-            ['create-group-modal', 'join-group-modal', 'create-community-modal', 'group-created-modal', 'community-post-modal'].forEach((id) => {
+            ['create-group-modal', 'join-group-modal', 'create-community-modal', 'group-created-modal', 'community-post-modal', 'community-edit-modal', 'post-delete-modal', 'mentorship-request-modal', 'mentorship-reject-modal', 'user-profile-modal'].forEach((id) => {
                 const overlay = document.getElementById(id);
                 if (!overlay) return;
                 overlay.addEventListener('click', (e) => {
@@ -2244,6 +2301,16 @@
             if (!modal) return;
             modal.classList.add('modal-hidden');
         }
+
+        function initModalCloseHandlers() {
+            document.querySelectorAll('[data-close-modal]').forEach((btn) => {
+                if (btn.dataset.modalCloseBound === '1') return;
+                btn.dataset.modalCloseBound = '1';
+                btn.addEventListener('click', () => closeModal(btn.getAttribute('data-close-modal')));
+            });
+        }
+
+        initModalCloseHandlers();
 
         function setChatInputEnabled(enabled) {
             const input = document.getElementById('chat-input');
@@ -2624,6 +2691,7 @@
             const rightSidebar = document.querySelector('.right-sidebar');
             if (rightSidebar) rightSidebar.style.display = 'block';
             resetNavActive('friends');
+            refreshMentorshipRequestState();
             saveNavState('friends');
         }
 
@@ -2716,6 +2784,504 @@
             }).join('');
 
             return `<ul style="margin:0;padding-left:1.1rem;list-style:disc;">${items}</ul>`;
+        }
+
+        function getEntityId(entity) {
+            if (!entity) return '';
+            if (typeof entity === 'string') return entity;
+            if (typeof entity === 'object') return entity._id || entity.id || '';
+            return String(entity);
+        }
+
+        function getMentorshipRequester(request) {
+            return request?.requester || request?.menteeId || null;
+        }
+
+        function getMentorshipRecipient(request) {
+            return request?.recipient || request?.mentorId || null;
+        }
+
+        function normalizeMentorshipStatus(status) {
+            return String(status || '').toLowerCase();
+        }
+
+        function statusLabel(status) {
+            const normalized = normalizeMentorshipStatus(status);
+            if (!normalized) return 'Unknown';
+            return normalized.charAt(0).toUpperCase() + normalized.slice(1);
+        }
+
+        function getMentorshipStatePriority(state) {
+            switch (state) {
+                case 'connected':
+                    return 5;
+                case 'pending_incoming':
+                    return 4;
+                case 'pending_outgoing':
+                    return 3;
+                case 'rejected':
+                    return 2;
+                case 'terminated':
+                    return 1;
+                default:
+                    return 0;
+            }
+        }
+
+        function setMentorshipStateForUser(userId, payload) {
+            const key = String(userId || '');
+            if (!key) return;
+
+            const current = mentorshipStateByUserId[key];
+            const nextPriority = getMentorshipStatePriority(payload.state);
+            const currentPriority = current ? getMentorshipStatePriority(current.state) : 0;
+
+            if (!current || nextPriority >= currentPriority) {
+                mentorshipStateByUserId[key] = payload;
+            }
+        }
+
+        function rebuildMentorshipStateMap() {
+            mentorshipStateByUserId = {};
+
+            mentorshipOutgoingRequests.forEach((request) => {
+                const recipient = getMentorshipRecipient(request);
+                const targetUserId = getEntityId(recipient);
+                const status = normalizeMentorshipStatus(request?.status);
+
+                if (!targetUserId) return;
+
+                if (status === 'accepted') {
+                    setMentorshipStateForUser(targetUserId, {
+                        state: 'connected',
+                        request,
+                    });
+                } else if (status === 'pending') {
+                    setMentorshipStateForUser(targetUserId, {
+                        state: 'pending_outgoing',
+                        request,
+                    });
+                } else if (status === 'rejected') {
+                    setMentorshipStateForUser(targetUserId, {
+                        state: 'rejected',
+                        request,
+                    });
+                } else if (status === 'terminated') {
+                    setMentorshipStateForUser(targetUserId, {
+                        state: 'terminated',
+                        request,
+                    });
+                }
+            });
+
+            mentorshipIncomingRequests.forEach((request) => {
+                const requester = getMentorshipRequester(request);
+                const targetUserId = getEntityId(requester);
+                const status = normalizeMentorshipStatus(request?.status);
+
+                if (!targetUserId) return;
+
+                if (status === 'accepted') {
+                    setMentorshipStateForUser(targetUserId, {
+                        state: 'connected',
+                        request,
+                    });
+                } else if (status === 'pending') {
+                    setMentorshipStateForUser(targetUserId, {
+                        state: 'pending_incoming',
+                        request,
+                    });
+                } else if (status === 'rejected') {
+                    setMentorshipStateForUser(targetUserId, {
+                        state: 'rejected',
+                        request,
+                    });
+                } else if (status === 'terminated') {
+                    setMentorshipStateForUser(targetUserId, {
+                        state: 'terminated',
+                        request,
+                    });
+                }
+            });
+        }
+
+        function getMentorshipStateForUser(userId) {
+            if (!userId) return null;
+            return mentorshipStateByUserId[String(userId)] || null;
+        }
+
+        function updateMentorshipRequestsBadge() {
+            const badge = document.querySelector('#friends-btn .badge');
+            if (!badge) return;
+
+            const pendingIncoming = mentorshipIncomingRequests.filter((request) => normalizeMentorshipStatus(request?.status) === 'pending').length;
+
+            if (pendingIncoming > 0) {
+                badge.style.display = 'inline-block';
+                badge.textContent = String(pendingIncoming);
+            } else {
+                badge.style.display = 'none';
+            }
+        }
+
+        async function loadIncomingMentorshipRequests() {
+            try {
+                const response = await fetch(API_BASE + '/mentorship/requests/incoming', {
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+                const data = await response.json();
+
+                if (data.success && Array.isArray(data.requests)) {
+                    mentorshipIncomingRequests = data.requests;
+                    return;
+                }
+            } catch (error) {
+                console.error('Failed to load incoming mentorship requests:', error);
+            }
+
+            mentorshipIncomingRequests = [];
+        }
+
+        async function loadOutgoingMentorshipRequests() {
+            try {
+                const response = await fetch(API_BASE + '/mentorship/requests/outgoing', {
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+                const data = await response.json();
+
+                if (data.success && Array.isArray(data.requests)) {
+                    mentorshipOutgoingRequests = data.requests;
+                    return;
+                }
+            } catch (error) {
+                console.error('Failed to load outgoing mentorship requests:', error);
+            }
+
+            mentorshipOutgoingRequests = [];
+        }
+
+        function renderMentorshipRequestItem(request, type) {
+            const requester = getMentorshipRequester(request);
+            const recipient = getMentorshipRecipient(request);
+            const counterpart = type === 'incoming' ? requester : recipient;
+            const counterpartName = counterpart?.name || 'User';
+            const counterpartMeta = [counterpart?.department, counterpart?.year ? `Year ${counterpart.year}` : '', counterpart?.role]
+                .filter(Boolean)
+                .join(' · ');
+
+            const requestId = getEntityId(request);
+            const status = normalizeMentorshipStatus(request?.status);
+            const reason = request?.reason && request.reason.trim()
+                ? escapeHtml(request.reason)
+                : '<span style="color:var(--text-tertiary);">No reason provided</span>';
+
+            const isPendingIncoming = type === 'incoming' && status === 'pending';
+            const rejectionReason = request?.rejectionReason && request.rejectionReason.trim()
+                ? `<div style="margin-top:8px;color:#fca5a5;font-size:0.82rem;"><strong>Rejection reason:</strong> ${escapeHtml(request.rejectionReason)}</div>`
+                : '';
+
+            return `
+                <details style="border:1px solid rgba(148,163,184,0.25);border-radius:10px;background:rgba(15,23,42,0.75);padding:10px;">
+                    <summary style="cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:10px;list-style:none;">
+                        <span style="font-size:0.9rem;color:var(--text-primary);">${escapeHtml(counterpartName)} ${type === 'incoming' ? 'requested mentorship' : 'request status'}</span>
+                        <span style="font-size:0.78rem;padding:3px 9px;border-radius:999px;background:rgba(167,139,250,0.18);color:var(--accent-purple);">${statusLabel(status)}</span>
+                    </summary>
+                    <div style="margin-top:10px;color:var(--text-secondary);font-size:0.86rem;line-height:1.5;">
+                        ${counterpartMeta ? `<div style="margin-bottom:6px;color:var(--text-tertiary);">${escapeHtml(counterpartMeta)}</div>` : ''}
+                        <div><strong style="color:var(--text-primary);">Reason:</strong> ${reason}</div>
+                        ${rejectionReason}
+                        ${isPendingIncoming ? `
+                            <div style="display:flex;gap:8px;margin-top:10px;">
+                                <button type="button" class="btn-follow incoming-request-accept-btn" data-request-id="${requestId}" style="padding:6px 12px;font-size:0.8rem;">Accept</button>
+                                <button type="button" class="btn-follow incoming-request-reject-btn" data-request-id="${requestId}" data-requester-name="${escapeHtml(counterpartName)}" style="padding:6px 12px;font-size:0.8rem;background:rgba(239,68,68,0.18);border-color:rgba(239,68,68,0.45);color:#fca5a5;">Reject</button>
+                            </div>
+                        ` : ''}
+                    </div>
+                </details>
+            `;
+        }
+
+        function bindMentorshipRequestActions() {
+            document.querySelectorAll('.incoming-request-accept-btn').forEach((button) => {
+                button.addEventListener('click', async (event) => {
+                    event.preventDefault();
+                    const requestId = button.getAttribute('data-request-id');
+                    if (requestId) {
+                        await acceptMentorshipRequest(requestId, button);
+                    }
+                });
+            });
+
+            document.querySelectorAll('.incoming-request-reject-btn').forEach((button) => {
+                button.addEventListener('click', (event) => {
+                    event.preventDefault();
+                    const requestId = button.getAttribute('data-request-id');
+                    const requesterName = button.getAttribute('data-requester-name') || 'this user';
+                    if (requestId) {
+                        openRejectMentorshipModal(requestId, requesterName);
+                    }
+                });
+            });
+        }
+
+        function renderMentorshipRequestsView() {
+            const incomingContainer = document.getElementById('incoming-requests-container');
+            const outgoingContainer = document.getElementById('outgoing-requests-container');
+
+            if (incomingContainer) {
+                if (mentorshipIncomingRequests.length) {
+                    incomingContainer.innerHTML = mentorshipIncomingRequests
+                        .map((request) => renderMentorshipRequestItem(request, 'incoming'))
+                        .join('');
+                } else {
+                    incomingContainer.innerHTML = '<div style="color:var(--text-secondary);font-size:0.88rem;">No incoming requests.</div>';
+                }
+            }
+
+            if (outgoingContainer) {
+                if (mentorshipOutgoingRequests.length) {
+                    outgoingContainer.innerHTML = mentorshipOutgoingRequests
+                        .map((request) => renderMentorshipRequestItem(request, 'outgoing'))
+                        .join('');
+                } else {
+                    outgoingContainer.innerHTML = '<div style="color:var(--text-secondary);font-size:0.88rem;">No outgoing requests.</div>';
+                }
+            }
+
+            bindMentorshipRequestActions();
+        }
+
+        async function refreshMentorshipRequestState() {
+            await Promise.all([
+                loadIncomingMentorshipRequests(),
+                loadOutgoingMentorshipRequests(),
+            ]);
+
+            rebuildMentorshipStateMap();
+            updateMentorshipRequestsBadge();
+            renderMentorshipRequestsView();
+            refreshMentorshipButtonsInOpenViews();
+        }
+
+        async function acceptMentorshipRequest(requestId, button) {
+            if (!requestId) return;
+
+            if (button) button.disabled = true;
+
+            try {
+                const response = await fetch(API_BASE + `/mentorship/request/${requestId}/accept`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': 'Bearer ' + token,
+                        'Content-Type': 'application/json',
+                    },
+                });
+
+                const data = await response.json();
+                if (!data.success) {
+                    alert(data.message || 'Failed to accept mentorship request');
+                    return;
+                }
+
+                await refreshMentorshipRequestState();
+                await loadMyChatGroups();
+                alert('Mentorship request accepted. A direct chat is now available in Messages.');
+            } catch (error) {
+                console.error('Error accepting mentorship request:', error);
+                alert('Failed to accept mentorship request');
+            } finally {
+                if (button) button.disabled = false;
+            }
+        }
+
+        function openRejectMentorshipModal(requestId, requesterName) {
+            pendingRejectMentorshipRequestId = requestId;
+            const subtitle = document.getElementById('mentorship-reject-modal-subtitle');
+            const reasonInput = document.getElementById('mentorship-reject-reason');
+
+            if (subtitle) {
+                subtitle.textContent = `Please provide a reason for rejecting ${requesterName}'s request.`;
+            }
+
+            if (reasonInput) {
+                reasonInput.value = '';
+            }
+
+            openModal('mentorship-reject-modal', reasonInput);
+        }
+
+        async function submitMentorshipReject() {
+            if (!pendingRejectMentorshipRequestId) {
+                alert('No request selected for rejection.');
+                return;
+            }
+
+            const reasonInput = document.getElementById('mentorship-reject-reason');
+            const reason = reasonInput ? reasonInput.value.trim() : '';
+
+            if (!reason || reason.length < 5) {
+                alert('Please provide a rejection reason (minimum 5 characters).');
+                return;
+            }
+
+            try {
+                const response = await fetch(API_BASE + `/mentorship/request/${pendingRejectMentorshipRequestId}/reject`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': 'Bearer ' + token,
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ rejectionReason: reason }),
+                });
+
+                const data = await response.json();
+                if (!data.success) {
+                    alert(data.message || 'Failed to reject mentorship request');
+                    return;
+                }
+
+                closeModal('mentorship-reject-modal');
+                pendingRejectMentorshipRequestId = null;
+                await refreshMentorshipRequestState();
+            } catch (error) {
+                console.error('Error rejecting mentorship request:', error);
+                alert('Failed to reject mentorship request');
+            }
+        }
+
+        function openMentorshipRequestModal(targetUser) {
+            const targetUserId = getEntityId(targetUser);
+            if (!targetUserId) return;
+
+            const isSelf = currentUser && String(getEntityId(currentUser)) === String(targetUserId);
+            if (isSelf) {
+                alert('You cannot request mentorship from yourself.');
+                return;
+            }
+
+            mentorshipRequestTargetUser = {
+                id: targetUserId,
+                name: targetUser?.name || 'this user',
+            };
+
+            const subtitle = document.getElementById('mentorship-request-modal-subtitle');
+            const reasonInput = document.getElementById('mentorship-request-reason');
+
+            if (subtitle) {
+                subtitle.textContent = `Request mentorship from ${mentorshipRequestTargetUser.name}.`;
+            }
+
+            if (reasonInput) {
+                reasonInput.value = '';
+            }
+
+            openModal('mentorship-request-modal', reasonInput);
+        }
+
+        async function submitMentorshipRequest() {
+            if (!mentorshipRequestTargetUser || !mentorshipRequestTargetUser.id) {
+                alert('No mentorship recipient selected.');
+                return;
+            }
+
+            const reasonInput = document.getElementById('mentorship-request-reason');
+            const reason = reasonInput ? reasonInput.value.trim() : '';
+
+            if (!reason || reason.length < 20) {
+                alert('Please provide a reason with at least 20 characters.');
+                return;
+            }
+
+            try {
+                const response = await fetch(API_BASE + '/mentorship/request', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': 'Bearer ' + token,
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        recipientId: mentorshipRequestTargetUser.id,
+                        reason,
+                    }),
+                });
+
+                const data = await response.json();
+                if (!data.success) {
+                    alert(data.message || 'Failed to send mentorship request');
+                    return;
+                }
+
+                closeModal('mentorship-request-modal');
+                await refreshMentorshipRequestState();
+            } catch (error) {
+                console.error('Error sending mentorship request:', error);
+                alert('Failed to send mentorship request');
+            }
+        }
+
+        function configureMentorshipActionButton(button, targetUser) {
+            if (!button || !targetUser) return;
+
+            const targetUserId = getEntityId(targetUser);
+            const selfId = getEntityId(currentUser);
+
+            if (!targetUserId || !selfId || String(targetUserId) === String(selfId)) {
+                button.style.display = 'none';
+                button.onclick = null;
+                return;
+            }
+
+            button.style.display = 'inline-block';
+
+            const state = getMentorshipStateForUser(targetUserId);
+            const stateKey = state ? state.state : 'none';
+
+            if (stateKey === 'connected') {
+                button.classList.add('joined');
+                button.textContent = 'Connected';
+                button.disabled = true;
+                button.onclick = null;
+                return;
+            }
+
+            if (stateKey === 'pending_outgoing') {
+                button.classList.add('joined');
+                button.textContent = 'Requested';
+                button.disabled = true;
+                button.onclick = null;
+                return;
+            }
+
+            if (stateKey === 'pending_incoming') {
+                button.classList.remove('joined');
+                button.textContent = 'Respond to Request';
+                button.disabled = false;
+                button.onclick = () => {
+                    navigateTo('friends');
+                    const incoming = document.getElementById('incoming-requests-container');
+                    if (incoming) {
+                        incoming.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }
+                };
+                return;
+            }
+
+            button.classList.remove('joined');
+            button.textContent = 'Request Mentorship';
+            button.disabled = false;
+            button.onclick = () => openMentorshipRequestModal(targetUser);
+        }
+
+        function refreshMentorshipButtonsInOpenViews() {
+            const profileRequestBtn = document.getElementById('profile-request-mentorship-btn');
+            if (profileRequestBtn && activeProfileViewUser) {
+                configureMentorshipActionButton(profileRequestBtn, activeProfileViewUser);
+            }
+
+            const modalRequestBtn = document.getElementById('user-profile-request-btn');
+            if (modalRequestBtn && activeUserProfileModalUser) {
+                configureMentorshipActionButton(modalRequestBtn, activeUserProfileModalUser);
+            }
         }
 
         // Load all communities
@@ -3351,8 +3917,12 @@
                 const profileProjects = document.getElementById('profile-projects');
                 const profileLinks = document.getElementById('profile-links');
                 const profileShareBox = document.getElementById('profile-share-box');
+                const profileUserActions = document.getElementById('profile-user-actions');
+                const profileRequestBtn = document.getElementById('profile-request-mentorship-btn');
                 
                 if (currentUser) {
+                    activeProfileViewUserId = getEntityId(currentUser);
+                    activeProfileViewUser = null;
                     const initials = getInitials(currentUser.name);
 
                     if (currentUser.profilePicture) {
@@ -3397,6 +3967,15 @@
                     // Ensure create-post box is visible on own profile
                     if (profileShareBox) {
                         profileShareBox.style.display = 'flex';
+                    }
+
+                    if (profileUserActions) {
+                        profileUserActions.style.display = 'none';
+                    }
+
+                    if (profileRequestBtn) {
+                        profileRequestBtn.style.display = 'none';
+                        profileRequestBtn.onclick = null;
                     }
 
                     // Interests
@@ -3505,6 +4084,8 @@
                 const profileProjects = document.getElementById('profile-projects');
                 const profileLinks = document.getElementById('profile-links');
                 const profileShareBox = document.getElementById('profile-share-box');
+                const profileUserActions = document.getElementById('profile-user-actions');
+                const profileRequestBtn = document.getElementById('profile-request-mentorship-btn');
 
                 const res = await fetch(API_BASE + '/users/profile/' + userId, {
                     headers: { 'Authorization': 'Bearer ' + token }
@@ -3516,6 +4097,8 @@
                 }
 
                 const user = data.user;
+                activeProfileViewUserId = getEntityId(user);
+                activeProfileViewUser = user;
 
                 if (user) {
                     const initials = getInitials(user.name || 'User');
@@ -3565,6 +4148,14 @@
                     // Hide create-post box when viewing another user's profile
                     if (profileShareBox) {
                         profileShareBox.style.display = 'none';
+                    }
+
+                    if (profileUserActions) {
+                        profileUserActions.style.display = 'flex';
+                    }
+
+                    if (profileRequestBtn) {
+                        configureMentorshipActionButton(profileRequestBtn, user);
                     }
 
                     // Interests
@@ -3971,10 +4562,13 @@
             const linksEl = document.getElementById('user-profile-links');
             const countsEl = document.getElementById('user-profile-counts');
             const followBtn = document.getElementById('user-profile-follow-btn');
+            const requestBtn = document.getElementById('user-profile-request-btn');
 
-            if (!user || !avatarEl || !nameEl || !handleEl || !metaEl || !bioEl || !linksEl || !countsEl || !followBtn) {
+            if (!user || !avatarEl || !nameEl || !handleEl || !metaEl || !bioEl || !linksEl || !countsEl || !followBtn || !requestBtn) {
                 return;
             }
+
+            activeUserProfileModalUser = user;
 
             const initials = getInitials(user.name || 'User');
 
@@ -4014,10 +4608,13 @@
             // Hide follow button on own profile
             if (currentUser && String(currentUser.id || currentUser._id) === String(user._id)) {
                 followBtn.style.display = 'none';
+                requestBtn.style.display = 'none';
                 return;
             }
 
             followBtn.style.display = 'inline-block';
+            requestBtn.style.display = 'inline-block';
+            configureMentorshipActionButton(requestBtn, user);
 
             let isFollowing = false;
             if (Array.isArray(currentUser?.following)) {
@@ -4265,6 +4862,7 @@
                     loadPosts();
                     loadSuggestions();
                     loadCommunitiesDropdown();
+                    refreshMentorshipRequestState();
                 }
             })
             .catch((err) => {
@@ -4279,11 +4877,45 @@
             userProfileModal.addEventListener('click', (e) => {
                 if (e.target === userProfileModal) {
                     closeModal('user-profile-modal');
+                    activeUserProfileModalUser = null;
                 }
             });
         }
         if (userProfileCloseBtn) {
-            userProfileCloseBtn.addEventListener('click', () => closeModal('user-profile-modal'));
+            userProfileCloseBtn.addEventListener('click', () => {
+                closeModal('user-profile-modal');
+                activeUserProfileModalUser = null;
+            });
+        }
+
+        const mentorshipRequestSubmitBtn = document.getElementById('mentorship-request-submit');
+        if (mentorshipRequestSubmitBtn) {
+            mentorshipRequestSubmitBtn.addEventListener('click', submitMentorshipRequest);
+        }
+
+        const mentorshipRejectSubmitBtn = document.getElementById('mentorship-reject-submit');
+        if (mentorshipRejectSubmitBtn) {
+            mentorshipRejectSubmitBtn.addEventListener('click', submitMentorshipReject);
+        }
+
+        const mentorshipRequestReasonInput = document.getElementById('mentorship-request-reason');
+        if (mentorshipRequestReasonInput) {
+            mentorshipRequestReasonInput.addEventListener('keydown', (e) => {
+                if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+                    e.preventDefault();
+                    submitMentorshipRequest();
+                }
+            });
+        }
+
+        const mentorshipRejectReasonInput = document.getElementById('mentorship-reject-reason');
+        if (mentorshipRejectReasonInput) {
+            mentorshipRejectReasonInput.addEventListener('keydown', (e) => {
+                if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+                    e.preventDefault();
+                    submitMentorshipReject();
+                }
+            });
         }
 
         if (userSearchInput) {
