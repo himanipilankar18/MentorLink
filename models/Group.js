@@ -21,6 +21,17 @@ const groupSchema = new mongoose.Schema({
     maxlength: [300, 'Description cannot exceed 300 characters'],
     default: '',
   },
+  pinnedMessage: {
+    type: String,
+    trim: true,
+    maxlength: [500, 'Pinned message cannot exceed 500 characters'],
+    default: '',
+  },
+  avatarUrl: {
+    type: String,
+    trim: true,
+    default: '',
+  },
   creatorId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
@@ -44,7 +55,7 @@ const groupSchema = new mongoose.Schema({
     },
     role: {
       type: String,
-      enum: ['owner', 'member'],
+      enum: ['owner', 'admin', 'moderator', 'member'],
       default: 'member',
     },
     joinedAt: {
