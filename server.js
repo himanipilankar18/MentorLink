@@ -1,14 +1,27 @@
 require('dotenv').config();
 
+const http = require('http');
 const express = require('express');
 const cors = require('cors');
+const { Server } = require('socket.io');
 const connectDB = require('./config/database');
 const { errorHandler, notFound } = require('./middleware/errorHandler');
 const { securityHeaders, apiLimiter } = require('./middleware/security');
 const { verifyToken } = require('./middleware/auth');
 const Group = require('./models/Group');
+const { setupSocketServer } = require('./realtime/socket');
 
 const app = express();
+const httpServer = http.createServer(app);
+const io = new Server(httpServer, {
+  cors: {
+    origin: true,
+    credentials: true,
+  },
+});
+
+setupSocketServer(io);
+app.set('io', io);
 
 // Security middleware
 app.use(securityHeaders);
@@ -38,6 +51,7 @@ app.use('/api/posts', require('./routes/posts'));
 app.use('/api/communities', require('./routes/communities'));
 app.use('/api/groups', require('./routes/groups'));
 app.use('/api/chat', require('./routes/chat'));
+app.use('/api/notifications', require('./routes/notifications'));
 
 // Fallback handler for /api/groups/my to ensure the
 // "Your groups" view works reliably.
@@ -51,6 +65,7 @@ app.get('/api/groups/my', verifyToken, apiLimiter, async (req, res) => {
       ],
     })
       .sort({ updatedAt: -1 })
+      .populate('members.userId', 'name profilePicture isOnline lastActiveAt')
       .lean();
 
     res.json({
@@ -117,7 +132,7 @@ async function startServer() {
 
     console.log('MongoDB Connected Successfully');
 
-    app.listen(PORT, () => {
+    httpServer.listen(PORT, () => {
       console.log(`Server running in ${process.env.NODE_ENV || 'development'} mode on port ${PORT}`);
     });
   } catch (error) {

@@ -66,6 +66,139 @@
             text-shadow: 0 0 30px rgba(236, 72, 153, 0.35);
         }
 
+        .header-actions {
+            margin-left: auto;
+            position: relative;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .notification-bell {
+            width: 40px;
+            height: 40px;
+            border-radius: 999px;
+            border: 1px solid rgba(148, 163, 184, 0.45);
+            background: rgba(15, 23, 42, 0.9);
+            color: var(--text-primary);
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            font-size: 1rem;
+            transition: all 0.18s ease-out;
+        }
+
+        .notification-bell:hover {
+            border-color: rgba(167, 139, 250, 0.85);
+            box-shadow: 0 0 0 3px rgba(167, 139, 250, 0.2);
+        }
+
+        .notification-count {
+            position: absolute;
+            top: -4px;
+            right: -4px;
+            min-width: 18px;
+            height: 18px;
+            border-radius: 999px;
+            padding: 0 5px;
+            background: #ef4444;
+            color: #fff;
+            font-size: 0.68rem;
+            font-weight: 700;
+            display: none;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .notification-dropdown {
+            position: absolute;
+            top: calc(100% + 10px);
+            right: 0;
+            width: min(380px, calc(100vw - 24px));
+            max-height: 460px;
+            overflow: hidden;
+            background: rgba(2, 6, 23, 0.98);
+            border: 1px solid rgba(167, 139, 250, 0.45);
+            border-radius: 14px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.75);
+            display: none;
+            z-index: 80;
+        }
+
+        .notification-dropdown.open {
+            display: block;
+        }
+
+        .notification-dropdown-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 14px;
+            border-bottom: 1px solid rgba(148, 163, 184, 0.2);
+        }
+
+        .notification-dropdown-title {
+            font-size: 0.92rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .notification-mark-all {
+            border: none;
+            background: transparent;
+            color: var(--accent-purple);
+            font-size: 0.76rem;
+            cursor: pointer;
+            padding: 0;
+        }
+
+        .notification-list {
+            max-height: 390px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .notification-item {
+            border: none;
+            width: 100%;
+            text-align: left;
+            background: transparent;
+            color: var(--text-primary);
+            padding: 10px 14px;
+            border-bottom: 1px solid rgba(148, 163, 184, 0.12);
+            cursor: pointer;
+        }
+
+        .notification-item:hover {
+            background: rgba(148, 163, 184, 0.12);
+        }
+
+        .notification-item.unread {
+            background: rgba(167, 139, 250, 0.1);
+        }
+
+        .notification-item-message {
+            font-size: 0.84rem;
+            line-height: 1.3;
+            color: var(--text-primary);
+        }
+
+        .notification-item-time {
+            margin-top: 4px;
+            font-size: 0.72rem;
+            color: var(--text-tertiary);
+        }
+
+        .notification-empty {
+            padding: 18px 14px;
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 0.82rem;
+        }
+
         .app {
             display: flex;
             min-height: 100vh;
@@ -1280,6 +1413,21 @@
         <header class="app-header">
             <div class="app-header-inner">
                 <div class="app-logo">MentorLink</div>
+                <div class="header-actions" id="header-actions">
+                    <button type="button" class="notification-bell" id="notification-bell" aria-label="Notifications">
+                        <span>🔔</span>
+                        <span class="notification-count" id="notification-count">0</span>
+                    </button>
+                    <div class="notification-dropdown" id="notification-dropdown">
+                        <div class="notification-dropdown-header">
+                            <div class="notification-dropdown-title">Notifications</div>
+                            <button type="button" class="notification-mark-all" id="notification-mark-all">Mark all as read</button>
+                        </div>
+                        <div class="notification-list" id="notification-list">
+                            <div class="notification-empty">No notifications yet.</div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </header>
     <div class="app">
@@ -1432,9 +1580,13 @@
                         <div class="avatar" style="width:96px;height:96px;font-size:2.5rem;" id="profile-avatar">U</div>
                         <div>
                             <h2 style="font-size:2rem;margin-bottom:4px;" id="profile-name">User</h2>
+                            <div id="profile-intent-badge" style="display:inline-flex;padding:4px 10px;border-radius:999px;font-size:0.75rem;font-weight:700;margin-bottom:8px;background:rgba(59,130,246,0.18);color:#93c5fd;border:1px solid rgba(59,130,246,0.45);">Seeking Mentorship</div>
+                            <p style="color:var(--text-secondary);font-size:0.85rem;margin-bottom:6px;" id="profile-skills-line">Skills: Not added yet</p>
                             <p style="color:var(--text-secondary);margin-bottom:8px;" id="profile-handle">@user</p>
                             <p style="color:var(--text-secondary);font-size:0.9rem;margin-bottom:8px;" id="profile-bio">No bio yet</p>
                             <p style="color:var(--text-secondary);font-size:0.85rem;" id="profile-meta"></p>
+                            <p style="color:var(--text-secondary);font-size:0.82rem;margin-top:4px;" id="profile-availability-line">Availability: Flexible</p>
+                            <p style="color:var(--text-secondary);font-size:0.82rem;margin-top:2px;" id="profile-strength-line">Profile Strength: 0%</p>
                             <div id="profile-user-actions" style="display:none;gap:8px;margin-top:10px;">
                                 <button id="profile-request-mentorship-btn" class="btn-follow" style="padding:7px 14px;font-size:0.85rem;">Request Mentorship</button>
                             </div>
@@ -1527,6 +1679,7 @@
                             <div id="chat-messages-container" class="chat-messages" style="margin-bottom:6px;">
                                 <div style="text-align:center;padding:12px;">Select a group to start chatting.</div>
                             </div>
+                            <div id="chat-typing-indicator" style="min-height:18px;font-size:0.78rem;color:var(--text-tertiary);margin:0 4px 6px 4px;"></div>
                             <div class="chat-input-row" id="chat-input-row">
                                 <input id="chat-input" type="text" placeholder="Select a group to start chatting." disabled style="flex:1;border-radius:999px;border:1px solid rgba(148,163,184,0.7);background:rgba(15,23,42,0.6);color:var(--text-primary);font-size:0.95rem;cursor:not-allowed;" />
                                 <button id="chat-send-btn" class="btn-send" disabled style="opacity:0.6;cursor:not-allowed;">Send</button>
@@ -1788,7 +1941,14 @@
 
             <div id="user-profile-counts" style="font-size:0.8rem;color:var(--text-secondary);margin-bottom:10px;"></div>
 
+            <div id="user-profile-intent" style="display:inline-flex;padding:4px 10px;border-radius:999px;font-size:0.72rem;font-weight:700;margin-bottom:8px;background:rgba(59,130,246,0.18);color:#93c5fd;border:1px solid rgba(59,130,246,0.45);">Seeking Mentorship</div>
+
+            <div id="user-profile-skills" style="font-size:0.8rem;color:var(--text-secondary);margin-bottom:10px;">Skills: Not added yet</div>
+
             <div id="user-profile-bio" style="font-size:0.9rem;color:var(--text-primary);margin-bottom:12px;line-height:1.4;"></div>
+
+            <div id="user-profile-availability" style="font-size:0.8rem;color:var(--text-secondary);margin-bottom:6px;">Availability: Flexible</div>
+            <div id="user-profile-strength" style="font-size:0.8rem;color:var(--text-secondary);margin-bottom:12px;">Profile Strength: 0%</div>
 
             <div id="user-profile-links" style="font-size:0.85rem;color:var(--text-secondary);margin-bottom:14px;"></div>
 
@@ -1827,6 +1987,7 @@
         </div>
     </div>
 
+    <script src="/socket.io/socket.io.js"></script>
     <script>
         const token = localStorage.getItem('mentorlink_token');
         const API_BASE = window.location.origin + '/api';
@@ -1836,6 +1997,13 @@
         let chatPollIntervalId = null;
         let chatGroups = [];
         let chatMode = 'groups'; // 'groups' or 'personal'
+        let socketClient = null;
+        const presenceByUserId = {};
+        const typingUsersByGroupId = {};
+        let localTypingStopTimeoutId = null;
+        let localTypingStartedForGroupId = null;
+        let notifications = [];
+        let unreadNotificationCount = 0;
         let activeCommunityForPost = null;
         let mentorshipIncomingRequests = [];
         let mentorshipOutgoingRequests = [];
@@ -1935,6 +2103,175 @@
             interval = Math.floor(seconds / 60);
             if (interval >= 1) return interval + ' minute' + (interval > 1 ? 's' : '') + ' ago';
             return 'Just now';
+        }
+
+        function setNotificationCount(value) {
+            unreadNotificationCount = Math.max(0, Number(value) || 0);
+            const countEl = document.getElementById('notification-count');
+            if (!countEl) return;
+
+            if (unreadNotificationCount > 0) {
+                countEl.style.display = 'inline-flex';
+                countEl.textContent = unreadNotificationCount > 99 ? '99+' : String(unreadNotificationCount);
+            } else {
+                countEl.style.display = 'none';
+                countEl.textContent = '0';
+            }
+        }
+
+        function closeNotificationDropdown() {
+            const dropdown = document.getElementById('notification-dropdown');
+            if (dropdown) {
+                dropdown.classList.remove('open');
+            }
+        }
+
+        function renderNotifications() {
+            const listEl = document.getElementById('notification-list');
+            if (!listEl) return;
+
+            if (!notifications.length) {
+                listEl.innerHTML = '<div class="notification-empty">No notifications yet.</div>';
+                return;
+            }
+
+            listEl.innerHTML = notifications.map((item) => {
+                const itemId = item._id || item.id;
+                const unreadClass = item.isRead ? '' : ' unread';
+                const message = escapeHtml(item.message || 'New notification');
+                const timeLabel = timeAgo(item.createdAt || new Date().toISOString());
+
+                return `
+                    <button type="button" class="notification-item${unreadClass}" data-notification-id="${itemId}" data-notification-type="${item.type || ''}">
+                        <div class="notification-item-message">${message}</div>
+                        <div class="notification-item-time">${timeLabel}</div>
+                    </button>
+                `;
+            }).join('');
+
+            listEl.querySelectorAll('.notification-item').forEach((itemEl) => {
+                itemEl.addEventListener('click', async () => {
+                    const notificationId = itemEl.getAttribute('data-notification-id');
+                    const notificationType = itemEl.getAttribute('data-notification-type');
+                    if (!notificationId) return;
+
+                    await markNotificationRead(notificationId);
+
+                    if (notificationType === 'NEW_MESSAGE') {
+                        navigateTo('messages');
+                    } else if (notificationType === 'MENTORSHIP_REQUEST') {
+                        navigateTo('friends');
+                    }
+
+                    closeNotificationDropdown();
+                });
+            });
+        }
+
+        async function loadNotifications(unreadOnly = false) {
+            if (!token) return;
+
+            try {
+                const url = unreadOnly
+                    ? API_BASE + '/notifications?limit=20&unread=true'
+                    : API_BASE + '/notifications?limit=20';
+
+                const response = await fetch(url, {
+                    headers: { 'Authorization': 'Bearer ' + token },
+                });
+                const data = await response.json();
+
+                if (!data.success || !Array.isArray(data.notifications)) {
+                    return;
+                }
+
+                notifications = data.notifications;
+                setNotificationCount(data.unreadCount || 0);
+                renderNotifications();
+            } catch (error) {
+                console.error('Failed to load notifications:', error);
+            }
+        }
+
+        async function markNotificationRead(notificationId) {
+            try {
+                const response = await fetch(API_BASE + `/notifications/${notificationId}/read`, {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': 'Bearer ' + token,
+                        'Content-Type': 'application/json',
+                    },
+                });
+
+                const data = await response.json();
+                if (!data.success) return;
+
+                notifications = notifications.map((item) => {
+                    const itemId = String(item._id || item.id || '');
+                    if (itemId !== String(notificationId)) return item;
+                    return { ...item, isRead: true };
+                });
+
+                setNotificationCount(data.unreadCount || 0);
+                renderNotifications();
+            } catch (error) {
+                console.error('Failed to mark notification as read:', error);
+            }
+        }
+
+        async function markAllNotificationsRead() {
+            try {
+                const response = await fetch(API_BASE + '/notifications/read-all', {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': 'Bearer ' + token,
+                        'Content-Type': 'application/json',
+                    },
+                });
+
+                const data = await response.json();
+                if (!data.success) return;
+
+                notifications = notifications.map((item) => ({ ...item, isRead: true }));
+                setNotificationCount(data.unreadCount || 0);
+                renderNotifications();
+            } catch (error) {
+                console.error('Failed to mark all notifications as read:', error);
+            }
+        }
+
+        function initNotificationUI() {
+            const bell = document.getElementById('notification-bell');
+            const dropdown = document.getElementById('notification-dropdown');
+            const markAllBtn = document.getElementById('notification-mark-all');
+            const headerActions = document.getElementById('header-actions');
+
+            if (bell && dropdown) {
+                bell.addEventListener('click', (event) => {
+                    event.stopPropagation();
+                    dropdown.classList.toggle('open');
+                    if (dropdown.classList.contains('open')) {
+                        loadNotifications();
+                    }
+                });
+            }
+
+            if (markAllBtn) {
+                markAllBtn.addEventListener('click', async (event) => {
+                    event.stopPropagation();
+                    await markAllNotificationsRead();
+                });
+            }
+
+            if (headerActions) {
+                headerActions.addEventListener('click', (event) => {
+                    event.stopPropagation();
+                });
+            }
+
+            document.addEventListener('click', () => {
+                closeNotificationDropdown();
+            });
         }
 
         // Format view count
@@ -2494,6 +2831,35 @@
                         sendChatMessage();
                     }
                 });
+
+                input.addEventListener('input', () => {
+                    if (!socketClient || !socketClient.connected || !currentChatGroupId) return;
+
+                    const value = input.value.trim();
+                    const groupId = String(currentChatGroupId);
+
+                    if (!value) {
+                        clearLocalTypingState(groupId);
+                        return;
+                    }
+
+                    if (localTypingStartedForGroupId !== groupId) {
+                        socketClient.emit('typing:start', { groupId });
+                        localTypingStartedForGroupId = groupId;
+                    }
+
+                    if (localTypingStopTimeoutId) {
+                        clearTimeout(localTypingStopTimeoutId);
+                    }
+
+                    localTypingStopTimeoutId = setTimeout(() => {
+                        clearLocalTypingState(groupId);
+                    }, 1500);
+                });
+
+                input.addEventListener('blur', () => {
+                    clearLocalTypingState(currentChatGroupId);
+                });
             }
 
             if (chatHeader) {
@@ -2558,6 +2924,107 @@
 
             // Ensure typing is disabled until a group is selected
             setChatInputEnabled(false);
+        }
+
+        function applyPresenceEvent(userId, isOnline, lastActiveAt) {
+            if (!userId) return;
+            cachePresence(userId, isOnline, lastActiveAt || null);
+
+            document.querySelectorAll(`.suggestion-item[data-user-id="${String(userId)}"] .presence-label`).forEach((el) => {
+                el.textContent = getPresenceLabelForUserId(userId);
+            });
+
+            if (activeProfileViewUser && String(getUserId(activeProfileViewUser)) === String(userId)) {
+                const profileMeta = document.getElementById('profile-meta');
+                if (profileMeta) {
+                    profileMeta.textContent = buildUserMetaText(activeProfileViewUser);
+                }
+            }
+
+            if (activeUserProfileModalUser && String(getUserId(activeUserProfileModalUser)) === String(userId)) {
+                const modalMeta = document.getElementById('user-profile-meta');
+                if (modalMeta) {
+                    modalMeta.textContent = buildUserMetaText(activeUserProfileModalUser);
+                }
+            }
+
+            updateActiveChatPresenceLine();
+        }
+
+        function joinSocketGroup(groupId) {
+            if (!groupId || !socketClient || !socketClient.connected) return;
+            socketClient.emit('group:join', { groupId: String(groupId) });
+        }
+
+        function bindRealtimeSocketEvents() {
+            if (!socketClient) return;
+
+            socketClient.on('connect', () => {
+                if (currentChatGroupId) {
+                    joinSocketGroup(currentChatGroupId);
+                }
+            });
+
+            socketClient.on('user:online', (payload) => {
+                if (!payload || !payload.userId) return;
+                applyPresenceEvent(payload.userId, true, null);
+            });
+
+            socketClient.on('user:offline', (payload) => {
+                if (!payload || !payload.userId) return;
+                applyPresenceEvent(payload.userId, false, payload.timestamp || null);
+            });
+
+            socketClient.on('typing:start', (payload) => {
+                if (!payload || !payload.groupId || !payload.userId) return;
+                const typingSet = ensureGroupTypingState(payload.groupId);
+                if (!typingSet) return;
+
+                typingSet.add(String(payload.userId));
+                renderTypingIndicator();
+            });
+
+            socketClient.on('typing:stop', (payload) => {
+                if (!payload || !payload.groupId || !payload.userId) return;
+                const typingSet = ensureGroupTypingState(payload.groupId);
+                if (!typingSet) return;
+
+                typingSet.delete(String(payload.userId));
+                renderTypingIndicator();
+            });
+
+            socketClient.on('notification:new', (payload) => {
+                if (!payload || !(payload._id || payload.id)) return;
+
+                const payloadId = String(payload._id || payload.id);
+                const exists = notifications.some((item) => String(item._id || item.id) === payloadId);
+                if (exists) return;
+
+                notifications.unshift({
+                    ...payload,
+                    isRead: false,
+                });
+
+                if (notifications.length > 20) {
+                    notifications = notifications.slice(0, 20);
+                }
+
+                setNotificationCount(unreadNotificationCount + 1);
+                renderNotifications();
+            });
+        }
+
+        function initRealtimeSocket() {
+            if (!token || typeof io !== 'function' || socketClient) return;
+
+            socketClient = io({
+                auth: {
+                    token,
+                },
+                transports: ['websocket', 'polling'],
+            });
+
+            bindRealtimeSocketEvents();
         }
 
         function applyChatMode(mode) {
@@ -2661,6 +3128,17 @@
                         ...g,
                         isMentorship: typeof g.name === 'string' && g.name.startsWith('mentorship-'),
                     }));
+
+                    chatGroups.forEach((group) => {
+                        if (!Array.isArray(group.members)) return;
+                        group.members.forEach((member) => {
+                            const memberUser = member && member.userId ? member.userId : null;
+                            if (memberUser && typeof memberUser === 'object') {
+                                cachePresenceFromUser(memberUser);
+                            }
+                        });
+                    });
+
                     renderChatGroupList();
                 } else {
                     chatGroups = [];
@@ -2950,6 +3428,10 @@
         }
 
         function selectChatGroup(groupId) {
+            if (currentChatGroupId && String(currentChatGroupId) !== String(groupId)) {
+                clearLocalTypingState(currentChatGroupId);
+            }
+
             currentChatGroupId = groupId;
 
             if (chatPollIntervalId) {
@@ -2965,6 +3447,7 @@
                 const title = group.displayName || group.name || 'Group chat';
                 const avatarUrl = group.avatarUrl || '';
                 const initials = getInitials(title);
+                const presenceLine = group.isMentorship ? '<div id="chat-presence-line" style="font-size:0.78rem;color:var(--text-tertiary);margin-top:2px;">Last seen recently</div>' : '';
 
                 let memberLine = '';
                 if (Array.isArray(group.members) && group.members.length) {
@@ -2994,9 +3477,12 @@
                         <div style="flex:1;min-width:0;">
                             <div style="font-size:0.95rem;color:var(--text-primary);font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(title)}</div>
                             ${memberLine ? `<div style=\"font-size:0.8rem;color:var(--text-tertiary);margin-top:2px;\">${memberLine}</div>` : ''}
+                            ${presenceLine}
                         </div>
                     </div>
                 `;
+
+                updateActiveChatPresenceLine();
             }
 
             if (group && codeHint) {
@@ -3013,13 +3499,20 @@
 
             if (!groupId) {
                 const container = document.getElementById('chat-messages-container');
+                const typingIndicator = document.getElementById('chat-typing-indicator');
                 if (container) {
                     container.innerHTML = '<div style="text-align:center;padding:12px;">Select a group to start chatting.</div>';
+                }
+                if (typingIndicator) {
+                    typingIndicator.textContent = '';
                 }
                 setChatInputEnabled(false);
                 return;
             }
 
+            ensureGroupTypingState(groupId).clear();
+            renderTypingIndicator();
+            joinSocketGroup(groupId);
             setChatInputEnabled(true);
             loadChatMessages(groupId);
             chatPollIntervalId = setInterval(() => {
@@ -3200,6 +3693,7 @@
             }
 
             const content = input.value.trim();
+            clearLocalTypingState(groupId);
 
             try {
                 const response = await fetch(API_BASE + `/chat/group/${groupId}/messages`, {
@@ -3430,6 +3924,225 @@
                 .replace(/'/g, '&#39;');
         }
 
+        function getUserId(user) {
+            if (!user) return '';
+            if (typeof user === 'string') return user;
+            return String(user._id || user.id || '');
+        }
+
+        function cachePresence(userOrId, isOnline, lastActiveAt) {
+            const userId = getUserId(userOrId);
+            if (!userId) return;
+
+            const existing = presenceByUserId[userId] || {};
+            presenceByUserId[userId] = {
+                isOnline: typeof isOnline === 'boolean' ? isOnline : !!existing.isOnline,
+                lastActiveAt: lastActiveAt || existing.lastActiveAt || null,
+            };
+        }
+
+        function cachePresenceFromUser(user) {
+            if (!user) return;
+            const userId = getUserId(user);
+            if (!userId) return;
+            cachePresence(userId, !!user.isOnline, user.lastActiveAt || null);
+        }
+
+        function formatLastSeen(value) {
+            if (!value) return 'Last seen recently';
+            const date = new Date(value);
+            if (Number.isNaN(date.getTime())) return 'Last seen recently';
+
+            const diffMs = Date.now() - date.getTime();
+            const diffSec = Math.max(0, Math.floor(diffMs / 1000));
+
+            if (diffSec < 60) return 'Last seen just now';
+
+            const diffMin = Math.floor(diffSec / 60);
+            if (diffMin < 60) return `Last seen ${diffMin}m ago`;
+
+            const diffHour = Math.floor(diffMin / 60);
+            if (diffHour < 24) return `Last seen ${diffHour}h ago`;
+
+            const diffDay = Math.floor(diffHour / 24);
+            return `Last seen ${diffDay}d ago`;
+        }
+
+        function getPresenceLabelForUserId(userId) {
+            const entry = presenceByUserId[String(userId)] || null;
+            if (entry && entry.isOnline) return 'Online';
+            return formatLastSeen(entry ? entry.lastActiveAt : null);
+        }
+
+        function getPresenceLabelForUser(user) {
+            const userId = getUserId(user);
+            if (!userId) return 'Last seen recently';
+
+            if (typeof user.isOnline === 'boolean' || user.lastActiveAt) {
+                cachePresence(userId, !!user.isOnline, user.lastActiveAt || null);
+            }
+
+            return getPresenceLabelForUserId(userId);
+        }
+
+        function buildUserMetaText(user, separator = ' • ') {
+            const parts = [];
+            if (user && user.year) parts.push(String(user.year));
+            if (user && user.department) parts.push(user.department);
+            parts.push(getPresenceLabelForUser(user || {}));
+            return parts.filter(Boolean).join(separator);
+        }
+
+        function formatMentorshipIntent(intent) {
+            if (intent === 'offering') return 'Offering Mentorship';
+            if (intent === 'both') return 'Seeking & Offering';
+            return 'Seeking Mentorship';
+        }
+
+        function formatAvailability(value) {
+            if (value === 'weekdays') return 'Weekdays';
+            if (value === 'weekends') return 'Weekends';
+            return 'Flexible';
+        }
+
+        function calculateProfileStrength(user) {
+            let score = 0;
+            if (user && user.profilePicture) score += 20;
+            if (user && Array.isArray(user.skills) && user.skills.length >= 3) score += 20;
+            if (user && typeof user.bio === 'string' && user.bio.trim().length > 0) score += 20;
+            if (user && Array.isArray(user.projects) && user.projects.length > 0) score += 20;
+            if (user && user.cgpa !== null && user.cgpa !== undefined && user.cgpa !== '') score += 20;
+            return score;
+        }
+
+        function applyIntentBadge(element, intent) {
+            if (!element) return;
+
+            const normalized = ['seeking', 'offering', 'both'].includes(intent) ? intent : 'seeking';
+            const palette = {
+                seeking: {
+                    bg: 'rgba(59,130,246,0.18)',
+                    color: '#93c5fd',
+                    border: 'rgba(59,130,246,0.45)',
+                },
+                offering: {
+                    bg: 'rgba(16,185,129,0.18)',
+                    color: '#6ee7b7',
+                    border: 'rgba(16,185,129,0.45)',
+                },
+                both: {
+                    bg: 'rgba(167,139,250,0.18)',
+                    color: '#c4b5fd',
+                    border: 'rgba(167,139,250,0.45)',
+                },
+            };
+
+            element.textContent = formatMentorshipIntent(normalized);
+            element.style.background = palette[normalized].bg;
+            element.style.color = palette[normalized].color;
+            element.style.border = `1px solid ${palette[normalized].border}`;
+        }
+
+        function getCounterpartForPersonalChat(group) {
+            if (!group || !Array.isArray(group.members) || !currentUser) return null;
+
+            const selfId = String(currentUser.id || currentUser._id || '');
+            if (!selfId) return null;
+
+            const counterpartMember = group.members.find((member) => {
+                const memberUser = member && member.userId;
+                const memberId = getUserId(memberUser || member);
+                return memberId && memberId !== selfId;
+            });
+
+            if (!counterpartMember) return null;
+            return counterpartMember.userId || counterpartMember;
+        }
+
+        function updateActiveChatPresenceLine() {
+            const line = document.getElementById('chat-presence-line');
+            if (!line) return;
+
+            const group = chatGroups.find((g) => String(g._id) === String(currentChatGroupId));
+            if (!group || !group.isMentorship) {
+                line.textContent = '';
+                return;
+            }
+
+            const counterpart = getCounterpartForPersonalChat(group);
+            if (!counterpart) {
+                line.textContent = 'Last seen recently';
+                return;
+            }
+
+            line.textContent = getPresenceLabelForUser(counterpart);
+        }
+
+        function ensureGroupTypingState(groupId) {
+            const key = String(groupId || '');
+            if (!key) return null;
+            if (!typingUsersByGroupId[key]) {
+                typingUsersByGroupId[key] = new Set();
+            }
+            return typingUsersByGroupId[key];
+        }
+
+        function renderTypingIndicator() {
+            const indicator = document.getElementById('chat-typing-indicator');
+            if (!indicator) return;
+
+            const activeGroupId = String(currentChatGroupId || '');
+            if (!activeGroupId) {
+                indicator.textContent = '';
+                return;
+            }
+
+            const typingSet = ensureGroupTypingState(activeGroupId);
+            if (!typingSet || typingSet.size === 0) {
+                indicator.textContent = '';
+                return;
+            }
+
+            const group = chatGroups.find((g) => String(g._id) === activeGroupId);
+            const names = [];
+
+            typingSet.forEach((userId) => {
+                if (!group || !Array.isArray(group.members)) return;
+                const member = group.members.find((m) => String(getUserId(m.userId || m)) === String(userId));
+                if (member) {
+                    const memberUser = member.userId || member;
+                    names.push(memberUser.name || 'Someone');
+                }
+            });
+
+            if (names.length === 1) {
+                indicator.textContent = `${names[0]} is typing...`;
+                return;
+            }
+
+            if (names.length > 1) {
+                indicator.textContent = `${names.length} people are typing...`;
+                return;
+            }
+
+            indicator.textContent = 'Someone is typing...';
+        }
+
+        function clearLocalTypingState(groupId) {
+            const key = String(groupId || '');
+            if (!key || !socketClient || !socketClient.connected) return;
+
+            if (localTypingStartedForGroupId === key) {
+                socketClient.emit('typing:stop', { groupId: key });
+                localTypingStartedForGroupId = null;
+            }
+
+            if (localTypingStopTimeoutId) {
+                clearTimeout(localTypingStopTimeoutId);
+                localTypingStopTimeoutId = null;
+            }
+        }
+
         // Helper: format community description as bullet points when there
         // are multiple lines; otherwise keep it as a single paragraph.
         function formatCommunityDescription(text) {
@@ -3631,7 +4344,7 @@
             const recipient = getMentorshipRecipient(request);
             const counterpart = type === 'incoming' ? requester : recipient;
             const counterpartName = counterpart?.name || 'User';
-            const counterpartMeta = [counterpart?.department, counterpart?.year ? `Year ${counterpart.year}` : '', counterpart?.role]
+            const counterpartMeta = [counterpart?.department, counterpart?.year ? `Year ${counterpart.year}` : '', counterpart?.role, getPresenceLabelForUser(counterpart || {})]
                 .filter(Boolean)
                 .join(' · ');
 
@@ -4579,6 +5292,10 @@
                 const profileHandle = document.getElementById('profile-handle');
                 const profileBio = document.getElementById('profile-bio');
                 const profileMeta = document.getElementById('profile-meta');
+                const profileIntentBadge = document.getElementById('profile-intent-badge');
+                const profileSkillsLine = document.getElementById('profile-skills-line');
+                const profileAvailabilityLine = document.getElementById('profile-availability-line');
+                const profileStrengthLine = document.getElementById('profile-strength-line');
                 const profileInterests = document.getElementById('profile-interests');
                 const profileProjects = document.getElementById('profile-projects');
                 const profileLinks = document.getElementById('profile-links');
@@ -4628,7 +5345,26 @@
                     if (currentUser.department) {
                         parts.push(currentUser.department);
                     }
-                    profileMeta.textContent = parts.length ? parts.join(' · ') : '';
+                    parts.push(getPresenceLabelForUser(currentUser));
+                    profileMeta.textContent = parts.filter(Boolean).join(' · ');
+
+                    applyIntentBadge(profileIntentBadge, currentUser.mentorshipIntent || 'seeking');
+
+                    if (profileSkillsLine) {
+                        const skillsText = Array.isArray(currentUser.skills) && currentUser.skills.length
+                            ? currentUser.skills.join(', ')
+                            : 'Not added yet';
+                        profileSkillsLine.textContent = `Skills: ${skillsText}`;
+                    }
+
+                    if (profileAvailabilityLine) {
+                        profileAvailabilityLine.textContent = `Availability: ${formatAvailability(currentUser.availability)}`;
+                    }
+
+                    if (profileStrengthLine) {
+                        const strength = Number(currentUser.profileStrength ?? calculateProfileStrength(currentUser));
+                        profileStrengthLine.textContent = `Profile Strength: ${strength}%`;
+                    }
 
                     // Ensure create-post box is visible on own profile
                     if (profileShareBox) {
@@ -4746,6 +5482,10 @@
                 const profileHandle = document.getElementById('profile-handle');
                 const profileBio = document.getElementById('profile-bio');
                 const profileMeta = document.getElementById('profile-meta');
+                const profileIntentBadge = document.getElementById('profile-intent-badge');
+                const profileSkillsLine = document.getElementById('profile-skills-line');
+                const profileAvailabilityLine = document.getElementById('profile-availability-line');
+                const profileStrengthLine = document.getElementById('profile-strength-line');
                 const profileInterests = document.getElementById('profile-interests');
                 const profileProjects = document.getElementById('profile-projects');
                 const profileLinks = document.getElementById('profile-links');
@@ -4809,7 +5549,26 @@
                     if (user.department) {
                         parts.push(user.department);
                     }
-                    profileMeta.textContent = parts.length ? parts.join(' · ') : '';
+                    parts.push(getPresenceLabelForUser(user));
+                    profileMeta.textContent = parts.filter(Boolean).join(' · ');
+
+                    applyIntentBadge(profileIntentBadge, user.mentorshipIntent || 'seeking');
+
+                    if (profileSkillsLine) {
+                        const skillsText = Array.isArray(user.skills) && user.skills.length
+                            ? user.skills.join(', ')
+                            : 'Not added yet';
+                        profileSkillsLine.textContent = `Skills: ${skillsText}`;
+                    }
+
+                    if (profileAvailabilityLine) {
+                        profileAvailabilityLine.textContent = `Availability: ${formatAvailability(user.availability)}`;
+                    }
+
+                    if (profileStrengthLine) {
+                        const strength = Number(user.profileStrength ?? calculateProfileStrength(user));
+                        profileStrengthLine.textContent = `Profile Strength: ${strength}%`;
+                    }
 
                     // Hide create-post box when viewing another user's profile
                     if (profileShareBox) {
@@ -5148,6 +5907,7 @@
                                 <div class="avatar-sm" data-user-id="${userId}">${initials}</div>
                                 <div class="info" data-user-id="${userId}">
                                     <div class="name">${user.name || 'Anonymous'}</div>
+                                    <div class="presence-label" style="font-size:0.74rem;color:var(--text-tertiary);margin-top:2px;">${escapeHtml(getPresenceLabelForUser(user))}</div>
                                 </div>
                                 <button class="btn-follow ${isFollowing ? 'joined' : ''}" data-user-id="${userId}">${isFollowing ? 'Following' : 'Follow'}</button>
                             </div>
@@ -5227,6 +5987,10 @@
             const bioEl = document.getElementById('user-profile-bio');
             const linksEl = document.getElementById('user-profile-links');
             const countsEl = document.getElementById('user-profile-counts');
+            const intentEl = document.getElementById('user-profile-intent');
+            const skillsEl = document.getElementById('user-profile-skills');
+            const availabilityEl = document.getElementById('user-profile-availability');
+            const strengthEl = document.getElementById('user-profile-strength');
             const followBtn = document.getElementById('user-profile-follow-btn');
             const requestBtn = document.getElementById('user-profile-request-btn');
 
@@ -5254,9 +6018,28 @@
             const metaParts = [];
             if (user.year) metaParts.push(user.year);
             if (user.department) metaParts.push(user.department);
-            metaEl.textContent = metaParts.join(' • ');
+            metaParts.push(getPresenceLabelForUser(user));
+            metaEl.textContent = metaParts.filter(Boolean).join(' • ');
+
+            applyIntentBadge(intentEl, user.mentorshipIntent || 'seeking');
+
+            if (skillsEl) {
+                const skillsText = Array.isArray(user.skills) && user.skills.length
+                    ? user.skills.join(', ')
+                    : 'Not added yet';
+                skillsEl.textContent = `Skills: ${skillsText}`;
+            }
 
             bioEl.textContent = user.bio && user.bio.trim().length > 0 ? user.bio : 'No bio added yet.';
+
+            if (availabilityEl) {
+                availabilityEl.textContent = `Availability: ${formatAvailability(user.availability)}`;
+            }
+
+            if (strengthEl) {
+                const strength = Number(user.profileStrength ?? calculateProfileStrength(user));
+                strengthEl.textContent = `Profile Strength: ${strength}%`;
+            }
 
             const followerCount = (user.followers || []).length;
             const followingCount = (user.following || []).length;
@@ -5399,6 +6182,7 @@
                             <div class="avatar-sm" data-user-id="${userId}">${initials}</div>
                             <div class="info" data-user-id="${userId}">
                                 <div class="name">${user.name || 'Anonymous'}</div>
+                                <div class="presence-label" style="font-size:0.74rem;color:var(--text-tertiary);margin-top:2px;">${escapeHtml(getPresenceLabelForUser(user))}</div>
                             </div>
                             <button class="btn-follow ${isFollowing ? 'joined' : ''}" data-user-id="${userId}">${isFollowing ? 'Following' : 'Follow'}</button>
                         </div>
@@ -5456,6 +6240,8 @@
             document.getElementById('feed-view').style.display = 'none';
             document.getElementById('auth-prompt').style.display = 'block';
         } else {
+            initNotificationUI();
+
             // Set up custom dropdowns once DOM is ready
             initCustomDropdowns();
 
@@ -5523,12 +6309,16 @@
                     }
                     document.getElementById('user-name').textContent = currentUser.name || 'User';
                     document.getElementById('user-handle').textContent = '@' + (currentUser.email || 'user').split('@')[0];
+
+                    cachePresenceFromUser(currentUser);
+                    initRealtimeSocket();
                     
                     // Load dynamic content
                     loadPosts();
                     loadSuggestions();
                     loadCommunitiesDropdown();
                     refreshMentorshipRequestState();
+                    loadNotifications();
                 }
             })
             .catch((err) => {

@@ -1,6 +1,7 @@
 const express = require('express');
 const ChatMessage = require('../models/ChatMessage');
 const Group = require('../models/Group');
+const { createAndEmitNotification } = require('../utils/notifications');
 const { verifyToken } = require('../middleware/auth');
 const { apiLimiter } = require('../middleware/security');
 
@@ -61,6 +62,7 @@ router.get('/group/:id/messages', verifyToken, apiLimiter, async (req, res) => {
 // @access  Private (any authenticated user)
 router.post('/group/:id/messages', verifyToken, apiLimiter, async (req, res) => {
   try {
+    const io = req.app.get('io');
     const { content } = req.body;
 
     if (!content || typeof content !== 'string' || !content.trim()) {
@@ -75,6 +77,8 @@ router.post('/group/:id/messages', verifyToken, apiLimiter, async (req, res) => 
       return res.status(error.status).json({ success: false, message: error.message });
     }
 
+    const group = await Group.findById(req.params.id).select('displayName name members');
+
     const message = await ChatMessage.create({
       groupId: req.params.id,
       senderId: req.user._id,
@@ -82,6 +86,28 @@ router.post('/group/:id/messages', verifyToken, apiLimiter, async (req, res) => 
     });
 
     await message.populate('senderId', 'name profilePicture');
+
+    if (group && Array.isArray(group.members)) {
+      const senderId = String(req.user._id);
+      const groupLabel = group.displayName || group.name || 'your group';
+      const senderName = message.senderId?.name || 'Someone';
+
+      const recipientIds = group.members
+        .map((member) => String(member.userId))
+        .filter((memberUserId) => memberUserId && memberUserId !== senderId);
+
+      const uniqueRecipientIds = Array.from(new Set(recipientIds));
+
+      await Promise.all(uniqueRecipientIds.map((memberUserId) => createAndEmitNotification({
+        io,
+        userId: memberUserId,
+        type: 'NEW_MESSAGE',
+        message: `${senderName} sent a message in ${groupLabel}.`,
+        relatedId: req.params.id,
+      }).catch((notifyError) => {
+        console.error('Failed to create message notification:', notifyError.message);
+      })));
+    }
 
     res.status(201).json({
       success: true,

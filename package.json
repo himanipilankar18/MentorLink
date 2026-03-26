@@ -29,7 +29,8 @@
     "mongodb": "4.1",
     "mongoose": "^8.23.0",
     "multer": "^2.1.0",
-    "nodemailer": "^8.0.1"
+    "nodemailer": "^8.0.1",
+    "socket.io": "^4.8.1"
   },
   "devDependencies": {
     "nodemon": "^3.0.2"
