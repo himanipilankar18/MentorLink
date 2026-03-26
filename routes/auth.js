@@ -11,6 +11,29 @@ const { authLimiter } = require('../middleware/security');
 const sendEmail = require('../utils/sendEmail');
 
 const router = express.Router();
+const MAX_SKILLS = 10;
+
+function normalizeSkills(input) {
+  if (!Array.isArray(input)) return [];
+
+  const normalized = input
+    .map((skill) => String(skill || '').trim().toLowerCase())
+    .filter(Boolean);
+
+  return Array.from(new Set(normalized));
+}
+
+function calculateProfileStrength(user) {
+  let score = 0;
+
+  if (user.profilePicture) score += 20;
+  if (Array.isArray(user.skills) && user.skills.length >= 3) score += 20;
+  if (typeof user.bio === 'string' && user.bio.trim().length > 0) score += 20;
+  if (Array.isArray(user.projects) && user.projects.length > 0) score += 20;
+  if (user.cgpa !== null && user.cgpa !== undefined && user.cgpa !== '') score += 20;
+
+  return score;
+}
 
 // Temporary storage for pending registrations (before OTP verification)
 // In production, use Redis or a separate PendingUsers collection
@@ -389,6 +412,11 @@ router.get('/me', verifyToken, async (req, res) => {
         profilePicture: user.profilePicture,
         githubUrl: user.githubUrl,
         isVerified: user.isVerified,
+        isOnline: user.isOnline,
+        lastActiveAt: user.lastActiveAt,
+        mentorshipIntent: user.mentorshipIntent || 'seeking',
+        availability: user.availability || 'flexible',
+        profileStrength: calculateProfileStrength(user),
         createdAt: user.createdAt
       }
     });
@@ -570,6 +598,8 @@ router.post('/complete-profile',
         cgpa, 
         projectLink,
         githubUrl,
+        mentorshipIntent,
+        availability,
         skipProfile 
       } = req.body;
 
@@ -632,9 +662,42 @@ router.post('/complete-profile',
         if (firstName) user.firstName = firstName;
         if (lastName) user.lastName = lastName;
         if (displayName) user.displayName = displayName;
-        if (bio) user.bio = bio;
+        if (bio) {
+          const normalizedBio = String(bio).trim();
+          if (normalizedBio.length > 200) {
+            return res.status(400).json({
+              success: false,
+              message: 'Bio cannot exceed 200 characters',
+            });
+          }
+          if (normalizedBio && normalizedBio.length < 10) {
+            return res.status(400).json({
+              success: false,
+              message: 'Bio must be at least 10 characters when provided',
+            });
+          }
+          user.bio = normalizedBio;
+        }
         if (projectLink) user.projectLink = projectLink;
         if (githubUrl) user.githubUrl = githubUrl;
+        if (mentorshipIntent) {
+          if (!['seeking', 'offering', 'both'].includes(mentorshipIntent)) {
+            return res.status(400).json({
+              success: false,
+              message: 'Invalid mentorship intent',
+            });
+          }
+          user.mentorshipIntent = mentorshipIntent;
+        }
+        if (availability) {
+          if (!['weekdays', 'weekends', 'flexible'].includes(availability)) {
+            return res.status(400).json({
+              success: false,
+              message: 'Invalid availability value',
+            });
+          }
+          user.availability = availability;
+        }
         
         // Parse JSON arrays from FormData
         if (interests) {
@@ -646,11 +709,22 @@ router.post('/complete-profile',
         }
         
         if (skills) {
+          let parsedSkills = [];
           try {
-            user.skills = JSON.parse(skills);
+            parsedSkills = JSON.parse(skills);
           } catch (e) {
-            user.skills = skills.split(',').map(s => s.trim()).filter(s => s);
+            parsedSkills = skills.split(',').map(s => s.trim()).filter(s => s);
           }
+
+          const normalizedSkills = normalizeSkills(parsedSkills);
+          if (normalizedSkills.length > MAX_SKILLS) {
+            return res.status(400).json({
+              success: false,
+              message: `Skills cannot exceed ${MAX_SKILLS} items`,
+            });
+          }
+
+          user.skills = normalizedSkills;
         }
         
         if (projects) {

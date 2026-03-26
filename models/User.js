@@ -1,6 +1,16 @@
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 
+function normalizeSkills(input) {
+  if (!Array.isArray(input)) return [];
+
+  const normalized = input
+    .map((skill) => String(skill || '').trim().toLowerCase())
+    .filter(Boolean);
+
+  return Array.from(new Set(normalized));
+}
+
 const userSchema = new mongoose.Schema({
   name: {
     type: String,
@@ -102,9 +112,9 @@ const userSchema = new mongoose.Schema({
     default: [],
     validate: {
       validator: function(v) {
-        return v.every(skill => typeof skill === 'string' && skill.trim().length > 0);
+        return Array.isArray(v) && v.length <= 10 && v.every(skill => typeof skill === 'string' && skill.trim().length > 0);
       },
-      message: 'Skills must be non-empty strings'
+      message: 'Skills must be non-empty strings and cannot exceed 10 items'
     }
   },
   interests: {
@@ -120,8 +130,24 @@ const userSchema = new mongoose.Schema({
   bio: {
     type: String,
     trim: true,
-    maxlength: [1000, 'Bio cannot exceed 1000 characters'],
+    maxlength: [200, 'Bio cannot exceed 200 characters'],
     default: ''
+  },
+  mentorshipIntent: {
+    type: String,
+    enum: {
+      values: ['seeking', 'offering', 'both'],
+      message: 'Mentorship intent must be seeking, offering, or both'
+    },
+    default: 'seeking'
+  },
+  availability: {
+    type: String,
+    enum: {
+      values: ['weekdays', 'weekends', 'flexible'],
+      message: 'Availability must be weekdays, weekends, or flexible'
+    },
+    default: 'flexible'
   },
   projects: {
     type: [{
@@ -208,6 +234,15 @@ const userSchema = new mongoose.Schema({
   isActive: {
     type: Boolean,
     default: true
+  },
+  isOnline: {
+    type: Boolean,
+    default: false,
+    index: true
+  },
+  lastActiveAt: {
+    type: Date,
+    default: null
   }
 }, {
   timestamps: true, // Automatically adds createdAt and updatedAt
@@ -226,6 +261,21 @@ userSchema.pre('save', async function(next) {
   } catch (error) {
     next(error);
   }
+});
+
+userSchema.pre('validate', function(next) {
+  if (Array.isArray(this.skills)) {
+    this.skills = normalizeSkills(this.skills);
+  }
+
+  if (typeof this.bio === 'string') {
+    this.bio = this.bio.trim();
+    if (this.bio && this.bio.length < 10) {
+      this.invalidate('bio', 'Bio must be at least 10 characters when provided');
+    }
+  }
+
+  next();
 });
 
 // Method to compare password

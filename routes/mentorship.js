@@ -4,6 +4,7 @@ const Mentorship = require('../models/Mentorship');
 const User = require('../models/User');
 const Group = require('../models/Group');
 const sendEmail = require('../utils/sendEmail');
+const { createAndEmitNotification } = require('../utils/notifications');
 const { verifyToken } = require('../middleware/auth');
 const { apiLimiter } = require('../middleware/security');
 
@@ -164,6 +165,7 @@ async function ensureDirectMentorshipGroup(requesterUser, recipientUser) {
 
 async function acceptMentorshipRequest(req, res) {
   try {
+    const io = req.app.get('io');
     const mentorship = await Mentorship.findById(req.params.id);
 
     if (!mentorship) {
@@ -236,6 +238,16 @@ async function acceptMentorshipRequest(req, res) {
       `,
     });
 
+    createAndEmitNotification({
+      io,
+      userId: requesterUser._id,
+      type: 'REQUEST_ACCEPTED',
+      message: `${recipientName} accepted your mentorship request.`,
+      relatedId: mentorship._id,
+    }).catch((error) => {
+      console.error('Failed to create accept notification:', error.message);
+    });
+
     return res.json({
       success: true,
       message: 'Mentorship request accepted',
@@ -257,6 +269,7 @@ async function acceptMentorshipRequest(req, res) {
 
 async function rejectMentorshipRequest(req, res) {
   try {
+    const io = req.app.get('io');
     const rawReason = typeof req.body?.rejectionReason === 'string'
       ? req.body.rejectionReason
       : req.body?.reason;
@@ -327,6 +340,16 @@ async function rejectMentorshipRequest(req, res) {
           <p>You rejected the mentorship request from ${requesterUser.name || 'User'}.</p>
         `,
       });
+
+      createAndEmitNotification({
+        io,
+        userId: requesterUser._id,
+        type: 'REQUEST_REJECTED',
+        message: `${recipientUser.name || 'A mentor'} rejected your mentorship request.`,
+        relatedId: mentorship._id,
+      }).catch((error) => {
+        console.error('Failed to create reject notification:', error.message);
+      });
     }
 
     return res.json({
@@ -348,6 +371,7 @@ async function rejectMentorshipRequest(req, res) {
 // @access  Private
 router.post('/request', verifyToken, apiLimiter, async (req, res) => {
   try {
+    const io = req.app.get('io');
     const recipientId = req.body?.recipientId || req.body?.mentorId;
     const reason = typeof req.body?.reason === 'string' ? req.body.reason.trim() : '';
     const requesterId = req.user._id;
@@ -448,6 +472,16 @@ router.post('/request', verifyToken, apiLimiter, async (req, res) => {
         <p>Your mentorship request was sent to ${recipient.name || 'the selected user'}.</p>
         <p><strong>Reason:</strong> ${reason}</p>
       `,
+    });
+
+    createAndEmitNotification({
+      io,
+      userId: recipient._id,
+      type: 'MENTORSHIP_REQUEST',
+      message: `${req.user.name || 'A user'} sent you a mentorship request.`,
+      relatedId: mentorship._id,
+    }).catch((error) => {
+      console.error('Failed to create mentorship request notification:', error.message);
     });
 
     res.status(201).json({

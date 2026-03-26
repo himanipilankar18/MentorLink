@@ -6,6 +6,30 @@ const sendEmail = require('../utils/sendEmail');
 
 const router = express.Router();
 
+const MAX_SKILLS = 10;
+
+function normalizeSkills(input) {
+  if (!Array.isArray(input)) return [];
+
+  const normalized = input
+    .map((skill) => String(skill || '').trim().toLowerCase())
+    .filter(Boolean);
+
+  return Array.from(new Set(normalized));
+}
+
+function calculateProfileStrength(user) {
+  let score = 0;
+
+  if (user.profilePicture) score += 20;
+  if (Array.isArray(user.skills) && user.skills.length >= 3) score += 20;
+  if (typeof user.bio === 'string' && user.bio.trim().length > 0) score += 20;
+  if (Array.isArray(user.projects) && user.projects.length > 0) score += 20;
+  if (user.cgpa !== null && user.cgpa !== undefined && user.cgpa !== '') score += 20;
+
+  return score;
+}
+
 // @route   GET /api/users/profile/:id
 // @desc    Get user profile by ID
 // @access  Private
@@ -23,9 +47,16 @@ router.get('/profile/:id', verifyToken, apiLimiter, async (req, res) => {
       });
     }
 
+    const payload = user.toObject();
+
     res.json({
       success: true,
-      user
+      user: {
+        ...payload,
+        mentorshipIntent: payload.mentorshipIntent || 'seeking',
+        availability: payload.availability || 'flexible',
+        profileStrength: calculateProfileStrength(payload),
+      }
     });
   } catch (error) {
     res.status(500).json({
@@ -36,18 +67,76 @@ router.get('/profile/:id', verifyToken, apiLimiter, async (req, res) => {
   }
 });
 
-// @route   PUT /api/users/profile
-// @desc    Update own profile
-// @access  Private
-router.put('/profile', verifyToken, apiLimiter, async (req, res) => {
+async function updateProfileHandler(req, res) {
   try {
-    const { name, year, department, skills, interests, cgpa, bio, projects } = req.body;
-    const allowedUpdates = { name, year, department, skills, interests, cgpa, bio, projects };
+    const {
+      name,
+      year,
+      department,
+      skills,
+      interests,
+      cgpa,
+      bio,
+      projects,
+      mentorshipIntent,
+      availability,
+    } = req.body;
+
+    const allowedUpdates = {
+      name,
+      year,
+      department,
+      skills,
+      interests,
+      cgpa,
+      bio,
+      projects,
+      mentorshipIntent,
+      availability,
+    };
     
     // Remove undefined fields
     Object.keys(allowedUpdates).forEach(key => 
       allowedUpdates[key] === undefined && delete allowedUpdates[key]
     );
+
+    if (allowedUpdates.skills !== undefined) {
+      if (!Array.isArray(allowedUpdates.skills)) {
+        return res.status(400).json({
+          success: false,
+          message: 'Skills must be an array',
+        });
+      }
+
+      const normalizedSkills = normalizeSkills(allowedUpdates.skills);
+      if (normalizedSkills.length > MAX_SKILLS) {
+        return res.status(400).json({
+          success: false,
+          message: `Skills cannot exceed ${MAX_SKILLS} items`,
+        });
+      }
+
+      allowedUpdates.skills = normalizedSkills;
+    }
+
+    if (allowedUpdates.bio !== undefined) {
+      const nextBio = String(allowedUpdates.bio || '').trim();
+      if (nextBio.length > 200) {
+        return res.status(400).json({
+          success: false,
+          message: 'Bio cannot exceed 200 characters',
+        });
+      }
+
+      if (nextBio && nextBio.length < 10) {
+        return res.status(400).json({
+          success: false,
+          message: 'Bio must be at least 10 characters when provided',
+        });
+      }
+
+      allowedUpdates.bio = nextBio;
+    }
 
     // Check if significant changes are being made
     const significantFields = ['name', 'year', 'department'];
@@ -103,16 +192,38 @@ router.put('/profile', verifyToken, apiLimiter, async (req, res) => {
     res.json({
       success: true,
       message: 'Profile updated successfully',
-      user
+      user: {
+        ...user.toObject(),
+        mentorshipIntent: user.mentorshipIntent || 'seeking',
+        availability: user.availability || 'flexible',
+        profileStrength: calculateProfileStrength(user),
+      }
     });
   } catch (error) {
+    if (error && error.name === 'ValidationError') {
+      return res.status(400).json({
+        success: false,
+        message: Object.values(error.errors).map((entry) => entry.message).join('. '),
+      });
+    }
+
     res.status(500).json({
       success: false,
       message: 'Failed to update profile',
       error: error.message
     });
   }
-});
+}
+
+// @route   PUT /api/users/profile
+// @desc    Update own profile
+// @access  Private
+router.put('/profile', verifyToken, apiLimiter, updateProfileHandler);
+
+// @route   PATCH /api/users/profile
+// @desc    Partially update own profile
+// @access  Private
+router.patch('/profile', verifyToken, apiLimiter, updateProfileHandler);
 
 // @route   GET /api/users/profile-completion
 // @desc    Get profile completion percentage
@@ -201,7 +312,8 @@ router.get('/mentors', verifyToken, apiLimiter, async (req, res) => {
     
     const query = {
       role: { $in: ['senior', 'faculty'] },
-      isActive: true
+      isActive: true,
+      mentorshipIntent: { $in: ['offering', 'both'] },
     };
 
     if (department) {
@@ -332,7 +444,12 @@ router.get('/juniors', verifyToken, checkRole('senior', 'faculty'), apiLimiter, 
     
     const query = {
       role: 'junior',
-      isActive: true
+      isActive: true,
+      $or: [
+        { mentorshipIntent: { $in: ['seeking', 'both'] } },
+        { mentorshipIntent: { $exists: false } },
+        { mentorshipIntent: null },
+      ],
     };
 
     if (department) {
@@ -448,7 +565,7 @@ router.get('/search', verifyToken, apiLimiter, async (req, res) => {
       isVerified: true,
       name: regex,
     })
-      .select('name email department year role profilePicture bio followers following')
+      .select('name email department year role profilePicture bio followers following isOnline lastActiveAt')
       .limit(parseInt(limit));
 
     const followingSet = new Set((currentUser.following || []).map((id) => String(id)));
@@ -466,6 +583,8 @@ router.get('/search', verifyToken, apiLimiter, async (req, res) => {
       followersCount: (u.followers || []).length,
       followingCount: (u.following || []).length,
       isFollowing: followingSet.has(String(u._id)),
+      isOnline: !!u.isOnline,
+      lastActiveAt: u.lastActiveAt || null,
     }));
 
     res.json({ success: true, count: enriched.length, users: enriched });
@@ -499,7 +618,7 @@ router.get('/suggestions', verifyToken, apiLimiter, async (req, res) => {
       isVerified: true,
       interests: { $in: myInterests },
     })
-      .select('name email department year role profilePicture bio')
+      .select('name email department year role profilePicture bio isOnline lastActiveAt')
       .limit(parseInt(limit));
 
     const followingSet = new Set((currentUser.following || []).map(id => String(id)));
@@ -515,6 +634,8 @@ router.get('/suggestions', verifyToken, apiLimiter, async (req, res) => {
       bio: u.bio,
       profilePicture: u.profilePicture,
       isFollowing: followingSet.has(String(u._id)),
+      isOnline: !!u.isOnline,
+      lastActiveAt: u.lastActiveAt || null,
     }));
 
     res.json({
@@ -527,6 +648,38 @@ router.get('/suggestions', verifyToken, apiLimiter, async (req, res) => {
       success: false,
       message: 'Failed to fetch suggestions',
       error: error.message
+    });
+  }
+});
+
+// @route   GET /api/users/:id
+// @desc    Get user by id with computed profile strength
+// @access  Private
+router.get('/:id', verifyToken, apiLimiter, async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id).select('-password').lean();
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found',
+      });
+    }
+
+    return res.json({
+      success: true,
+      user: {
+        ...user,
+        mentorshipIntent: user.mentorshipIntent || 'seeking',
+        availability: user.availability || 'flexible',
+        profileStrength: calculateProfileStrength(user),
+      },
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to fetch user',
+      error: error.message,
     });
   }
 });

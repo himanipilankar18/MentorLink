@@ -172,7 +172,7 @@ router.get('/my', verifyToken, apiLimiter, async (req, res) => {
       ],
     })
       .sort({ updatedAt: -1 })
-      .populate('members.userId', 'name')
+      .populate('members.userId', 'name profilePicture isOnline lastActiveAt')
       .lean();
 
     res.json({

@@ -49,14 +49,14 @@ export default function Landing() {
         {/* Moving feature boxes */}
         <div className="moving-features">
           <div className="features-track">
-            <div className="feature-box">Join to Learn</div>
+            <div className="feature-box">Decision-Ready Profiles</div>
             <div className="feature-box">Connect with Mentors</div>
-            <div className="feature-box">Grow Your Skills</div>
+            <div className="feature-box">Intent-Based Discovery</div>
             <div className="feature-box">Build Network</div>
             <div className="feature-box">Share Knowledge</div>
-            <div className="feature-box">Join to Learn</div>
+            <div className="feature-box">Decision-Ready Profiles</div>
             <div className="feature-box">Connect with Mentors</div>
-            <div className="feature-box">Grow Your Skills</div>
+            <div className="feature-box">Intent-Based Discovery</div>
             <div className="feature-box">Build Network</div>
             <div className="feature-box">Share Knowledge</div>
           </div>

@@ -198,6 +198,7 @@
         }
 
         .form-group input,
+        .form-group select,
         .form-group textarea {
             width: 100%;
             padding: 12px 14px;
@@ -227,6 +228,7 @@
         }
 
         .form-group input:focus,
+        .form-group select:focus,
         .form-group textarea:focus {
             outline: none;
             border-color: rgba(167, 139, 250, 0.4);
@@ -432,6 +434,30 @@
                 <div class="form-group">
                     <label for="bio">Bio</label>
                     <textarea id="bio" name="bio" placeholder="Tell us about yourself..."></textarea>
+                    <div class="helper-text">10-200 characters</div>
+                </div>
+
+                <h2 class="section-title">Mentorship Preferences</h2>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="mentorshipIntent">Mentorship Intent *</label>
+                        <select id="mentorshipIntent" name="mentorshipIntent" required>
+                            <option value="" selected disabled>Select intent</option>
+                            <option value="seeking">Seeking Mentorship</option>
+                            <option value="offering">Offering Mentorship</option>
+                            <option value="both">Both</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="availability">Availability *</label>
+                        <select id="availability" name="availability" required>
+                            <option value="" selected disabled>Select availability</option>
+                            <option value="weekdays">Weekdays</option>
+                            <option value="weekends">Weekends</option>
+                            <option value="flexible">Flexible</option>
+                        </select>
+                    </div>
                 </div>
 
                 <h2 class="section-title">Academic & Skills</h2>
@@ -445,7 +471,7 @@
                 <div class="form-group">
                     <label for="skills">Skills</label>
                     <input type="text" id="skills" name="skills" placeholder="e.g., JavaScript, Python, React">
-                    <div class="helper-text">Comma-separated list</div>
+                    <div class="helper-text">Comma-separated list (maximum 10 skills)</div>
                 </div>
 
                 <div class="form-group">
@@ -559,7 +585,35 @@
                 formData.append('displayName', displayName);
             }
             
-            formData.append('bio', document.getElementById('bio').value.trim());
+            const bio = document.getElementById('bio').value.trim();
+            if (bio && bio.length < 10) {
+                showMessage('Bio must be at least 10 characters when provided', 'error');
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Complete Profile';
+                return;
+            }
+
+            if (bio.length > 200) {
+                showMessage('Bio cannot exceed 200 characters', 'error');
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Complete Profile';
+                return;
+            }
+
+            formData.append('bio', bio);
+
+            const mentorshipIntent = document.getElementById('mentorshipIntent').value;
+            const availability = document.getElementById('availability').value;
+
+            if (!mentorshipIntent || !availability) {
+                showMessage('Please select mentorship intent and availability', 'error');
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Complete Profile';
+                return;
+            }
+
+            formData.append('mentorshipIntent', mentorshipIntent);
+            formData.append('availability', availability);
             
             // Process comma-separated lists
             const interests = document.getElementById('interests').value;
@@ -569,7 +623,14 @@
             
             const skills = document.getElementById('skills').value;
             if (skills) {
-                formData.append('skills', JSON.stringify(skills.split(',').map(s => s.trim()).filter(s => s)));
+                const skillsList = skills.split(',').map(s => s.trim()).filter(s => s);
+                if (skillsList.length > 10) {
+                    showMessage('Please provide a maximum of 10 skills', 'error');
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = 'Complete Profile';
+                    return;
+                }
+                formData.append('skills', JSON.stringify(skillsList));
             }
             
             const projects = document.getElementById('projects').value;
