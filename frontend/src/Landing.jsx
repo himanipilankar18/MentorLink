@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
 
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000'
+const APP_BASE = import.meta.env.VITE_APP_URL || 'http://localhost:5001'
 
 export default function Landing() {
   useEffect(() => {
@@ -8,7 +8,7 @@ export default function Landing() {
     const token = localStorage.getItem('mentorlink_token')
     if (token) {
       // Redirect to home page if already authenticated
-      window.location.href = `${API_BASE}/home.html`
+      window.location.href = `${APP_BASE}/home.html`
     }
   }, [])
 
@@ -27,8 +27,8 @@ export default function Landing() {
           <div className="logo-text">MentorLink</div>
           <nav className="nav-right">
             <a href="#home" className="nav-link">Home</a>
-            <a href={`${API_BASE}/login.html`} className="nav-link">Login</a>
-            <a href={`${API_BASE}/register.html`} className="nav-link-signup">Sign up</a>
+            <a href={`${APP_BASE}/login.html`} className="nav-link">Login</a>
+            <a href={`${APP_BASE}/register.html`} className="nav-link-signup">Sign up</a>
           </nav>
         </header>
 
@@ -41,7 +41,7 @@ export default function Landing() {
           <p>
             Real connections. Real growth. Join the community where mentorship transforms futures.
           </p>
-          <a href={`${API_BASE}/login.html`} className="btn-get-started">
+          <a href={`${APP_BASE}/login.html`} className="btn-get-started">
             Get Started
           </a>
         </section>

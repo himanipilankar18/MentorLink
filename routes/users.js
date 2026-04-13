@@ -1,8 +1,10 @@
 const express = require('express');
 const User = require('../models/User');
+const Interaction = require('../models/Interaction');
 const { verifyToken, checkRole } = require('../middleware/auth');
 const { apiLimiter } = require('../middleware/security');
 const sendEmail = require('../utils/sendEmail');
+const { buildPeerRecommendations } = require('../recommender_model/src/peerMatcher');
 
 const router = express.Router();
 
@@ -16,6 +18,138 @@ function normalizeSkills(input) {
     .filter(Boolean);
 
   return Array.from(new Set(normalized));
+}
+
+function escapeRegex(value) {
+  return String(value).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function computeUserSearchScore(user, queryLower, isFollowing) {
+  const name = String(user.name || '').toLowerCase();
+  const email = String(user.email || '').toLowerCase();
+  const emailLocal = email.split('@')[0] || '';
+  const queryToken = queryLower.replace(/\s+/g, '');
+
+  let score = 0;
+  let hasTextMatch = false;
+
+  if (name === queryLower) {
+    score += 120;
+    hasTextMatch = true;
+  } else if (name.startsWith(queryLower)) {
+    score += 80;
+    hasTextMatch = true;
+  } else if (name.split(/\s+/).some((part) => part.startsWith(queryLower))) {
+    score += 55;
+    hasTextMatch = true;
+  } else if (name.includes(queryLower)) {
+    score += 30;
+    hasTextMatch = true;
+  }
+
+  if (email.startsWith(queryLower)) {
+    score += 20;
+    hasTextMatch = true;
+  } else if (email.includes(queryLower)) {
+    score += 10;
+    hasTextMatch = true;
+  }
+
+  const fuzzyName = bestFuzzySimilarity(name, queryLower);
+  const fuzzyEmail = bestFuzzySimilarity(emailLocal, queryLower);
+  const bestFuzzy = Math.max(fuzzyName, fuzzyEmail);
+
+  if (bestFuzzy >= 0.82) {
+    score += 40;
+    hasTextMatch = true;
+  } else if (bestFuzzy >= 0.72) {
+    score += 28;
+    hasTextMatch = true;
+  } else if (bestFuzzy >= 0.62) {
+    score += 16;
+    hasTextMatch = true;
+  }
+
+  const compactName = name.replace(/\s+/g, '');
+  if (queryToken && isSubsequence(compactName, queryToken)) {
+    score += 8;
+    hasTextMatch = true;
+  }
+
+  // Keep social/activity boosts only when there is an actual text match.
+  if (hasTextMatch) {
+    if (isFollowing) score += 12;
+    if (user.isOnline) score += 8;
+  }
+
+  return hasTextMatch ? score : 0;
+}
+
+function levenshteinDistance(a, b) {
+  const s1 = String(a || '');
+  const s2 = String(b || '');
+  const rows = s1.length + 1;
+  const cols = s2.length + 1;
+
+  const matrix = Array.from({ length: rows }, () => new Array(cols).fill(0));
+
+  for (let i = 0; i < rows; i += 1) matrix[i][0] = i;
+  for (let j = 0; j < cols; j += 1) matrix[0][j] = j;
+
+  for (let i = 1; i < rows; i += 1) {
+    for (let j = 1; j < cols; j += 1) {
+      const cost = s1[i - 1] === s2[j - 1] ? 0 : 1;
+      matrix[i][j] = Math.min(
+        matrix[i - 1][j] + 1,
+        matrix[i][j - 1] + 1,
+        matrix[i - 1][j - 1] + cost
+      );
+    }
+  }
+
+  return matrix[rows - 1][cols - 1];
+}
+
+function normalizedSimilarity(a, b) {
+  const left = String(a || '').trim();
+  const right = String(b || '').trim();
+  if (!left || !right) return 0;
+
+  const maxLen = Math.max(left.length, right.length);
+  if (!maxLen) return 0;
+
+  const distance = levenshteinDistance(left, right);
+  return Math.max(0, 1 - (distance / maxLen));
+}
+
+function bestFuzzySimilarity(text, query) {
+  const source = String(text || '').toLowerCase();
+  const q = String(query || '').toLowerCase();
+  if (!source || !q) return 0;
+
+  const tokens = source.split(/[^a-z0-9]+/).filter(Boolean);
+  let best = normalizedSimilarity(source, q);
+
+  for (const token of tokens) {
+    best = Math.max(best, normalizedSimilarity(token, q));
+  }
+
+  return best;
+}
+
+function isSubsequence(text, query) {
+  const t = String(text || '');
+  const q = String(query || '');
+  if (!t || !q) return false;
+
+  let i = 0;
+  let j = 0;
+  while (i < t.length && j < q.length) {
+    if (t[i] === q[j]) j += 1;
+    i += 1;
+  }
+
+  return j === q.length;
 }
 
 function calculateProfileStrength(user) {
@@ -338,6 +472,84 @@ router.get('/mentors', verifyToken, apiLimiter, async (req, res) => {
   }
 });
 
+// @route   GET /api/users/peers/recommendations
+// @desc    Get peer-to-peer directional recommendations for logged in user
+// @access  Private
+router.get('/peers/recommendations', verifyToken, apiLimiter, async (req, res) => {
+  const startedAt = Date.now();
+
+  try {
+    const limit = Math.max(1, Math.min(Number(req.query.limit) || 10, 30));
+    const includeBreakdown = String(req.query.includeBreakdown || 'false').toLowerCase() === 'true';
+    const sameDepartmentOnly = String(req.query.sameDepartmentOnly || 'false').toLowerCase() === 'true';
+
+    const targetUser = await User.findById(req.user._id)
+      .select('_id name department year skills interests availability')
+      .lean();
+
+    if (!targetUser) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found',
+      });
+    }
+
+    const candidateQuery = {
+      isActive: true,
+      _id: { $ne: req.user._id },
+    };
+
+    if (sameDepartmentOnly && targetUser.department) {
+      candidateQuery.department = targetUser.department;
+    }
+
+    const candidates = await User.find(candidateQuery)
+      .select('_id name department year skills interests availability')
+      .lean();
+
+    const interactions = await Interaction.find({
+      timestamp: { $gte: new Date(Date.now() - (180 * 24 * 60 * 60 * 1000)) },
+    })
+      .select('mentorId menteeId satisfactionRating timestamp')
+      .lean();
+
+    const result = buildPeerRecommendations({
+      targetUser,
+      candidates,
+      interactions,
+      topN: limit,
+    });
+
+    const peers = includeBreakdown
+      ? result.recommendations
+      : result.recommendations.map((row) => ({
+        userId: row.userId,
+        name: row.name,
+        department: row.department,
+        year: row.year,
+        score: row.score,
+      }));
+
+    return res.json({
+      success: true,
+      count: peers.length,
+      peers,
+      recommendationMeta: {
+        ...result.metadata,
+        candidatePool: candidates.length,
+        interactionWindowDays: 180,
+        latencyMs: Date.now() - startedAt,
+      },
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to generate peer recommendations',
+      error: error.message,
+    });
+  }
+});
+
 // @route   POST /api/users/:id/follow
 // @desc    Follow a user
 // @access  Private
@@ -558,34 +770,52 @@ router.get('/search', verifyToken, apiLimiter, async (req, res) => {
       return res.json({ success: true, count: 0, users: [] });
     }
 
+    const parsedLimit = Math.max(1, Math.min(parseInt(limit, 10) || 10, 30));
     const currentUser = await User.findById(req.user._id).select('following');
     const regex = new RegExp(query, 'i');
 
     const users = await User.find({
+      _id: { $ne: req.user._id },
       isVerified: true,
-      name: regex,
+      isActive: true,
     })
       .select('name email department year role profilePicture bio followers following isOnline lastActiveAt')
-      .limit(parseInt(limit));
+      .limit(250);
 
     const followingSet = new Set((currentUser.following || []).map((id) => String(id)));
+    const queryLower = query.toLowerCase();
 
-    const enriched = users.map((u) => ({
-      id: u._id,
-      _id: u._id,
-      name: u.name,
-      email: u.email,
-      department: u.department,
-      year: u.year,
-      role: u.role,
-      bio: u.bio,
-      profilePicture: u.profilePicture,
-      followersCount: (u.followers || []).length,
-      followingCount: (u.following || []).length,
-      isFollowing: followingSet.has(String(u._id)),
-      isOnline: !!u.isOnline,
-      lastActiveAt: u.lastActiveAt || null,
-    }));
+    const enriched = users
+      .map((u) => {
+        const isFollowing = followingSet.has(String(u._id));
+        return {
+          id: u._id,
+          _id: u._id,
+          name: u.name,
+          email: u.email,
+          department: u.department,
+          year: u.year,
+          role: u.role,
+          bio: u.bio,
+          profilePicture: u.profilePicture,
+          followersCount: (u.followers || []).length,
+          followingCount: (u.following || []).length,
+          isFollowing,
+          isOnline: !!u.isOnline,
+          lastActiveAt: u.lastActiveAt || null,
+          _score: computeUserSearchScore(u, queryLower, isFollowing),
+        };
+      })
+      .filter((row) => row._score > 0)
+      .sort((a, b) => {
+        if (b._score !== a._score) return b._score - a._score;
+        if ((b.followersCount || 0) !== (a.followersCount || 0)) {
+          return (b.followersCount || 0) - (a.followersCount || 0);
+        }
+        return String(a.name || '').localeCompare(String(b.name || ''));
+      })
+      .slice(0, parsedLimit)
+      .map(({ _score, ...row }) => row);
 
     res.json({ success: true, count: enriched.length, users: enriched });
   } catch (error) {
@@ -604,22 +834,56 @@ router.get('/suggestions', verifyToken, apiLimiter, async (req, res) => {
   try {
     const { limit = 10 } = req.query;
 
-    const currentUser = await User.findById(req.user._id).select('interests following');
-    const myInterests = currentUser?.interests || [];
+    const parsedLimit = Math.max(1, Math.min(parseInt(limit, 10) || 10, 30));
+    const currentUser = await User.findById(req.user._id).select('interests following department');
+    const myInterests = Array.isArray(currentUser?.interests) ? currentUser.interests : [];
+    const normalizedInterests = Array.from(
+      new Set(
+        myInterests
+          .map((interest) => String(interest || '').trim().toLowerCase())
+          .filter(Boolean)
+      )
+    );
 
-    // If user has no interests, we can't match on them – return empty list
-    if (!myInterests.length) {
-      return res.json({ success: true, count: 0, users: [] });
-    }
-
-    // Only suggest users that share at least one interest
-    const suggestions = await User.find({
+    const baseQuery = {
       _id: { $ne: req.user._id },
       isVerified: true,
-      interests: { $in: myInterests },
-    })
-      .select('name email department year role profilePicture bio isOnline lastActiveAt')
-      .limit(parseInt(limit));
+      isActive: true,
+    };
+
+    let strategy = 'shared_interests';
+    let suggestions = [];
+
+    if (normalizedInterests.length) {
+      const interestMatchers = normalizedInterests.map(
+        (interest) => new RegExp(`^${escapeRegex(interest)}$`, 'i')
+      );
+
+      suggestions = await User.find({
+        ...baseQuery,
+        interests: { $in: interestMatchers },
+      })
+        .select('name email department year role profilePicture bio isOnline lastActiveAt')
+        .limit(parsedLimit);
+    }
+
+    // Graceful fallback: if no shared-interest matches, suggest active verified peers in same department.
+    if (!suggestions.length) {
+      strategy = 'department_fallback';
+
+      const fallbackQuery = {
+        ...baseQuery,
+      };
+
+      if (currentUser?.department) {
+        fallbackQuery.department = currentUser.department;
+      }
+
+      suggestions = await User.find(fallbackQuery)
+        .select('name email department year role profilePicture bio isOnline lastActiveAt')
+        .sort({ isOnline: -1, lastActiveAt: -1, createdAt: -1 })
+        .limit(parsedLimit);
+    }
 
     const followingSet = new Set((currentUser.following || []).map(id => String(id)));
 
@@ -642,6 +906,7 @@ router.get('/suggestions', verifyToken, apiLimiter, async (req, res) => {
       success: true,
       count: enriched.length,
       users: enriched,
+      strategy,
     });
   } catch (error) {
     res.status(500).json({

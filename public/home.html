@@ -5914,7 +5914,7 @@
                         `;
                     }).join('');
                     
-                    container.innerHTML = suggestionsHTML + '<span class="see-all">See all</span>';
+                    container.innerHTML = suggestionsHTML + '<button type="button" class="see-all" id="see-all-suggestions">See all</button>';
 
                     // Enhance avatars with profile pictures when available and wire up events
                     data.users.forEach(user => {
@@ -5944,6 +5944,11 @@
                             followBtn.addEventListener('click', () => handleFollowToggle(user, followBtn));
                         }
                     });
+
+                    const seeAllBtn = document.getElementById('see-all-suggestions');
+                    if (seeAllBtn) {
+                        seeAllBtn.addEventListener('click', loadAllSuggestionsIntoPeople);
+                    }
                 } else {
                     container.innerHTML = `
                         <div style="text-align:center;padding:20px;color:var(--text-secondary);font-size:0.85rem;">
@@ -6149,6 +6154,107 @@
         const userSearchInput = document.getElementById('user-search-input');
         const userSearchResults = document.getElementById('user-search-results');
 
+        function renderPeopleList(users, emptyMessage = 'No users found', listLabel = '') {
+            if (!userSearchResults) return;
+
+            if (!Array.isArray(users) || users.length === 0) {
+                userSearchResults.innerHTML = `
+                    <div style="text-align:center;padding:10px 0;color:var(--text-secondary);font-size:0.8rem;">
+                        ${emptyMessage}
+                    </div>
+                `;
+                return;
+            }
+
+            const html = users.map(user => {
+                const initials = getInitials(user.name || 'User');
+                const isFollowing = !!user.isFollowing;
+                const userId = user.id || user._id;
+                return `
+                    <div class="suggestion-item" data-user-id="${userId}">
+                        <div class="avatar-sm" data-user-id="${userId}">${initials}</div>
+                        <div class="info" data-user-id="${userId}">
+                            <div class="name">${user.name || 'Anonymous'}</div>
+                            <div class="presence-label" style="font-size:0.74rem;color:var(--text-tertiary);margin-top:2px;">${escapeHtml(getPresenceLabelForUser(user))}</div>
+                        </div>
+                        <button class="btn-follow ${isFollowing ? 'joined' : ''}" data-user-id="${userId}">${isFollowing ? 'Following' : 'Follow'}</button>
+                    </div>
+                `;
+            }).join('');
+
+            userSearchResults.innerHTML = (listLabel
+                ? `<div style="font-size:0.72rem;color:var(--text-tertiary);text-transform:uppercase;letter-spacing:0.04em;margin-bottom:8px;">${escapeHtml(listLabel)}</div>`
+                : '') + html;
+
+            users.forEach(user => {
+                const userId = user.id || user._id;
+                const item = userSearchResults.querySelector(`.suggestion-item[data-user-id="${userId}"]`);
+                if (!item) return;
+
+                const avatarEl = item.querySelector('.avatar-sm');
+                const infoEl = item.querySelector('.info');
+                const followBtn = item.querySelector('.btn-follow');
+
+                const isSelf = currentUser && String(currentUser.id || currentUser._id) === String(userId);
+
+                if (user.profilePicture && avatarEl) {
+                    avatarEl.style.backgroundImage = `url(${user.profilePicture})`;
+                    avatarEl.style.backgroundSize = 'cover';
+                    avatarEl.style.backgroundPosition = 'center';
+                    avatarEl.textContent = '';
+                }
+
+                if (avatarEl) {
+                    avatarEl.addEventListener('click', () => openUserProfilePage(userId));
+                }
+                if (infoEl) {
+                    infoEl.addEventListener('click', () => openUserProfilePage(userId));
+                }
+
+                if (followBtn) {
+                    if (isSelf) {
+                        followBtn.style.display = 'none';
+                    } else {
+                        followBtn.addEventListener('click', () => handleFollowToggle(user, followBtn));
+                    }
+                }
+            });
+        }
+
+        async function loadAllSuggestionsIntoPeople() {
+            if (!userSearchResults) return;
+
+            try {
+                const response = await fetch(API_BASE + '/users/suggestions?limit=30', {
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+                const data = await response.json();
+
+                if (!data.success) {
+                    userSearchResults.innerHTML = `
+                        <div style="text-align:center;padding:10px 0;color:#ff6b6b;font-size:0.8rem;">
+                            Failed to load all suggestions
+                        </div>
+                    `;
+                    return;
+                }
+
+                if (userSearchInput) {
+                    userSearchInput.value = '';
+                    userSearchInput.focus();
+                }
+
+                renderPeopleList(data.users || [], 'No suggestions available', 'Suggested people');
+            } catch (err) {
+                console.error('Error loading all suggestions:', err);
+                userSearchResults.innerHTML = `
+                    <div style="text-align:center;padding:10px 0;color:#ff6b6b;font-size:0.8rem;">
+                        Failed to load all suggestions
+                    </div>
+                `;
+            }
+        }
+
         async function searchUsersByName(query) {
             if (!userSearchResults) return;
 
@@ -6163,68 +6269,16 @@
                     headers: { 'Authorization': 'Bearer ' + token }
                 });
                 const data = await response.json();
-
-                if (!data.success || !Array.isArray(data.users) || data.users.length === 0) {
+                if (!data.success) {
                     userSearchResults.innerHTML = `
-                        <div style="text-align:center;padding:10px 0;color:var(--text-secondary);font-size:0.8rem;">
-                            No users found
+                        <div style="text-align:center;padding:10px 0;color:#ff6b6b;font-size:0.8rem;">
+                            Search failed
                         </div>
                     `;
                     return;
                 }
 
-                const html = data.users.map(user => {
-                    const initials = getInitials(user.name || 'User');
-                    const isFollowing = !!user.isFollowing;
-                    const userId = user.id || user._id;
-                    return `
-                        <div class="suggestion-item" data-user-id="${userId}">
-                            <div class="avatar-sm" data-user-id="${userId}">${initials}</div>
-                            <div class="info" data-user-id="${userId}">
-                                <div class="name">${user.name || 'Anonymous'}</div>
-                                <div class="presence-label" style="font-size:0.74rem;color:var(--text-tertiary);margin-top:2px;">${escapeHtml(getPresenceLabelForUser(user))}</div>
-                            </div>
-                            <button class="btn-follow ${isFollowing ? 'joined' : ''}" data-user-id="${userId}">${isFollowing ? 'Following' : 'Follow'}</button>
-                        </div>
-                    `;
-                }).join('');
-
-                userSearchResults.innerHTML = html;
-
-                data.users.forEach(user => {
-                    const userId = user.id || user._id;
-                    const item = userSearchResults.querySelector(`.suggestion-item[data-user-id="${userId}"]`);
-                    if (!item) return;
-
-                    const avatarEl = item.querySelector('.avatar-sm');
-                    const infoEl = item.querySelector('.info');
-                    const followBtn = item.querySelector('.btn-follow');
-
-                    const isSelf = currentUser && String(currentUser.id || currentUser._id) === String(userId);
-
-                    if (user.profilePicture && avatarEl) {
-                        avatarEl.style.backgroundImage = `url(${user.profilePicture})`;
-                        avatarEl.style.backgroundSize = 'cover';
-                        avatarEl.style.backgroundPosition = 'center';
-                        avatarEl.textContent = '';
-                    }
-
-                    if (avatarEl) {
-                        avatarEl.addEventListener('click', () => openUserProfilePage(userId));
-                    }
-                    if (infoEl) {
-                        infoEl.addEventListener('click', () => openUserProfilePage(userId));
-                    }
-
-                    if (followBtn) {
-                        if (isSelf) {
-                            // Don't show follow button for yourself
-                            followBtn.style.display = 'none';
-                        } else {
-                            followBtn.addEventListener('click', () => handleFollowToggle(user, followBtn));
-                        }
-                    }
-                });
+                renderPeopleList(data.users || [], 'No users found', 'Top matches');
             } catch (err) {
                 console.error('Error searching users:', err);
                 userSearchResults.innerHTML = `
@@ -6235,12 +6289,49 @@
             }
         }
 
+        function initPeopleSearch() {
+            if (!userSearchInput) return;
+
+            let searchDebounceTimer = null;
+
+            userSearchInput.addEventListener('input', (e) => {
+                const value = (e.target.value || '').trim();
+
+                if (searchDebounceTimer) {
+                    clearTimeout(searchDebounceTimer);
+                }
+
+                if (!value) {
+                    if (userSearchResults) userSearchResults.innerHTML = '';
+                    return;
+                }
+
+                searchDebounceTimer = setTimeout(() => {
+                    searchUsersByName(value);
+                }, 220);
+            });
+
+            userSearchInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    const value = (userSearchInput.value || '').trim();
+                    if (value) {
+                        searchUsersByName(value);
+                    }
+                } else if (e.key === 'Escape') {
+                    userSearchInput.value = '';
+                    if (userSearchResults) userSearchResults.innerHTML = '';
+                }
+            });
+        }
+
         // Initialize page
         if (!token) {
             document.getElementById('feed-view').style.display = 'none';
             document.getElementById('auth-prompt').style.display = 'block';
         } else {
             initNotificationUI();
+            initPeopleSearch();
 
             // Set up custom dropdowns once DOM is ready
             initCustomDropdowns();
