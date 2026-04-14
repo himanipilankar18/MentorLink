@@ -3,8 +3,10 @@ const fs = require('fs');
 const path = require('path');
 const multer = require('multer');
 const Post = require('../models/Post');
+const User = require('../models/User');
 const { verifyToken } = require('../middleware/auth');
 const { apiLimiter } = require('../middleware/security');
+const { createAndEmitNotification } = require('../utils/notifications');
 const router = express.Router();
 
 // Multer setup for post image uploads (used by community create-post modal)
@@ -123,34 +125,68 @@ router.post('/', verifyToken, apiLimiter, async (req, res) => {
 });
 
 // @route   GET /api/posts/feed
-// @desc    Get feed posts
+// @desc    Get feed posts (supports mode=all|following|popular)
 // @access  Private
 router.get('/feed', verifyToken, apiLimiter, async (req, res) => {
   try {
-    const { limit = 20, skip = 0 } = req.query;
+    const { limit = 20, skip = 0, mode = 'all' } = req.query;
 
-    const posts = await Post.find({ 
+    const baseQuery = {
       visibility: 'public',
       communityId: null // Only personal posts in main feed
-    })
-      .sort({ createdAt: -1 })
-      .limit(parseInt(limit))
-      .skip(parseInt(skip))
+    };
+
+    // When mode=following, restrict to authors the current user follows (plus own posts)
+    if (mode === 'following') {
+      const me = req.user;
+      // req.user.following may not be populated, so we re-query to be safe
+      const meDoc = await require('../models/User').findById(me._id).select('following');
+      const followingIds = meDoc?.following || [];
+      baseQuery.authorId = { $in: [req.user._id, ...followingIds] };
+    }
+
+    let sort = { createdAt: -1 };
+    if (mode === 'popular') {
+      // Sort by like count (desc), then most recent
+      sort = { likeCount: -1, createdAt: -1 };
+    }
+
+    const posts = await Post.aggregate([
+      { $match: baseQuery },
+      {
+        $addFields: {
+          likeCount: { $size: '$likes' },
+          commentCount: { $size: '$comments' }
+        }
+      },
+      { $sort: sort },
+      { $skip: parseInt(skip) },
+      { $limit: parseInt(limit) }
+    ]);
+
+    // Re-populate author and comment authors after aggregation
+    const postIds = posts.map(p => p._id);
+    const populated = await Post.find({ _id: { $in: postIds } })
       .populate('authorId', 'name email department year role profilePicture')
       .populate('comments.authorId', 'name profilePicture')
       .lean();
 
-    // Filter out posts whose author no longer exists to avoid
-    // showing legacy "Anonymous" entries from deleted users.
-    const visiblePosts = posts.filter(post => post.authorId && post.authorId._id);
+    // Merge like/comment counts and filter out posts whose author no longer exists
+    const countsById = new Map(posts.map(p => [String(p._id), { likeCount: p.likeCount, commentCount: p.commentCount }]));
 
-    // Add like count and format data
-    const formattedPosts = visiblePosts.map(post => ({
-      ...post,
-      likeCount: post.likes.length,
-      commentCount: post.comments.length,
-      isLiked: post.likes.some(like => like.toString() === req.user._id.toString())
-    }));
+    const formattedPosts = populated
+      .filter(post => post.authorId && post.authorId._id)
+      .map(post => {
+        const counts = countsById.get(String(post._id)) || { likeCount: post.likes.length, commentCount: post.comments.length };
+        return {
+          ...post,
+          likeCount: counts.likeCount,
+          commentCount: counts.commentCount,
+          isLiked: post.likes.some(like => like.toString() === req.user._id.toString())
+        };
+      })
+      // Ensure order matches aggregation order
+      .sort((a, b) => postIds.indexOf(a._id) - postIds.indexOf(b._id));
 
     res.json({
       success: true,
@@ -216,6 +252,25 @@ router.post('/:id/like', verifyToken, apiLimiter, async (req, res) => {
     
     const isLiked = post.likes.includes(req.user._id);
 
+    // Notify post owner only when someone else likes their post.
+    if (isLiked && String(post.authorId) !== String(req.user._id)) {
+      try {
+        const actor = await User.findById(req.user._id).select('name');
+        const actorName = actor?.name || 'Someone';
+        const io = req.app.get('io');
+
+        await createAndEmitNotification({
+          io,
+          userId: post.authorId,
+          type: 'POST_LIKED',
+          message: `${actorName} liked your post`,
+          relatedId: post._id,
+        });
+      } catch (notificationError) {
+        console.error('Failed to create like notification:', notificationError.message);
+      }
+    }
+
     res.json({
       success: true,
       message: isLiked ? 'Post liked' : 'Post unliked',
@@ -257,6 +312,25 @@ router.post('/:id/comment', verifyToken, apiLimiter, async (req, res) => {
     await post.addComment(req.user._id, content.trim());
     await post.populate('comments.authorId', 'name profilePicture');
 
+    // Notify post owner when someone else comments on their post.
+    if (String(post.authorId) !== String(req.user._id)) {
+      try {
+        const actor = await User.findById(req.user._id).select('name');
+        const actorName = actor?.name || 'Someone';
+        const io = req.app.get('io');
+
+        await createAndEmitNotification({
+          io,
+          userId: post.authorId,
+          type: 'POST_COMMENTED',
+          message: `${actorName} commented on your post`,
+          relatedId: post._id,
+        });
+      } catch (notificationError) {
+        console.error('Failed to create comment notification:', notificationError.message);
+      }
+    }
+
     res.json({
       success: true,
       message: 'Comment added successfully',
@@ -270,6 +344,58 @@ router.post('/:id/comment', verifyToken, apiLimiter, async (req, res) => {
     });
   }
 });
+
+async function deleteOwnCommentHandler(req, res) {
+  try {
+    const { id: postId, commentId } = req.params;
+
+    const post = await Post.findById(postId);
+    if (!post) {
+      return res.status(404).json({
+        success: false,
+        message: 'Post not found'
+      });
+    }
+
+    const targetComment = post.comments.id(commentId);
+    if (!targetComment) {
+      return res.status(404).json({
+        success: false,
+        message: 'Comment not found'
+      });
+    }
+
+    if (String(targetComment.authorId) !== String(req.user._id)) {
+      return res.status(403).json({
+        success: false,
+        message: 'Not authorized to delete this comment'
+      });
+    }
+
+    targetComment.deleteOne();
+    await post.save();
+
+    return res.json({
+      success: true,
+      message: 'Comment deleted successfully',
+      commentCount: post.comments.length
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to delete comment',
+      error: error.message
+    });
+  }
+}
+
+// @route   DELETE /api/posts/:id/comment/:commentId
+// @desc    Delete own comment from a post
+// @access  Private (Comment author only)
+router.delete('/:id/comment/:commentId', verifyToken, apiLimiter, deleteOwnCommentHandler);
+
+// Backward-compatible alias
+router.delete('/:id/comments/:commentId', verifyToken, apiLimiter, deleteOwnCommentHandler);
 
 // @route   DELETE /api/posts/:id
 // @desc    Delete a post
@@ -309,20 +435,30 @@ router.delete('/:id', verifyToken, apiLimiter, async (req, res) => {
 });
 
 // @route   GET /api/posts/user/:userId
-// @desc    Get posts by a specific user
+// @desc    Get posts by a specific user (scope=personal|community|all)
 // @access  Private
 router.get('/user/:userId', verifyToken, apiLimiter, async (req, res) => {
   try {
-    const { limit = 20, skip = 0 } = req.query;
+    const { limit = 20, skip = 0, scope = 'personal' } = req.query;
 
-    const posts = await Post.find({ 
+    const query = {
       authorId: req.params.userId,
       visibility: { $in: ['public', 'friends'] }
-    })
+    };
+
+    // Keep personal and community posts explicitly separated for profile tabs.
+    if (scope === 'community') {
+      query.communityId = { $ne: null };
+    } else if (scope === 'personal') {
+      query.communityId = null;
+    }
+
+    const posts = await Post.find(query)
       .sort({ createdAt: -1 })
       .limit(parseInt(limit))
       .skip(parseInt(skip))
       .populate('authorId', 'name email department year role profilePicture')
+      .populate('communityId', 'name displayName icon')
       .populate('comments.authorId', 'name profilePicture');
 
     res.json({

@@ -1,9 +1,12 @@
 const express = require('express');
+const path = require('path');
+const { spawnSync } = require('child_process');
 const User = require('../models/User');
 const Interaction = require('../models/Interaction');
 const { verifyToken, checkRole } = require('../middleware/auth');
 const { apiLimiter } = require('../middleware/security');
 const sendEmail = require('../utils/sendEmail');
+const { createAndEmitNotification } = require('../utils/notifications');
 const { buildPeerRecommendations } = require('../recommender_model/src/peerMatcher');
 
 const router = express.Router();
@@ -152,6 +155,98 @@ function isSubsequence(text, query) {
   return j === q.length;
 }
 
+function isPlaceholderProfile(user) {
+  const name = String(user?.name || '').trim().toLowerCase();
+  const email = String(user?.email || '').trim().toLowerCase();
+
+  if (!name) return true;
+
+  if (email.endsWith('@peer.synthetic.spit.ac.in')) return true;
+  if (email.endsWith('@test.spit.ac.in')) return true;
+
+  const placeholderPatterns = [
+    /^recommendation\b/i,
+    /^mentor\b/i,
+    /^mentee\b/i,
+    /\bfaculty\b/i,
+    /\bjunior\b/i,
+    /\btest\b/i,
+    /\bdummy\b/i,
+    /^peer user\b/i,
+    /\bsynthetic\b/i,
+  ];
+
+  return placeholderPatterns.some((pattern) => pattern.test(name));
+}
+
+const PROJECT_SYNONYM_GROUPS = [
+  ['donation', 'charity', 'fundraiser', 'fundraising', 'ngo', 'nonprofit', 'non-profit', 'crowdfunding', 'philanthropy', 'relief'],
+  ['health', 'medical', 'clinic', 'hospital', 'wellness', 'healthcare'],
+  ['education', 'learning', 'edtech', 'teaching', 'classroom', 'school'],
+  ['environment', 'climate', 'sustainability', 'green', 'recycle', 'recycling'],
+  ['jobs', 'career', 'employment', 'hiring', 'recruitment', 'internship'],
+];
+
+function tokenizeText(text) {
+  return String(text || '')
+    .toLowerCase()
+    .replace(/[^a-z0-9\s-]+/g, ' ')
+    .split(/\s+/)
+    .map((token) => token.trim())
+    .filter(Boolean);
+}
+
+function expandSemanticTerms(queryText) {
+  const queryTokens = tokenizeText(queryText);
+  const terms = new Set(queryTokens);
+
+  for (const token of queryTokens) {
+    for (const group of PROJECT_SYNONYM_GROUPS) {
+      if (group.includes(token)) {
+        group.forEach((item) => terms.add(item));
+      }
+    }
+  }
+
+  return Array.from(terms);
+}
+
+function computeProjectMatchScore(project, queryText, semanticTerms) {
+  const title = String(project?.title || '').toLowerCase();
+  const description = String(project?.description || '').toLowerCase();
+  const technologies = Array.isArray(project?.technologies)
+    ? project.technologies.map((t) => String(t || '').toLowerCase()).join(' ')
+    : '';
+
+  const fullText = `${title} ${description} ${technologies}`.trim();
+  if (!fullText) return 0;
+
+  const queryLower = String(queryText || '').toLowerCase().trim();
+  let score = 0;
+
+  if (queryLower && fullText.includes(queryLower)) {
+    score += 70;
+  }
+
+  for (const term of semanticTerms) {
+    if (!term || term.length < 3) continue;
+    if (title.includes(term)) score += 10;
+    else if (description.includes(term)) score += 6;
+    else if (technologies.includes(term)) score += 4;
+  }
+
+  const fuzzyTitle = bestFuzzySimilarity(title, queryLower);
+  const fuzzyDescription = bestFuzzySimilarity(description, queryLower);
+  const fuzzyTech = bestFuzzySimilarity(technologies, queryLower);
+  const fuzzy = Math.max(fuzzyTitle, fuzzyDescription, fuzzyTech);
+
+  if (fuzzy >= 0.88) score += 40;
+  else if (fuzzy >= 0.76) score += 24;
+  else if (fuzzy >= 0.66) score += 12;
+
+  return score;
+}
+
 function calculateProfileStrength(user) {
   let score = 0;
 
@@ -162,6 +257,108 @@ function calculateProfileStrength(user) {
   if (user.cgpa !== null && user.cgpa !== undefined && user.cgpa !== '') score += 20;
 
   return score;
+}
+
+function normalizeTextArray(values) {
+  if (!Array.isArray(values)) return [];
+  return values
+    .map((value) => String(value || '').trim().toLowerCase())
+    .filter(Boolean);
+}
+
+const PEOPLE_CLUSTERS = {
+  'ml-experts': {
+    label: 'Machine Learning Experts',
+    keywords: ['machine learning', 'ml', 'deep learning', 'tensorflow', 'pytorch', 'nlp', 'computer vision', 'scikit-learn', 'data science'],
+  },
+  'web-dev': {
+    label: 'Web Developers',
+    keywords: ['web development', 'frontend', 'backend', 'react', 'node', 'express', 'javascript', 'html', 'css', 'full stack'],
+  },
+  'app-dev': {
+    label: 'App Developers',
+    keywords: ['android', 'ios', 'mobile', 'flutter', 'react native', 'kotlin', 'swift'],
+  },
+  'data-analytics': {
+    label: 'Data Analytics',
+    keywords: ['analytics', 'data analysis', 'sql', 'power bi', 'tableau', 'excel', 'statistics', 'python'],
+  },
+  'open-source': {
+    label: 'Open Source Contributors',
+    keywords: ['open source', 'github', 'community', 'maintainer', 'contributor', 'hacktoberfest'],
+  },
+};
+
+function computeClusterScore(user, keywords) {
+  const skills = normalizeTextArray(user.skills);
+  const interests = normalizeTextArray(user.interests);
+  const projectTokens = Array.isArray(user.projects)
+    ? user.projects.flatMap((project) => normalizeTextArray([
+      project?.title,
+      project?.description,
+      ...(Array.isArray(project?.technologies) ? project.technologies : []),
+    ]))
+    : [];
+
+  const haystack = [...skills, ...interests, ...projectTokens].join(' ');
+  if (!haystack) return 0;
+
+  let score = 0;
+  for (const keyword of keywords) {
+    const term = String(keyword || '').trim().toLowerCase();
+    if (!term) continue;
+
+    if (skills.some((s) => s.includes(term))) score += 8;
+    else if (interests.some((i) => i.includes(term))) score += 6;
+    else if (projectTokens.some((p) => p.includes(term))) score += 5;
+    else if (haystack.includes(term)) score += 3;
+  }
+
+  return score;
+}
+
+function runPythonClusterRanking(payload) {
+  const scriptPath = path.join(__dirname, '..', 'scripts', 'cluster_people.py');
+  const commands = [
+    ['python', [scriptPath]],
+    ['py', ['-3', scriptPath]],
+    ['py', [scriptPath]],
+  ];
+
+  let lastError = null;
+
+  for (const [command, args] of commands) {
+    try {
+      const result = spawnSync(command, args, {
+        input: JSON.stringify(payload),
+        encoding: 'utf-8',
+        timeout: 8000,
+        maxBuffer: 1024 * 1024,
+      });
+
+      if (result.error) {
+        lastError = result.error;
+        continue;
+      }
+
+      if (result.status !== 0) {
+        lastError = new Error((result.stderr || '').trim() || (result.stdout || '').trim() || `Python exited with code ${result.status}`);
+        continue;
+      }
+
+      const parsed = JSON.parse(result.stdout || '{}');
+      if (!parsed.success) {
+        lastError = new Error(parsed.message || 'Python clustering failed');
+        continue;
+      }
+
+      return parsed.ranked || [];
+    } catch (error) {
+      lastError = error;
+    }
+  }
+
+  throw lastError || new Error('Failed to execute Python clustering');
 }
 
 // @route   GET /api/users/profile/:id
@@ -586,6 +783,24 @@ router.post('/:id/follow', verifyToken, apiLimiter, async (req, res) => {
     const updatedMe = await User.findById(req.user._id).select('followers following');
     const updatedTarget = await User.findById(targetUser._id).select('followers following');
 
+    // Notify target user that someone started following them.
+    try {
+      const actor = await User.findById(req.user._id).select('name');
+      const actorName = actor?.name || 'Someone';
+      const io = req.app.get('io');
+
+      await createAndEmitNotification({
+        io,
+        userId: targetUser._id,
+        type: 'NEW_FOLLOWER',
+        message: `${actorName} started following you`,
+        relatedId: req.user._id,
+      });
+    } catch (notificationError) {
+      // Non-blocking: follow should still succeed even if notification fails.
+      console.error('Failed to create follow notification:', notificationError.message);
+    }
+
     return res.json({
       success: true,
       message: 'Now following user',
@@ -786,6 +1001,7 @@ router.get('/search', verifyToken, apiLimiter, async (req, res) => {
     const queryLower = query.toLowerCase();
 
     const enriched = users
+      .filter((u) => !isPlaceholderProfile(u))
       .map((u) => {
         const isFollowing = followingSet.has(String(u._id));
         return {
@@ -864,7 +1080,28 @@ router.get('/suggestions', verifyToken, apiLimiter, async (req, res) => {
         interests: { $in: interestMatchers },
       })
         .select('name email department year role profilePicture bio isOnline lastActiveAt')
-        .limit(parsedLimit);
+        .limit(parsedLimit * 5);
+
+      suggestions = suggestions.filter((u) => !isPlaceholderProfile(u));
+      suggestions = suggestions.slice(0, parsedLimit);
+
+      // Shared-interest match can be sparse; top-up with global users to keep list populated.
+      if (suggestions.length < parsedLimit) {
+        strategy = 'shared_interests_with_topup';
+        const excludedIds = new Set(suggestions.map((u) => String(u._id)));
+
+        const topUp = await User.find(baseQuery)
+          .select('name email department year role profilePicture bio isOnline lastActiveAt')
+          .sort({ isOnline: -1, lastActiveAt: -1, createdAt: -1 })
+          .limit(parsedLimit * 8);
+
+        const filteredTopUp = topUp.filter((u) => {
+          const id = String(u._id);
+          return !excludedIds.has(id) && !isPlaceholderProfile(u);
+        });
+
+        suggestions = [...suggestions, ...filteredTopUp].slice(0, parsedLimit);
+      }
     }
 
     // Graceful fallback: if no shared-interest matches, suggest active verified peers in same department.
@@ -882,7 +1119,28 @@ router.get('/suggestions', verifyToken, apiLimiter, async (req, res) => {
       suggestions = await User.find(fallbackQuery)
         .select('name email department year role profilePicture bio isOnline lastActiveAt')
         .sort({ isOnline: -1, lastActiveAt: -1, createdAt: -1 })
-        .limit(parsedLimit);
+        .limit(parsedLimit * 5);
+
+      suggestions = suggestions.filter((u) => !isPlaceholderProfile(u));
+
+      // If department fallback is too narrow, top-up from global verified users.
+      if (suggestions.length < parsedLimit) {
+        const excludedIds = new Set(suggestions.map((u) => String(u._id)));
+
+        const topUp = await User.find(baseQuery)
+          .select('name email department year role profilePicture bio isOnline lastActiveAt')
+          .sort({ isOnline: -1, lastActiveAt: -1, createdAt: -1 })
+          .limit(parsedLimit * 8);
+
+        const filteredTopUp = topUp.filter((u) => {
+          const id = String(u._id);
+          return !excludedIds.has(id) && !isPlaceholderProfile(u);
+        });
+
+        suggestions = [...suggestions, ...filteredTopUp].slice(0, parsedLimit);
+      } else {
+        suggestions = suggestions.slice(0, parsedLimit);
+      }
     }
 
     const followingSet = new Set((currentUser.following || []).map(id => String(id)));
@@ -913,6 +1171,209 @@ router.get('/suggestions', verifyToken, apiLimiter, async (req, res) => {
       success: false,
       message: 'Failed to fetch suggestions',
       error: error.message
+    });
+  }
+});
+
+// @route   GET /api/users/projects/search
+// @desc    Search users by project intent/topic using semantic terms and fuzzy matching
+// @access  Private
+router.get('/projects/search', verifyToken, apiLimiter, async (req, res) => {
+  try {
+    const { q = '', limit = 12 } = req.query;
+    const query = String(q || '').trim();
+
+    if (!query) {
+      return res.json({
+        success: true,
+        query,
+        exists: false,
+        userCount: 0,
+        projectCount: 0,
+        users: [],
+      });
+    }
+
+    const parsedLimit = Math.max(1, Math.min(parseInt(limit, 10) || 12, 30));
+    const semanticTerms = expandSemanticTerms(query);
+
+    const users = await User.find({
+      _id: { $ne: req.user._id },
+      isVerified: true,
+      isActive: true,
+      projects: { $exists: true, $ne: [] },
+    })
+      .select('name email department year role profilePicture isOnline lastActiveAt projects')
+      .limit(250)
+      .lean();
+
+    const ranked = users
+      .filter((user) => !isPlaceholderProfile(user))
+      .map((user) => {
+        const projects = Array.isArray(user.projects) ? user.projects : [];
+
+        const matchedProjects = projects
+          .map((project) => {
+            const score = computeProjectMatchScore(project, query, semanticTerms);
+            return {
+              title: project?.title || 'Untitled project',
+              description: project?.description || '',
+              technologies: Array.isArray(project?.technologies) ? project.technologies : [],
+              score,
+            };
+          })
+          .filter((entry) => entry.score >= 18)
+          .sort((a, b) => b.score - a.score)
+          .slice(0, 3);
+
+        const bestScore = matchedProjects.length ? matchedProjects[0].score : 0;
+
+        return {
+          id: user._id,
+          _id: user._id,
+          name: user.name,
+          email: user.email,
+          department: user.department,
+          year: user.year,
+          role: user.role,
+          profilePicture: user.profilePicture,
+          isOnline: !!user.isOnline,
+          lastActiveAt: user.lastActiveAt || null,
+          matchedProjects,
+          _bestScore: bestScore,
+        };
+      })
+      .filter((row) => row._bestScore > 0)
+      .sort((a, b) => {
+        if (b._bestScore !== a._bestScore) return b._bestScore - a._bestScore;
+        if ((b.matchedProjects?.length || 0) !== (a.matchedProjects?.length || 0)) {
+          return (b.matchedProjects?.length || 0) - (a.matchedProjects?.length || 0);
+        }
+        return String(a.name || '').localeCompare(String(b.name || ''));
+      })
+      .slice(0, parsedLimit)
+      .map(({ _bestScore, ...row }) => row);
+
+    const projectCount = ranked.reduce((total, user) => total + (user.matchedProjects?.length || 0), 0);
+
+    return res.json({
+      success: true,
+      query,
+      exists: ranked.length > 0,
+      userCount: ranked.length,
+      projectCount,
+      users: ranked,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to search projects',
+      error: error.message,
+    });
+  }
+});
+
+// @route   GET /api/users/clusters
+// @desc    Find people grouped by skill/project clusters (MVP)
+// @access  Private
+router.get('/clusters', verifyToken, apiLimiter, async (req, res) => {
+  try {
+    const { cluster = 'ml-experts', limit = 15 } = req.query;
+    const clusterKey = String(cluster || 'ml-experts').toLowerCase();
+    const clusterConfig = PEOPLE_CLUSTERS[clusterKey];
+
+    if (!clusterConfig) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid cluster key',
+        availableClusters: Object.keys(PEOPLE_CLUSTERS),
+      });
+    }
+
+    const parsedLimit = Math.max(1, Math.min(parseInt(limit, 10) || 15, 40));
+    const me = await User.findById(req.user._id).select('following');
+    const followingSet = new Set((me?.following || []).map((id) => String(id)));
+
+    const users = await User.find({
+      _id: { $ne: req.user._id },
+      isVerified: true,
+      isActive: true,
+    })
+      .select('name email department year role profilePicture skills interests projects isOnline lastActiveAt')
+      .limit(300)
+      .lean();
+
+    const prepared = users.filter((user) => !isPlaceholderProfile(user)).map((user) => {
+      const topProject = Array.isArray(user.projects) && user.projects.length > 0
+        ? user.projects[0]
+        : null;
+
+      return {
+        id: user._id,
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        department: user.department,
+        year: user.year,
+        role: user.role,
+        profilePicture: user.profilePicture,
+        skills: user.skills || [],
+        interests: user.interests || [],
+        projects: user.projects || [],
+        isFollowing: followingSet.has(String(user._id)),
+        isOnline: !!user.isOnline,
+        lastActiveAt: user.lastActiveAt || null,
+        topProject: topProject
+          ? {
+            title: topProject.title || '',
+            description: topProject.description || '',
+            technologies: Array.isArray(topProject.technologies) ? topProject.technologies : [],
+          }
+          : null,
+      };
+    });
+
+    let ranked = [];
+
+    try {
+      ranked = runPythonClusterRanking({
+        clusterKey,
+        clusterConfig,
+        limit: parsedLimit,
+        entries: prepared,
+      }).map(({ _score, ...entry }) => entry);
+    } catch (pythonError) {
+      // Keep API resilient if python is unavailable in current environment.
+      console.warn('Python clustering failed, using JS fallback:', pythonError.message);
+
+      ranked = prepared
+        .map((entry) => ({
+          ...entry,
+          _score: computeClusterScore(entry, clusterConfig.keywords),
+        }))
+        .filter((entry) => entry._score >= 6)
+        .sort((a, b) => {
+          if (b._score !== a._score) return b._score - a._score;
+          if ((b.skills?.length || 0) !== (a.skills?.length || 0)) return (b.skills?.length || 0) - (a.skills?.length || 0);
+          return String(a.name || '').localeCompare(String(b.name || ''));
+        })
+        .slice(0, parsedLimit)
+        .map(({ _score, projects, ...entry }) => entry);
+    }
+
+    return res.json({
+      success: true,
+      cluster: clusterKey,
+      clusterLabel: clusterConfig.label,
+      count: ranked.length,
+      people: ranked,
+      availableClusters: Object.entries(PEOPLE_CLUSTERS).map(([key, value]) => ({ key, label: value.label })),
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to cluster users',
+      error: error.message,
     });
   }
 });

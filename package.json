@@ -8,6 +8,12 @@
     "server": "node server.js",
     "dev": "npm run dev --prefix frontend",
     "seed:peer": "node scripts/seed-peer-mode-data.js",
+    "seed:demo-users": "node scripts/seed-demo-users.js",
+    "seed:csv-profiles": "node scripts/seed-profiles-from-csv.js",
+    "cleanup:placeholders": "node scripts/cleanup-placeholder-users.js",
+    "backfill:dps": "node scripts/backfill-user-dps.js",
+    "remove:dps": "node scripts/remove-all-dps.js",
+    "refresh:demo-identities": "node scripts/refresh-demo-identities.js",
     "demo:peer": "node scripts/run-peer-model-demo.js",
     "traffic:peer": "node scripts/simulate-peer-traffic.js",
     "test": "echo \"Error: no test specified\" && exit 1"
