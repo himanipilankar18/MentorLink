@@ -3,6 +3,7 @@ const path = require('path');
 const { spawnSync } = require('child_process');
 const User = require('../models/User');
 const Interaction = require('../models/Interaction');
+const Mentorship = require('../models/Mentorship');
 const { verifyToken, checkRole } = require('../middleware/auth');
 const { apiLimiter } = require('../middleware/security');
 const sendEmail = require('../utils/sendEmail');
@@ -361,6 +362,93 @@ function runPythonClusterRanking(payload) {
   throw lastError || new Error('Failed to execute Python clustering');
 }
 
+function normalizeMentorshipStatus(status) {
+  return String(status || '').trim().toLowerCase();
+}
+
+function toFiniteNumber(value, fallback = 0) {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : fallback;
+}
+
+function computeMentorScoreFallback(stats) {
+  const acceptedCount = toFiniteNumber(stats?.acceptedCount, 0);
+  const rejectedCount = toFiniteNumber(stats?.rejectedCount, 0);
+  const pendingCount = toFiniteNumber(stats?.pendingCount, 0);
+  const totalRequests = Math.max(acceptedCount + rejectedCount + pendingCount, toFiniteNumber(stats?.totalRequests, 0));
+  const respondedCount = acceptedCount + rejectedCount;
+
+  const acceptanceRate = respondedCount > 0 ? (acceptedCount / respondedCount) : 0;
+  const responseCoverage = totalRequests > 0 ? (respondedCount / totalRequests) : 0;
+  const volumeNorm = Math.min(1, respondedCount / 12);
+
+  const avgSatisfaction = Math.max(0, Math.min(5, toFiniteNumber(stats?.avgSatisfaction, 0)));
+  const satisfactionNorm = avgSatisfaction / 5;
+  const interactionsCount = toFiniteNumber(stats?.interactionsCount, 0);
+  const engagementNorm = Math.min(1, interactionsCount / 20);
+
+  const avgResponseHours = toFiniteNumber(stats?.avgResponseHours, 0);
+  const speedNorm = avgResponseHours > 0
+    ? Math.max(0, 1 - Math.min(avgResponseHours / 72, 1))
+    : (respondedCount > 0 ? 0.5 : 0.2);
+
+  const acceptanceBehaviorScore = (0.6 * acceptanceRate + 0.25 * responseCoverage + 0.15 * volumeNorm) * 100;
+  const reactionBehaviorScore = (0.5 * satisfactionNorm + 0.3 * engagementNorm + 0.2 * speedNorm) * 100;
+  const mentorScore = (0.6 * acceptanceBehaviorScore) + (0.4 * reactionBehaviorScore);
+  const confidence = Math.min(1, (Math.min(1, respondedCount / 8) * 0.6) + (Math.min(1, interactionsCount / 15) * 0.4));
+
+  return {
+    mentorScore: Math.round(mentorScore * 100) / 100,
+    acceptanceBehaviorScore: Math.round(acceptanceBehaviorScore * 100) / 100,
+    reactionBehaviorScore: Math.round(reactionBehaviorScore * 100) / 100,
+    confidence: Math.round(confidence * 1000) / 1000,
+  };
+}
+
+function runPythonMentorScoring(payload) {
+  const scriptPath = path.join(__dirname, '..', 'scripts', 'mentor_scoring.py');
+  const commands = [
+    ['python', [scriptPath]],
+    ['py', ['-3', scriptPath]],
+    ['py', [scriptPath]],
+  ];
+
+  let lastError = null;
+
+  for (const [command, args] of commands) {
+    try {
+      const result = spawnSync(command, args, {
+        input: JSON.stringify(payload),
+        encoding: 'utf-8',
+        timeout: 8000,
+        maxBuffer: 1024 * 1024,
+      });
+
+      if (result.error) {
+        lastError = result.error;
+        continue;
+      }
+
+      if (result.status !== 0) {
+        lastError = new Error((result.stderr || '').trim() || (result.stdout || '').trim() || `Python exited with code ${result.status}`);
+        continue;
+      }
+
+      const parsed = JSON.parse(result.stdout || '{}');
+      if (!parsed.success) {
+        lastError = new Error(parsed.message || 'Python mentor scoring failed');
+        continue;
+      }
+
+      return parsed.ranked || [];
+    } catch (error) {
+      lastError = error;
+    }
+  }
+
+  throw lastError || new Error('Failed to execute Python mentor scoring');
+}
+
 // @route   GET /api/users/profile/:id
 // @desc    Get user profile by ID
 // @access  Private
@@ -379,6 +467,144 @@ router.get('/profile/:id', verifyToken, apiLimiter, async (req, res) => {
     }
 
     const payload = user.toObject();
+    const role = String(payload.role || '').toLowerCase();
+    const isMentorRole = role === 'senior' || role === 'faculty';
+
+    let mentorScorePayload = {
+      mentorScore: null,
+      acceptanceBehaviorScore: null,
+      reactionBehaviorScore: null,
+      scoringConfidence: null,
+      mentorStats: null,
+      mentorScoringSource: null,
+    };
+
+    if (isMentorRole) {
+      const interactionWindowDays = 180;
+      const mentorId = payload._id;
+
+      const [mentorshipRecords, interactionRecords] = await Promise.all([
+        Mentorship.find({ mentorId })
+          .select('status requestedAt acceptedAt updatedAt')
+          .lean(),
+        Interaction.find({
+          mentorId,
+          timestamp: { $gte: new Date(Date.now() - (interactionWindowDays * 24 * 60 * 60 * 1000)) },
+        })
+          .select('satisfactionRating duration timestamp')
+          .lean(),
+      ]);
+
+      const stats = {
+        totalRequests: 0,
+        acceptedCount: 0,
+        rejectedCount: 0,
+        pendingCount: 0,
+        respondedCount: 0,
+        avgResponseHours: 0,
+        interactionsCount: 0,
+        avgSatisfaction: 0,
+        recentInteractionsCount: 0,
+        avgInteractionDuration: 0,
+      };
+
+      const responseTimes = [];
+      mentorshipRecords.forEach((record) => {
+        const status = normalizeMentorshipStatus(record?.status);
+        stats.totalRequests += 1;
+
+        if (status === 'accepted') {
+          stats.acceptedCount += 1;
+          stats.respondedCount += 1;
+        } else if (status === 'rejected') {
+          stats.rejectedCount += 1;
+          stats.respondedCount += 1;
+        } else if (status === 'pending') {
+          stats.pendingCount += 1;
+        }
+
+        if (status === 'accepted' || status === 'rejected') {
+          const requestedAt = record?.requestedAt ? new Date(record.requestedAt) : null;
+          const responseAt = status === 'accepted'
+            ? (record?.acceptedAt ? new Date(record.acceptedAt) : (record?.updatedAt ? new Date(record.updatedAt) : null))
+            : (record?.updatedAt ? new Date(record.updatedAt) : null);
+
+          if (requestedAt && responseAt && responseAt > requestedAt) {
+            const diffHours = (responseAt.getTime() - requestedAt.getTime()) / (1000 * 60 * 60);
+            if (Number.isFinite(diffHours)) {
+              responseTimes.push(diffHours);
+            }
+          }
+        }
+      });
+
+      const ratings = [];
+      const durations = [];
+      const now = Date.now();
+      const recentWindowMs = 30 * 24 * 60 * 60 * 1000;
+
+      interactionRecords.forEach((record) => {
+        stats.interactionsCount += 1;
+
+        if (record?.timestamp && (now - new Date(record.timestamp).getTime()) <= recentWindowMs) {
+          stats.recentInteractionsCount += 1;
+        }
+
+        if (Number.isFinite(record?.satisfactionRating)) {
+          ratings.push(Number(record.satisfactionRating));
+        }
+
+        if (Number.isFinite(record?.duration) && Number(record.duration) >= 0) {
+          durations.push(Number(record.duration));
+        }
+      });
+
+      stats.avgResponseHours = responseTimes.length
+        ? (responseTimes.reduce((sum, value) => sum + value, 0) / responseTimes.length)
+        : 0;
+      stats.avgSatisfaction = ratings.length
+        ? (ratings.reduce((sum, value) => sum + value, 0) / ratings.length)
+        : 0;
+      stats.avgInteractionDuration = durations.length
+        ? (durations.reduce((sum, value) => sum + value, 0) / durations.length)
+        : 0;
+
+      let scoreSource = 'python';
+      let scoreRow;
+
+      try {
+        const ranked = runPythonMentorScoring({
+          mentors: [{
+            id: String(mentorId),
+            name: payload.name || 'Mentor',
+            stats,
+          }],
+        });
+        scoreRow = ranked[0] || computeMentorScoreFallback(stats);
+      } catch (pythonError) {
+        scoreSource = 'js_fallback';
+        scoreRow = computeMentorScoreFallback(stats);
+        console.warn('Python mentor scoring failed in profile route, using JS fallback:', pythonError.message);
+      }
+
+      mentorScorePayload = {
+        mentorScore: toFiniteNumber(scoreRow?.mentorScore, 0),
+        acceptanceBehaviorScore: toFiniteNumber(scoreRow?.acceptanceBehaviorScore, 0),
+        reactionBehaviorScore: toFiniteNumber(scoreRow?.reactionBehaviorScore, 0),
+        scoringConfidence: toFiniteNumber(scoreRow?.confidence, 0),
+        mentorStats: {
+          totalRequests: toFiniteNumber(stats.totalRequests, 0),
+          acceptedCount: toFiniteNumber(stats.acceptedCount, 0),
+          rejectedCount: toFiniteNumber(stats.rejectedCount, 0),
+          pendingCount: toFiniteNumber(stats.pendingCount, 0),
+          avgResponseHours: Math.round(toFiniteNumber(stats.avgResponseHours, 0) * 100) / 100,
+          interactionsCount: toFiniteNumber(stats.interactionsCount, 0),
+          avgSatisfaction: Math.round(toFiniteNumber(stats.avgSatisfaction, 0) * 100) / 100,
+          recentInteractionsCount: toFiniteNumber(stats.recentInteractionsCount, 0),
+        },
+        mentorScoringSource: scoreSource,
+      };
+    }
 
     res.json({
       success: true,
@@ -387,6 +613,7 @@ router.get('/profile/:id', verifyToken, apiLimiter, async (req, res) => {
         mentorshipIntent: payload.mentorshipIntent || 'seeking',
         availability: payload.availability || 'flexible',
         profileStrength: calculateProfileStrength(payload),
+        ...mentorScorePayload,
       }
     });
   } catch (error) {
@@ -640,6 +867,8 @@ router.get('/profile-completion', verifyToken, apiLimiter, async (req, res) => {
 router.get('/mentors', verifyToken, apiLimiter, async (req, res) => {
   try {
     const { department, subjectTag } = req.query;
+    const includeScores = String(req.query.includeScores || 'true').toLowerCase() !== 'false';
+    const interactionWindowDays = Math.max(30, Math.min(Number(req.query.interactionWindowDays) || 180, 365));
     
     const query = {
       role: { $in: ['senior', 'faculty'] },
@@ -653,12 +882,198 @@ router.get('/mentors', verifyToken, apiLimiter, async (req, res) => {
 
     const mentors = await User.find(query)
       .select('-password')
-      .sort({ createdAt: -1 });
+      .sort({ createdAt: -1 })
+      .lean();
+
+    if (!includeScores || !mentors.length) {
+      return res.json({
+        success: true,
+        count: mentors.length,
+        mentors,
+      });
+    }
+
+    const mentorIds = mentors.map((mentor) => mentor._id);
+    const statsByMentorId = new Map(mentorIds.map((id) => [String(id), {
+      totalRequests: 0,
+      acceptedCount: 0,
+      rejectedCount: 0,
+      pendingCount: 0,
+      respondedCount: 0,
+      avgResponseHours: 0,
+      interactionsCount: 0,
+      avgSatisfaction: 0,
+      recentInteractionsCount: 0,
+      avgInteractionDuration: 0,
+    }]));
+
+    const mentorshipRecords = await Mentorship.find({
+      mentorId: { $in: mentorIds },
+    })
+      .select('mentorId status requestedAt acceptedAt updatedAt')
+      .lean();
+
+    const responseTimeBuckets = new Map(mentorIds.map((id) => [String(id), []]));
+
+    mentorshipRecords.forEach((record) => {
+      const mentorId = String(record?.mentorId || '');
+      if (!statsByMentorId.has(mentorId)) return;
+
+      const stats = statsByMentorId.get(mentorId);
+      const status = normalizeMentorshipStatus(record?.status);
+
+      stats.totalRequests += 1;
+      if (status === 'accepted') {
+        stats.acceptedCount += 1;
+        stats.respondedCount += 1;
+      } else if (status === 'rejected') {
+        stats.rejectedCount += 1;
+        stats.respondedCount += 1;
+      } else if (status === 'pending') {
+        stats.pendingCount += 1;
+      }
+
+      if (status === 'accepted' || status === 'rejected') {
+        const requestedAt = record?.requestedAt ? new Date(record.requestedAt) : null;
+        const responseAt = status === 'accepted'
+          ? (record?.acceptedAt ? new Date(record.acceptedAt) : (record?.updatedAt ? new Date(record.updatedAt) : null))
+          : (record?.updatedAt ? new Date(record.updatedAt) : null);
+
+        if (requestedAt && responseAt && responseAt > requestedAt) {
+          const diffHours = (responseAt.getTime() - requestedAt.getTime()) / (1000 * 60 * 60);
+          if (Number.isFinite(diffHours)) {
+            responseTimeBuckets.get(mentorId).push(diffHours);
+          }
+        }
+      }
+    });
+
+    const interactionQuery = {
+      mentorId: { $in: mentorIds },
+      timestamp: { $gte: new Date(Date.now() - (interactionWindowDays * 24 * 60 * 60 * 1000)) },
+    };
+
+    if (subjectTag) {
+      interactionQuery.subjectTag = String(subjectTag);
+    }
+
+    const interactionRecords = await Interaction.find(interactionQuery)
+      .select('mentorId satisfactionRating duration timestamp')
+      .lean();
+
+    const satisfactionBuckets = new Map(mentorIds.map((id) => [String(id), []]));
+    const durationBuckets = new Map(mentorIds.map((id) => [String(id), []]));
+    const now = Date.now();
+    const recentWindowMs = 30 * 24 * 60 * 60 * 1000;
+
+    interactionRecords.forEach((record) => {
+      const mentorId = String(record?.mentorId || '');
+      if (!statsByMentorId.has(mentorId)) return;
+
+      const stats = statsByMentorId.get(mentorId);
+      stats.interactionsCount += 1;
+
+      if (record?.timestamp && (now - new Date(record.timestamp).getTime()) <= recentWindowMs) {
+        stats.recentInteractionsCount += 1;
+      }
+
+      if (Number.isFinite(record?.satisfactionRating)) {
+        satisfactionBuckets.get(mentorId).push(Number(record.satisfactionRating));
+      }
+
+      if (Number.isFinite(record?.duration) && Number(record.duration) >= 0) {
+        durationBuckets.get(mentorId).push(Number(record.duration));
+      }
+    });
+
+    statsByMentorId.forEach((stats, mentorId) => {
+      const responseTimes = responseTimeBuckets.get(mentorId) || [];
+      const ratings = satisfactionBuckets.get(mentorId) || [];
+      const durations = durationBuckets.get(mentorId) || [];
+
+      stats.avgResponseHours = responseTimes.length
+        ? (responseTimes.reduce((sum, value) => sum + value, 0) / responseTimes.length)
+        : 0;
+      stats.avgSatisfaction = ratings.length
+        ? (ratings.reduce((sum, value) => sum + value, 0) / ratings.length)
+        : 0;
+      stats.avgInteractionDuration = durations.length
+        ? (durations.reduce((sum, value) => sum + value, 0) / durations.length)
+        : 0;
+    });
+
+    const payloadMentors = mentors.map((mentor) => ({
+      id: String(mentor._id),
+      name: mentor.name || 'Mentor',
+      stats: statsByMentorId.get(String(mentor._id)) || {
+        totalRequests: 0,
+        acceptedCount: 0,
+        rejectedCount: 0,
+        pendingCount: 0,
+        respondedCount: 0,
+        avgResponseHours: 0,
+        interactionsCount: 0,
+        avgSatisfaction: 0,
+        recentInteractionsCount: 0,
+        avgInteractionDuration: 0,
+      },
+    }));
+
+    let ranked;
+    let scoreSource = 'python';
+
+    try {
+      ranked = runPythonMentorScoring({ mentors: payloadMentors });
+    } catch (pythonError) {
+      scoreSource = 'js_fallback';
+      ranked = payloadMentors.map((entry) => ({
+        id: entry.id,
+        ...computeMentorScoreFallback(entry.stats),
+      }));
+      console.warn('Python mentor scoring failed, using JS fallback:', pythonError.message);
+    }
+
+    const scoreById = new Map(ranked.map((row) => [String(row.id), row]));
+
+    const enrichedMentors = mentors
+      .map((mentor) => {
+        const mentorId = String(mentor._id);
+        const scoreRow = scoreById.get(mentorId) || computeMentorScoreFallback(statsByMentorId.get(mentorId));
+        const stats = statsByMentorId.get(mentorId) || {};
+
+        return {
+          ...mentor,
+          mentorScore: toFiniteNumber(scoreRow.mentorScore, 0),
+          acceptanceBehaviorScore: toFiniteNumber(scoreRow.acceptanceBehaviorScore, 0),
+          reactionBehaviorScore: toFiniteNumber(scoreRow.reactionBehaviorScore, 0),
+          scoringConfidence: toFiniteNumber(scoreRow.confidence, 0),
+          mentorStats: {
+            totalRequests: toFiniteNumber(stats.totalRequests, 0),
+            acceptedCount: toFiniteNumber(stats.acceptedCount, 0),
+            rejectedCount: toFiniteNumber(stats.rejectedCount, 0),
+            pendingCount: toFiniteNumber(stats.pendingCount, 0),
+            avgResponseHours: Math.round(toFiniteNumber(stats.avgResponseHours, 0) * 100) / 100,
+            interactionsCount: toFiniteNumber(stats.interactionsCount, 0),
+            avgSatisfaction: Math.round(toFiniteNumber(stats.avgSatisfaction, 0) * 100) / 100,
+            recentInteractionsCount: toFiniteNumber(stats.recentInteractionsCount, 0),
+          },
+        };
+      })
+      .sort((a, b) => {
+        if (b.mentorScore !== a.mentorScore) return b.mentorScore - a.mentorScore;
+        if (b.scoringConfidence !== a.scoringConfidence) return b.scoringConfidence - a.scoringConfidence;
+        return String(a.name || '').localeCompare(String(b.name || ''));
+      });
 
     res.json({
       success: true,
-      count: mentors.length,
-      mentors
+      count: enrichedMentors.length,
+      mentors: enrichedMentors,
+      scoringMeta: {
+        scoreSource,
+        interactionWindowDays,
+        scoringLogic: 'acceptance_behavior_plus_reaction_behavior',
+      },
     });
   } catch (error) {
     res.status(500).json({
@@ -807,6 +1222,8 @@ router.post('/:id/follow', verifyToken, apiLimiter, async (req, res) => {
       isFollowing: true,
       followerCount: updatedTarget.followers.length,
       followingCount: updatedMe.following.length,
+      followingIds: (updatedMe.following || []).map((id) => String(id)),
+      followerIds: (updatedTarget.followers || []).map((id) => String(id)),
     });
   } catch (error) {
     res.status(500).json({
@@ -852,6 +1269,8 @@ router.post('/:id/unfollow', verifyToken, apiLimiter, async (req, res) => {
       isFollowing: false,
       followerCount: updatedTarget.followers.length,
       followingCount: updatedMe.following.length,
+      followingIds: (updatedMe.following || []).map((id) => String(id)),
+      followerIds: (updatedTarget.followers || []).map((id) => String(id)),
     });
   } catch (error) {
     res.status(500).json({

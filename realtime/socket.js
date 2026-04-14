@@ -55,6 +55,19 @@ async function ensureGroupMembership(groupId, userId) {
   return !!group;
 }
 
+async function findDirectGroupForUsers(groupId, userId, targetUserId) {
+  if (!groupId || !userId || !targetUserId) return null;
+
+  const group = await Group.findOne({
+    _id: groupId,
+    isActive: true,
+    name: /^direct-/,
+    'members.userId': { $all: [userId, targetUserId] },
+  }).select('_id name members');
+
+  return group || null;
+}
+
 function setupSocketServer(io) {
   io.use(async (socket, next) => {
     try {
@@ -156,6 +169,138 @@ function setupSocketServer(io) {
         groupId,
         userId,
       });
+    });
+
+    // Caller starts ringing target user for a direct-message call.
+    socket.on('call:ring', async (payload) => {
+      try {
+        const groupId = payload && payload.groupId ? String(payload.groupId) : '';
+        const targetUserId = payload && payload.targetUserId ? String(payload.targetUserId) : '';
+        const callId = payload && payload.callId ? String(payload.callId) : '';
+
+        if (!groupId || !targetUserId || !callId || targetUserId === userId) {
+          return;
+        }
+
+        const group = await findDirectGroupForUsers(groupId, userId, targetUserId);
+        if (!group) {
+          socket.emit('call:error', {
+            groupId,
+            callId,
+            message: 'Direct call not allowed for this chat',
+          });
+          return;
+        }
+
+        io.to(`user:${targetUserId}`).emit('call:incoming', {
+          groupId,
+          callId,
+          fromUserId: userId,
+          callerName: payload && payload.callerName ? String(payload.callerName) : 'Someone',
+          offer: payload ? payload.offer : null,
+          at: new Date().toISOString(),
+        });
+      } catch (error) {
+        console.error('Failed to process call:ring event:', error.message);
+      }
+    });
+
+    socket.on('call:accept', async (payload) => {
+      try {
+        const groupId = payload && payload.groupId ? String(payload.groupId) : '';
+        const targetUserId = payload && payload.targetUserId ? String(payload.targetUserId) : '';
+        const callId = payload && payload.callId ? String(payload.callId) : '';
+
+        if (!groupId || !targetUserId || !callId || targetUserId === userId) {
+          return;
+        }
+
+        const group = await findDirectGroupForUsers(groupId, userId, targetUserId);
+        if (!group) return;
+
+        io.to(`user:${targetUserId}`).emit('call:accepted', {
+          groupId,
+          callId,
+          fromUserId: userId,
+          answer: payload ? payload.answer : null,
+          at: new Date().toISOString(),
+        });
+      } catch (error) {
+        console.error('Failed to process call:accept event:', error.message);
+      }
+    });
+
+    socket.on('call:decline', async (payload) => {
+      try {
+        const groupId = payload && payload.groupId ? String(payload.groupId) : '';
+        const targetUserId = payload && payload.targetUserId ? String(payload.targetUserId) : '';
+        const callId = payload && payload.callId ? String(payload.callId) : '';
+
+        if (!groupId || !targetUserId || !callId || targetUserId === userId) {
+          return;
+        }
+
+        const group = await findDirectGroupForUsers(groupId, userId, targetUserId);
+        if (!group) return;
+
+        io.to(`user:${targetUserId}`).emit('call:declined', {
+          groupId,
+          callId,
+          fromUserId: userId,
+          reason: payload && payload.reason ? String(payload.reason) : 'declined',
+          at: new Date().toISOString(),
+        });
+      } catch (error) {
+        console.error('Failed to process call:decline event:', error.message);
+      }
+    });
+
+    socket.on('call:end', async (payload) => {
+      try {
+        const groupId = payload && payload.groupId ? String(payload.groupId) : '';
+        const targetUserId = payload && payload.targetUserId ? String(payload.targetUserId) : '';
+        const callId = payload && payload.callId ? String(payload.callId) : '';
+
+        if (!groupId || !targetUserId || !callId || targetUserId === userId) {
+          return;
+        }
+
+        const group = await findDirectGroupForUsers(groupId, userId, targetUserId);
+        if (!group) return;
+
+        io.to(`user:${targetUserId}`).emit('call:ended', {
+          groupId,
+          callId,
+          fromUserId: userId,
+          at: new Date().toISOString(),
+        });
+      } catch (error) {
+        console.error('Failed to process call:end event:', error.message);
+      }
+    });
+
+    socket.on('webrtc:ice', async (payload) => {
+      try {
+        const groupId = payload && payload.groupId ? String(payload.groupId) : '';
+        const targetUserId = payload && payload.targetUserId ? String(payload.targetUserId) : '';
+        const callId = payload && payload.callId ? String(payload.callId) : '';
+
+        if (!groupId || !targetUserId || !callId || targetUserId === userId) {
+          return;
+        }
+
+        const group = await findDirectGroupForUsers(groupId, userId, targetUserId);
+        if (!group) return;
+
+        io.to(`user:${targetUserId}`).emit('webrtc:ice', {
+          groupId,
+          callId,
+          fromUserId: userId,
+          candidate: payload ? payload.candidate : null,
+        });
+      } catch (error) {
+        console.error('Failed to process webrtc:ice event:', error.message);
+      }
     });
 
     socket.on('disconnect', async () => {

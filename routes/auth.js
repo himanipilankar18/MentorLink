@@ -417,6 +417,10 @@ router.get('/me', verifyToken, async (req, res) => {
         mentorshipIntent: user.mentorshipIntent || 'seeking',
         availability: user.availability || 'flexible',
         profileStrength: calculateProfileStrength(user),
+        followers: user.followers || [],
+        following: user.following || [],
+        followerCount: Array.isArray(user.followers) ? user.followers.length : 0,
+        followingCount: Array.isArray(user.following) ? user.following.length : 0,
         createdAt: user.createdAt
       }
     });

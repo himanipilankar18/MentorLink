@@ -1,8 +1,10 @@
 const express = require('express');
+const crypto = require('crypto');
 const fs = require('fs');
 const path = require('path');
 const multer = require('multer');
 const Group = require('../models/Group');
+const User = require('../models/User');
 const { verifyToken } = require('../middleware/auth');
 const { apiLimiter } = require('../middleware/security');
 
@@ -66,6 +68,116 @@ function generateJoinCode(length = 6) {
   }
   return code;
 }
+
+function buildDirectGroupName(userAId, userBId) {
+  const pairKey = [String(userAId), String(userBId)].sort().join(':');
+  const hash = crypto.createHash('sha1').update(pairKey).digest('hex').slice(0, 18);
+  return `direct-${hash}`;
+}
+
+async function generateUniqueJoinCode(maxAttempts = 12) {
+  let attempts = 0;
+
+  while (attempts < maxAttempts) {
+    const code = generateJoinCode();
+    // eslint-disable-next-line no-await-in-loop
+    const exists = await Group.findOne({ joinCode: code }).select('_id').lean();
+    if (!exists) {
+      return code;
+    }
+    attempts += 1;
+  }
+
+  throw new Error('Unable to generate unique join code');
+}
+
+// @route   POST /api/groups/direct/:userId/start
+// @desc    Backward-compatible direct chat bootstrap endpoint
+// @access  Private
+router.post('/direct/:userId/start', verifyToken, apiLimiter, async (req, res) => {
+  try {
+    const meId = String(req.user._id);
+    const otherUserId = String(req.params.userId || '').trim();
+
+    if (!otherUserId) {
+      return res.status(400).json({
+        success: false,
+        message: 'Target user id is required',
+      });
+    }
+
+    if (otherUserId === meId) {
+      return res.status(400).json({
+        success: false,
+        message: 'Cannot open direct chat with yourself',
+      });
+    }
+
+    const [meUser, otherUser] = await Promise.all([
+      User.findById(meId).select('name isActive').lean(),
+      User.findById(otherUserId).select('name isActive').lean(),
+    ]);
+
+    if (!meUser || !meUser.isActive) {
+      return res.status(401).json({
+        success: false,
+        message: 'Current user is not active',
+      });
+    }
+
+    if (!otherUser || !otherUser.isActive) {
+      return res.status(404).json({
+        success: false,
+        message: 'Target user not found',
+      });
+    }
+
+    const groupName = buildDirectGroupName(meId, otherUserId);
+    let group = await Group.findOne({ name: groupName, isActive: true });
+
+    if (!group) {
+      const joinCode = await generateUniqueJoinCode();
+      const displayName = `Direct: ${meUser.name || 'User'} & ${otherUser.name || 'User'}`.slice(0, 100);
+
+      group = await Group.create({
+        name: groupName,
+        displayName,
+        description: 'Private direct chat',
+        creatorId: req.user._id,
+        joinCode,
+        members: [
+          { userId: req.user._id, role: 'owner' },
+          { userId: otherUser._id, role: 'member' },
+        ],
+      });
+    } else {
+      const memberIds = new Set((group.members || []).map((entry) => String(entry.userId)));
+      if (!memberIds.has(meId)) {
+        group.members.push({ userId: req.user._id, role: 'member' });
+      }
+      if (!memberIds.has(otherUserId)) {
+        group.members.push({ userId: otherUser._id, role: 'member' });
+      }
+      await group.save();
+    }
+
+    const populated = await Group.findById(group._id)
+      .populate('members.userId', 'name profilePicture isOnline lastActiveAt')
+      .lean();
+
+    return res.json({
+      success: true,
+      message: 'Direct chat ready',
+      group: populated || group,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to start direct chat',
+      error: error.message,
+    });
+  }
+});
 
 // @route   POST /api/groups
 // @desc    Create a new chat group (separate from communities)

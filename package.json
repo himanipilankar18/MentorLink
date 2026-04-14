@@ -12,6 +12,7 @@
     "seed:csv-profiles": "node scripts/seed-profiles-from-csv.js",
     "cleanup:placeholders": "node scripts/cleanup-placeholder-users.js",
     "backfill:dps": "node scripts/backfill-user-dps.js",
+    "backfill:college-projects": "node scripts/backfill-college-projects.js",
     "remove:dps": "node scripts/remove-all-dps.js",
     "refresh:demo-identities": "node scripts/refresh-demo-identities.js",
     "demo:peer": "node scripts/run-peer-model-demo.js",

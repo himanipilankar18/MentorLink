@@ -1066,6 +1066,97 @@
             transform: translateY(-1px);
         }
 
+        .chat-call-btn {
+            border-radius: 999px;
+            padding: 7px 14px;
+            border: 1px solid rgba(34, 197, 94, 0.55);
+            background: rgba(22, 163, 74, 0.18);
+            color: #86efac;
+            font-size: 0.78rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            white-space: nowrap;
+        }
+
+        .chat-call-btn:hover:enabled {
+            background: rgba(22, 163, 74, 0.28);
+            border-color: rgba(34, 197, 94, 0.8);
+            transform: translateY(-1px);
+        }
+
+        .chat-call-btn:disabled {
+            opacity: 0.65;
+            cursor: not-allowed;
+        }
+
+        .chat-call-banner {
+            display: none;
+            margin-bottom: 8px;
+            padding: 10px 12px;
+            border-radius: 12px;
+            border: 1px solid rgba(251, 191, 36, 0.55);
+            background: rgba(120, 53, 15, 0.35);
+            color: #fde68a;
+            font-size: 0.84rem;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .chat-call-banner-actions {
+            display: inline-flex;
+            gap: 8px;
+        }
+
+        .chat-call-accept {
+            border-radius: 999px;
+            padding: 6px 12px;
+            border: 1px solid rgba(16, 185, 129, 0.7);
+            background: rgba(16, 185, 129, 0.2);
+            color: #6ee7b7;
+            font-size: 0.78rem;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .chat-call-decline {
+            border-radius: 999px;
+            padding: 6px 12px;
+            border: 1px solid rgba(239, 68, 68, 0.65);
+            background: rgba(127, 29, 29, 0.35);
+            color: #fca5a5;
+            font-size: 0.78rem;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .chat-call-status {
+            display: none;
+            margin-bottom: 8px;
+            padding: 8px 10px;
+            border-radius: 10px;
+            border: 1px solid rgba(59, 130, 246, 0.5);
+            background: rgba(30, 58, 138, 0.25);
+            color: #bfdbfe;
+            font-size: 0.8rem;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+        }
+
+        .chat-call-end {
+            border-radius: 999px;
+            padding: 5px 10px;
+            border: 1px solid rgba(239, 68, 68, 0.65);
+            background: rgba(127, 29, 29, 0.4);
+            color: #fca5a5;
+            font-size: 0.75rem;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
         /* Share input */
         .share-box {
             display: flex;
@@ -1929,6 +2020,7 @@
                                     <span id="profile-strength-line">Profile Strength: 0%</span>
                                 </div>
                                 <div id="profile-user-actions" class="profile-actions-row" style="display:none;">
+                                    <button id="profile-message-btn" class="btn-follow" style="padding:7px 14px;font-size:0.85rem;">Message</button>
                                     <button id="profile-follow-btn" class="btn-follow" style="padding:7px 14px;font-size:0.85rem;">Follow</button>
                                     <button id="profile-request-mentorship-btn" class="btn-follow" style="padding:7px 14px;font-size:0.85rem;">Request Mentorship</button>
                                 </div>
@@ -1994,6 +2086,7 @@
                     <div class="community-tabs" id="chat-tabs">
                         <button type="button" class="community-tab active" data-chat-tab="groups">Groups</button>
                         <button type="button" class="community-tab" data-chat-tab="personal">Personal</button>
+                        <button type="button" class="community-tab" data-chat-tab="direct">Direct</button>
                     </div>
                 </div>
 
@@ -2020,6 +2113,17 @@
                             <div id="chat-header" style="font-size:0.9rem;color:var(--text-secondary);cursor:pointer;">
                                 Select a group to start chatting.
                             </div>
+                            <div id="chat-call-banner" class="chat-call-banner">
+                                <span id="chat-call-banner-text">Incoming call...</span>
+                                <span class="chat-call-banner-actions">
+                                    <button id="chat-call-accept-btn" type="button" class="chat-call-accept">Accept</button>
+                                    <button id="chat-call-decline-btn" type="button" class="chat-call-decline">Decline</button>
+                                </span>
+                            </div>
+                            <div id="chat-call-status" class="chat-call-status">
+                                <span id="chat-call-status-text">Call status</span>
+                                <button id="chat-call-end-btn" type="button" class="chat-call-end">End</button>
+                            </div>
                             <div id="chat-messages-container" class="chat-messages" style="margin-bottom:6px;">
                                 <div style="text-align:center;padding:12px;">Select a group to start chatting.</div>
                             </div>
@@ -2028,6 +2132,7 @@
                                 <input id="chat-input" type="text" placeholder="Select a group to start chatting." disabled style="flex:1;border-radius:999px;border:1px solid rgba(148,163,184,0.7);background:rgba(15,23,42,0.6);color:var(--text-primary);font-size:0.95rem;cursor:not-allowed;" />
                                 <button id="chat-send-btn" class="btn-send" disabled style="opacity:0.6;cursor:not-allowed;">Send</button>
                             </div>
+                            <audio id="remote-call-audio" autoplay playsinline></audio>
                         </div>
                     </div>
 
@@ -2317,6 +2422,7 @@
             </div>
 
             <div style="display:flex;justify-content:flex-end;gap:8px;">
+                <button id="user-profile-message-btn" class="btn-follow" style="padding:7px 14px;font-size:0.85rem;">Message</button>
                 <button id="user-profile-request-btn" class="btn-follow" style="padding:7px 14px;font-size:0.85rem;">Request Mentorship</button>
                 <button id="user-profile-follow-btn" class="btn-follow" style="padding:7px 14px;font-size:0.85rem;">Follow</button>
             </div>
@@ -2360,7 +2466,7 @@
         let currentChatGroupId = null;
         let chatPollIntervalId = null;
         let chatGroups = [];
-        let chatMode = 'groups'; // 'groups' or 'personal'
+        let chatMode = 'groups'; // 'groups' or 'personal' or 'direct'
         let socketClient = null;
         const presenceByUserId = {};
         const typingUsersByGroupId = {};
@@ -2379,6 +2485,14 @@
         let pendingRejectMentorshipRequestId = null;
         let notificationRefreshIntervalId = null;
         let postComposerPreviewUrl = null;
+        let activeCall = null;
+        let pendingIncomingCall = null;
+        let callPeerConnection = null;
+        let localCallStream = null;
+        let remoteCallStream = null;
+        let ringtoneTimerId = null;
+        let ringtoneAudioContext = null;
+        let callDurationIntervalId = null;
         let activeFindPeopleCluster = 'ml-experts';
         let hasInitializedFindPeopleClusters = false;
 
@@ -3361,6 +3475,7 @@
                 messagesViewInitialized = true;
             }
             // Ensure the last selected chat mode is reflected when revisiting
+            setActiveChatTab(chatMode);
             applyChatMode(chatMode);
             saveNavState('messages');
         }
@@ -3380,6 +3495,9 @@
             const joinCodeInput = document.getElementById('join-group-code');
             const chatTabs = document.getElementById('chat-tabs');
             const chatHeader = document.getElementById('chat-header');
+            const callAcceptBtn = document.getElementById('chat-call-accept-btn');
+            const callDeclineBtn = document.getElementById('chat-call-decline-btn');
+            const callEndBtn = document.getElementById('chat-call-end-btn');
 
             if (sendBtn) {
                 sendBtn.addEventListener('click', sendChatMessage);
@@ -3463,6 +3581,23 @@
                     });
                 });
             }
+
+            callAcceptBtn?.addEventListener('click', () => {
+                acceptIncomingCall();
+            });
+
+            callDeclineBtn?.addEventListener('click', () => {
+                if (pendingIncomingCall) {
+                    declineIncomingCall('declined');
+                } else {
+                    hideCallBanner();
+                    stopRingtone();
+                }
+            });
+
+            callEndBtn?.addEventListener('click', () => {
+                endActiveCall(true);
+            });
 
             // Close buttons for modals
             document.querySelectorAll('[data-close-modal]')
@@ -3554,6 +3689,97 @@
                 renderTypingIndicator();
             });
 
+            socketClient.on('call:incoming', (payload) => {
+                if (!payload || !payload.groupId || !payload.callId || !payload.fromUserId || !payload.offer) return;
+
+                if (activeCall) {
+                    socketClient.emit('call:decline', {
+                        groupId: payload.groupId,
+                        targetUserId: payload.fromUserId,
+                        callId: payload.callId,
+                        reason: 'busy',
+                    });
+                    return;
+                }
+
+                pendingIncomingCall = {
+                    groupId: String(payload.groupId),
+                    callId: String(payload.callId),
+                    fromUserId: String(payload.fromUserId),
+                    callerName: payload.callerName || 'Someone',
+                    offer: payload.offer,
+                };
+
+                chatMode = 'direct';
+                showMessagesView();
+                setActiveChatTab('direct');
+                applyChatMode('direct');
+                if (String(currentChatGroupId || '') !== String(payload.groupId)) {
+                    selectChatGroup(String(payload.groupId));
+                }
+
+                setCallBanner(`Incoming call from ${pendingIncomingCall.callerName}...`, true);
+                startRingtone();
+            });
+
+            socketClient.on('call:accepted', async (payload) => {
+                if (!payload || !activeCall) return;
+                if (String(payload.callId) !== String(activeCall.callId)) return;
+                if (!payload.answer || !callPeerConnection) return;
+
+                try {
+                    await callPeerConnection.setRemoteDescription(new RTCSessionDescription(payload.answer));
+                    activeCall.state = 'connecting';
+                    setCallStatus(`Connecting with ${activeCall.peerName || 'user'}...`, true);
+                } catch (error) {
+                    console.error('Failed to apply remote answer:', error);
+                    await endActiveCall(false);
+                }
+            });
+
+            socketClient.on('call:declined', async (payload) => {
+                if (!payload || !activeCall) return;
+                if (String(payload.callId) !== String(activeCall.callId)) return;
+
+                const reason = payload.reason === 'busy' ? 'User is busy on another call' : 'Call declined';
+                alert(reason);
+                await endActiveCall(false);
+            });
+
+            socketClient.on('call:ended', async (payload) => {
+                if (!payload) return;
+
+                if (activeCall && String(payload.callId) === String(activeCall.callId)) {
+                    await endActiveCall(false);
+                }
+
+                if (pendingIncomingCall && String(payload.callId) === String(pendingIncomingCall.callId)) {
+                    pendingIncomingCall = null;
+                    hideCallBanner();
+                    stopRingtone();
+                }
+            });
+
+            socketClient.on('webrtc:ice', async (payload) => {
+                if (!payload || !callPeerConnection || !activeCall) return;
+                if (String(payload.callId) !== String(activeCall.callId)) return;
+                if (!payload.candidate) return;
+
+                try {
+                    await callPeerConnection.addIceCandidate(payload.candidate);
+                } catch (error) {
+                    console.warn('Failed to add ICE candidate:', error);
+                }
+            });
+
+            socketClient.on('call:error', (payload) => {
+                if (!payload) return;
+                if (activeCall && String(payload.callId || '') === String(activeCall.callId)) {
+                    alert(payload.message || 'Call failed');
+                    endActiveCall(false);
+                }
+            });
+
             socketClient.on('notification:new', (payload) => {
                 if (!payload || !(payload._id || payload.id)) return;
 
@@ -3588,20 +3814,118 @@
             bindRealtimeSocketEvents();
         }
 
+        function setActiveChatTab(mode) {
+            const chatTabs = document.getElementById('chat-tabs');
+            if (!chatTabs) return;
+
+            chatTabs.querySelectorAll('.community-tab').forEach((btn) => {
+                const tabMode = btn.getAttribute('data-chat-tab') || 'groups';
+                btn.classList.toggle('active', tabMode === mode);
+            });
+        }
+
+        function getGroupsForMode(mode) {
+            return chatGroups.filter((group) => {
+                const isMentorship = !!group.isMentorship;
+                const isDirect = !!group.isDirect;
+
+                if (mode === 'personal') return isMentorship;
+                if (mode === 'direct') return isDirect;
+                return !isMentorship && !isDirect;
+            });
+        }
+
+        async function startDirectMessage(targetUserId) {
+            if (!targetUserId) return;
+
+            try {
+                const candidateEndpoints = [
+                    `/chat/direct/${targetUserId}/start`,
+                    `/groups/direct/${targetUserId}/start`,
+                ];
+
+                let data = null;
+                let resolved = false;
+                let lastErrorMessage = 'Failed to start direct chat';
+
+                for (const endpoint of candidateEndpoints) {
+                    // eslint-disable-next-line no-await-in-loop
+                    const response = await fetch(API_BASE + endpoint, {
+                        method: 'POST',
+                        headers: { 'Authorization': 'Bearer ' + token },
+                    });
+
+                    let payload = null;
+                    try {
+                        // eslint-disable-next-line no-await-in-loop
+                        payload = await response.json();
+                    } catch (parseError) {
+                        payload = null;
+                    }
+
+                    if (response.ok && payload?.success && payload?.group) {
+                        data = payload;
+                        resolved = true;
+                        break;
+                    }
+
+                    if (payload?.message) {
+                        lastErrorMessage = payload.message;
+                    }
+
+                    if (response.status !== 404) {
+                        break;
+                    }
+                }
+
+                if (!resolved || !data?.group) {
+                    alert(lastErrorMessage);
+                    return;
+                }
+
+                chatMode = 'direct';
+                showMessagesView();
+                setActiveChatTab('direct');
+                await loadMyChatGroups();
+                applyChatMode('direct');
+
+                if (data.group._id) {
+                    selectChatGroup(data.group._id);
+                }
+            } catch (error) {
+                console.error('Failed to start direct chat:', error);
+                alert('Failed to start direct chat');
+            }
+        }
+
         function applyChatMode(mode) {
             const groupLayout = document.getElementById('group-chat-layout');
             const listTitle = document.getElementById('chat-list-title');
+            const createBtn = document.getElementById('create-group-btn');
+            const joinBtn = document.getElementById('join-group-btn');
 
             if (mode === 'personal') {
                 if (listTitle) listTitle.textContent = 'Your mentorship chats';
+            } else if (mode === 'direct') {
+                if (listTitle) listTitle.textContent = 'Your direct messages';
             } else {
                 if (listTitle) listTitle.textContent = 'Your groups';
             }
+
+            const showGroupActions = mode === 'groups';
+            if (createBtn) createBtn.style.display = showGroupActions ? 'inline-flex' : 'none';
+            if (joinBtn) joinBtn.style.display = showGroupActions ? 'inline-flex' : 'none';
 
             if (groupLayout) groupLayout.style.display = 'flex';
 
             // Rebuild the left list for the selected mode and reset selection if needed
             renderChatGroupList();
+
+            const groupsToShow = getGroupsForMode(mode);
+            const selectedStillVisible = groupsToShow.some((g) => String(g._id) === String(currentChatGroupId));
+            if (!selectedStillVisible) {
+                selectChatGroup(null);
+            }
 
             if (!currentChatGroupId) {
                 setChatInputEnabled(false);
@@ -3688,6 +4012,7 @@
                     chatGroups = groups.map((g) => ({
                         ...g,
                         isMentorship: typeof g.name === 'string' && g.name.startsWith('mentorship-'),
+                        isDirect: typeof g.name === 'string' && g.name.startsWith('direct-'),
                     }));
 
                     chatGroups.forEach((group) => {
@@ -3718,20 +4043,21 @@
             if (!chatGroups.length) {
                 const emptyText = chatMode === 'personal'
                     ? 'You do not have any mentorship chats yet.'
-                    : 'You are not in any groups yet. Create one or join with a code.';
+                    : (chatMode === 'direct'
+                        ? 'You do not have any direct messages yet.'
+                        : 'You are not in any groups yet. Create one or join with a code.');
                 list.innerHTML = `<div style="text-align:center;padding:12px;">${emptyText}</div>`;
                 return;
             }
 
-            const groupsToShow = chatGroups.filter((group) => {
-                const isMentorship = !!group.isMentorship;
-                return chatMode === 'personal' ? isMentorship : !isMentorship;
-            });
+            const groupsToShow = getGroupsForMode(chatMode);
 
             if (!groupsToShow.length) {
                 const emptyText = chatMode === 'personal'
                     ? 'You do not have any mentorship chats yet.'
-                    : 'You are not in any groups yet. Create one or join with a code.';
+                    : (chatMode === 'direct'
+                        ? 'You do not have any direct messages yet.'
+                        : 'You are not in any groups yet. Create one or join with a code.');
                 list.innerHTML = `<div style="text-align:center;padding:12px;">${emptyText}</div>`;
                 return;
             }
@@ -3753,7 +4079,7 @@
                         </div>
                         <div style="flex:1;min-width:0;">
                             <div style="font-size:0.9rem;color:var(--text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(title)}</div>
-                            <div style="font-size:0.75rem;color:var(--text-tertiary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${group.description ? escapeHtml(group.description) : 'Group chat'}</div>
+                            <div style="font-size:0.75rem;color:var(--text-tertiary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${group.description ? escapeHtml(group.description) : (group.isDirect ? 'Direct message' : (group.isMentorship ? 'Mentorship chat' : 'Group chat'))}</div>
                         </div>
                     </div>
                 `;
@@ -4004,11 +4330,17 @@
             const codeHint = document.getElementById('current-group-code');
             const group = chatGroups.find((g) => String(g._id) === String(groupId));
 
+            if (!groupId && header) {
+                header.textContent = 'Select a chat to start chatting.';
+            }
+
             if (group && header) {
                 const title = group.displayName || group.name || 'Group chat';
                 const avatarUrl = group.avatarUrl || '';
                 const initials = getInitials(title);
-                const presenceLine = group.isMentorship ? '<div id="chat-presence-line" style="font-size:0.78rem;color:var(--text-tertiary);margin-top:2px;">Last seen recently</div>' : '';
+                const presenceLine = (group.isMentorship || group.isDirect)
+                    ? '<div id="chat-presence-line" style="font-size:0.78rem;color:var(--text-tertiary);margin-top:2px;">Last seen recently</div>'
+                    : '';
 
                 let memberLine = '';
                 if (Array.isArray(group.members) && group.members.length) {
@@ -4030,8 +4362,12 @@
                     ? `<img src="${escapeHtml(avatarUrl)}" alt="${escapeHtml(title)}" style="width:100%;height:100%;object-fit:cover;" />`
                     : initials;
 
+                const callActionHtml = group.isDirect
+                    ? `<button id="chat-call-btn" type="button" class="chat-call-btn">Call</button>`
+                    : '';
+
                 header.innerHTML = `
-                    <div style="display:flex;align-items:center;gap:10px;">
+                    <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
                         <div style="width:32px;height:32px;border-radius:999px;overflow:hidden;background:var(--gradient-splash);display:flex;align-items:center;justify-content:center;font-size:0.8rem;color:#fff;flex-shrink:0;">
                             ${avatarHtml}
                         </div>
@@ -4040,14 +4376,24 @@
                             ${memberLine ? `<div style=\"font-size:0.8rem;color:var(--text-tertiary);margin-top:2px;\">${memberLine}</div>` : ''}
                             ${presenceLine}
                         </div>
+                        ${callActionHtml}
                     </div>
                 `;
+
+                const callBtn = document.getElementById('chat-call-btn');
+                if (callBtn) {
+                    callBtn.addEventListener('click', (event) => {
+                        event.preventDefault();
+                        event.stopPropagation();
+                        startDirectCallFromActiveChat();
+                    });
+                }
 
                 updateActiveChatPresenceLine();
             }
 
             if (group && codeHint) {
-                if (group.joinCode) {
+                if (group.joinCode && !group.isMentorship && !group.isDirect) {
                     codeHint.style.display = 'block';
                     codeHint.textContent = `Share this code to invite others: ${group.joinCode}`;
                 } else {
@@ -4066,6 +4412,9 @@
                 }
                 if (typingIndicator) {
                     typingIndicator.textContent = '';
+                }
+                if (!activeCall) {
+                    hideCallStatus();
                 }
                 setChatInputEnabled(false);
                 return;
@@ -4587,6 +4936,19 @@
             return score;
         }
 
+        function formatProfileStrengthText(user) {
+            const strength = Number(user?.profileStrength ?? calculateProfileStrength(user));
+            const role = String(user?.role || '').toLowerCase();
+            const isMentorRole = role === 'senior' || role === 'faculty';
+            const mentorScore = Number(user?.mentorScore);
+
+            if (isMentorRole && Number.isFinite(mentorScore)) {
+                return `Profile Strength: ${strength}% · Mentor Score: ${mentorScore.toFixed(1)}`;
+            }
+
+            return `Profile Strength: ${strength}%`;
+        }
+
         function applyIntentBadge(element, intent) {
             if (!element) return;
 
@@ -4631,23 +4993,391 @@
             return counterpartMember.userId || counterpartMember;
         }
 
+        function getCounterpartForDirectChat(group) {
+            if (!group || !group.isDirect || !Array.isArray(group.members) || !currentUser) return null;
+
+            const selfId = String(currentUser.id || currentUser._id || '');
+            if (!selfId) return null;
+
+            const counterpartMember = group.members.find((member) => {
+                const memberUser = member && member.userId;
+                const memberId = getUserId(memberUser || member);
+                return memberId && memberId !== selfId;
+            });
+
+            if (!counterpartMember) return null;
+            return counterpartMember.userId || counterpartMember;
+        }
+
         function updateActiveChatPresenceLine() {
             const line = document.getElementById('chat-presence-line');
             if (!line) return;
 
             const group = chatGroups.find((g) => String(g._id) === String(currentChatGroupId));
-            if (!group || !group.isMentorship) {
+            if (!group || (!group.isMentorship && !group.isDirect)) {
                 line.textContent = '';
                 return;
             }
 
-            const counterpart = getCounterpartForPersonalChat(group);
+            const counterpart = group.isDirect
+                ? getCounterpartForDirectChat(group)
+                : getCounterpartForPersonalChat(group);
             if (!counterpart) {
                 line.textContent = 'Last seen recently';
                 return;
             }
 
             line.textContent = getPresenceLabelForUser(counterpart);
+        }
+
+        function setCallBanner(text, showAcceptDecline) {
+            const banner = document.getElementById('chat-call-banner');
+            const bannerText = document.getElementById('chat-call-banner-text');
+            const acceptBtn = document.getElementById('chat-call-accept-btn');
+            const declineBtn = document.getElementById('chat-call-decline-btn');
+            if (!banner || !bannerText || !acceptBtn || !declineBtn) return;
+
+            bannerText.textContent = text || 'Incoming call...';
+            acceptBtn.style.display = showAcceptDecline ? 'inline-flex' : 'none';
+            declineBtn.textContent = showAcceptDecline ? 'Decline' : 'Dismiss';
+            banner.style.display = 'flex';
+        }
+
+        function hideCallBanner() {
+            const banner = document.getElementById('chat-call-banner');
+            if (banner) {
+                banner.style.display = 'none';
+            }
+        }
+
+        function setCallStatus(text, showEndButton = false) {
+            const status = document.getElementById('chat-call-status');
+            const statusText = document.getElementById('chat-call-status-text');
+            const endBtn = document.getElementById('chat-call-end-btn');
+            if (!status || !statusText || !endBtn) return;
+
+            statusText.textContent = text || 'Call status';
+            endBtn.style.display = showEndButton ? 'inline-flex' : 'none';
+            status.style.display = 'flex';
+        }
+
+        function hideCallStatus() {
+            const status = document.getElementById('chat-call-status');
+            if (status) {
+                status.style.display = 'none';
+            }
+
+            if (callDurationIntervalId) {
+                clearInterval(callDurationIntervalId);
+                callDurationIntervalId = null;
+            }
+        }
+
+        function startRingtone() {
+            if (ringtoneTimerId) return;
+
+            const ring = () => {
+                try {
+                    if (!ringtoneAudioContext) {
+                        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+                        if (!AudioCtx) return;
+                        ringtoneAudioContext = new AudioCtx();
+                    }
+
+                    const ctx = ringtoneAudioContext;
+                    const oscillator = ctx.createOscillator();
+                    const gainNode = ctx.createGain();
+
+                    oscillator.type = 'sine';
+                    oscillator.frequency.setValueAtTime(760, ctx.currentTime);
+                    gainNode.gain.setValueAtTime(0.001, ctx.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.045, ctx.currentTime + 0.05);
+                    gainNode.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.32);
+
+                    oscillator.connect(gainNode);
+                    gainNode.connect(ctx.destination);
+                    oscillator.start();
+                    oscillator.stop(ctx.currentTime + 0.34);
+                } catch (error) {
+                    console.warn('Ringtone playback failed:', error);
+                }
+            };
+
+            ring();
+            ringtoneTimerId = setInterval(ring, 1200);
+        }
+
+        function stopRingtone() {
+            if (ringtoneTimerId) {
+                clearInterval(ringtoneTimerId);
+                ringtoneTimerId = null;
+            }
+        }
+
+        function getCallContextForGroup(groupId) {
+            const group = chatGroups.find((g) => String(g._id) === String(groupId));
+            if (!group || !group.isDirect) return null;
+
+            const targetUser = getCounterpartForDirectChat(group);
+            const targetUserId = getUserId(targetUser);
+            if (!targetUserId) return null;
+
+            return {
+                group,
+                groupId: String(group._id),
+                targetUser,
+                targetUserId: String(targetUserId),
+            };
+        }
+
+        async function ensureLocalCallStream() {
+            if (localCallStream) return localCallStream;
+
+            localCallStream = await navigator.mediaDevices.getUserMedia({
+                audio: true,
+                video: false,
+            });
+            return localCallStream;
+        }
+
+        function closeCallPeerConnection() {
+            if (!callPeerConnection) return;
+            try {
+                callPeerConnection.ontrack = null;
+                callPeerConnection.onicecandidate = null;
+                callPeerConnection.onconnectionstatechange = null;
+                callPeerConnection.close();
+            } catch (_) {
+                // Ignore peer-connection close errors.
+            }
+            callPeerConnection = null;
+        }
+
+        function stopCallStreams() {
+            if (localCallStream) {
+                localCallStream.getTracks().forEach((track) => track.stop());
+                localCallStream = null;
+            }
+
+            if (remoteCallStream) {
+                remoteCallStream.getTracks().forEach((track) => track.stop());
+                remoteCallStream = null;
+            }
+
+            const audio = document.getElementById('remote-call-audio');
+            if (audio) {
+                audio.srcObject = null;
+            }
+        }
+
+        async function ensureCallPeerConnection(context, callId) {
+            if (callPeerConnection) return callPeerConnection;
+
+            const pc = new RTCPeerConnection({
+                iceServers: [
+                    { urls: 'stun:stun.l.google.com:19302' },
+                ],
+            });
+
+            const stream = await ensureLocalCallStream();
+            stream.getTracks().forEach((track) => {
+                pc.addTrack(track, stream);
+            });
+
+            pc.ontrack = (event) => {
+                const [streamFromRemote] = event.streams;
+                if (!streamFromRemote) return;
+
+                remoteCallStream = streamFromRemote;
+                const audio = document.getElementById('remote-call-audio');
+                if (audio) {
+                    audio.srcObject = streamFromRemote;
+                }
+            };
+
+            pc.onicecandidate = (event) => {
+                if (!event.candidate || !socketClient || !socketClient.connected) return;
+                socketClient.emit('webrtc:ice', {
+                    groupId: context.groupId,
+                    targetUserId: context.targetUserId,
+                    callId,
+                    candidate: event.candidate,
+                });
+            };
+
+            pc.onconnectionstatechange = () => {
+                if (!activeCall || activeCall.callId !== callId) return;
+
+                if (pc.connectionState === 'connected') {
+                    activeCall.state = 'connected';
+                    const startedAt = activeCall.connectedAt || Date.now();
+                    activeCall.connectedAt = startedAt;
+                    setCallStatus(`In call with ${activeCall.peerName || 'user'} · 00:00`, true);
+
+                    if (callDurationIntervalId) {
+                        clearInterval(callDurationIntervalId);
+                    }
+                    callDurationIntervalId = setInterval(() => {
+                        const elapsed = Math.max(0, Math.floor((Date.now() - startedAt) / 1000));
+                        const mm = String(Math.floor(elapsed / 60)).padStart(2, '0');
+                        const ss = String(elapsed % 60).padStart(2, '0');
+                        setCallStatus(`In call with ${activeCall.peerName || 'user'} · ${mm}:${ss}`, true);
+                    }, 1000);
+                }
+
+                if (pc.connectionState === 'failed' || pc.connectionState === 'disconnected' || pc.connectionState === 'closed') {
+                    endActiveCall(false);
+                }
+            };
+
+            callPeerConnection = pc;
+            return pc;
+        }
+
+        async function endActiveCall(emitRemote = true) {
+            stopRingtone();
+            hideCallBanner();
+
+            const outgoing = activeCall;
+            activeCall = null;
+            pendingIncomingCall = null;
+
+            if (emitRemote && outgoing && socketClient && socketClient.connected) {
+                socketClient.emit('call:end', {
+                    groupId: outgoing.groupId,
+                    targetUserId: outgoing.peerUserId,
+                    callId: outgoing.callId,
+                });
+            }
+
+            closeCallPeerConnection();
+            stopCallStreams();
+            hideCallStatus();
+        }
+
+        async function startDirectCallFromActiveChat() {
+            if (!socketClient || !socketClient.connected) {
+                alert('Realtime connection is not ready yet.');
+                return;
+            }
+
+            const context = getCallContextForGroup(currentChatGroupId);
+            if (!context) {
+                alert('Calls are only available in direct messages.');
+                return;
+            }
+
+            if (activeCall) {
+                alert('You are already in a call.');
+                return;
+            }
+
+            const callId = `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+
+            try {
+                setCallStatus(`Calling ${context.targetUser?.name || 'user'}...`, true);
+                const pc = await ensureCallPeerConnection(context, callId);
+
+                const offer = await pc.createOffer();
+                await pc.setLocalDescription(offer);
+
+                activeCall = {
+                    callId,
+                    groupId: context.groupId,
+                    peerUserId: context.targetUserId,
+                    peerName: context.targetUser?.name || 'user',
+                    state: 'calling',
+                };
+
+                socketClient.emit('call:ring', {
+                    groupId: context.groupId,
+                    targetUserId: context.targetUserId,
+                    callId,
+                    callerName: currentUser?.name || 'Someone',
+                    offer,
+                });
+            } catch (error) {
+                console.error('Failed to start direct call:', error);
+                alert('Could not start call. Please allow microphone access.');
+                await endActiveCall(false);
+            }
+        }
+
+        async function acceptIncomingCall() {
+            if (!pendingIncomingCall || !socketClient || !socketClient.connected) return;
+
+            const call = pendingIncomingCall;
+            const context = getCallContextForGroup(call.groupId);
+            if (!context) {
+                socketClient.emit('call:decline', {
+                    groupId: call.groupId,
+                    targetUserId: call.fromUserId,
+                    callId: call.callId,
+                    reason: 'chat_not_open',
+                });
+                pendingIncomingCall = null;
+                hideCallBanner();
+                stopRingtone();
+                return;
+            }
+
+            try {
+                stopRingtone();
+                hideCallBanner();
+                setCallStatus(`Connecting with ${call.callerName || 'user'}...`, true);
+
+                const pc = await ensureCallPeerConnection(context, call.callId);
+                await pc.setRemoteDescription(new RTCSessionDescription(call.offer));
+                const answer = await pc.createAnswer();
+                await pc.setLocalDescription(answer);
+
+                activeCall = {
+                    callId: call.callId,
+                    groupId: context.groupId,
+                    peerUserId: call.fromUserId,
+                    peerName: call.callerName || 'user',
+                    state: 'connecting',
+                };
+
+                socketClient.emit('call:accept', {
+                    groupId: context.groupId,
+                    targetUserId: call.fromUserId,
+                    callId: call.callId,
+                    answer,
+                });
+                pendingIncomingCall = null;
+            } catch (error) {
+                console.error('Failed to accept call:', error);
+                alert('Could not join call. Please allow microphone access.');
+                socketClient.emit('call:decline', {
+                    groupId: call.groupId,
+                    targetUserId: call.fromUserId,
+                    callId: call.callId,
+                    reason: 'media_error',
+                });
+                pendingIncomingCall = null;
+                await endActiveCall(false);
+            }
+        }
+
+        function declineIncomingCall(reason = 'declined') {
+            if (!pendingIncomingCall || !socketClient || !socketClient.connected) {
+                pendingIncomingCall = null;
+                hideCallBanner();
+                stopRingtone();
+                return;
+            }
+
+            socketClient.emit('call:decline', {
+                groupId: pendingIncomingCall.groupId,
+                targetUserId: pendingIncomingCall.fromUserId,
+                callId: pendingIncomingCall.callId,
+                reason,
+            });
+
+            pendingIncomingCall = null;
+            hideCallBanner();
+            stopRingtone();
         }
 
         function ensureGroupTypingState(groupId) {
@@ -5874,8 +6604,32 @@
                 const profileLinks = document.getElementById('profile-links');
                 const profileShareBox = document.getElementById('profile-share-box');
                 const profileUserActions = document.getElementById('profile-user-actions');
+                const profileMessageBtn = document.getElementById('profile-message-btn');
                 const profileRequestBtn = document.getElementById('profile-request-mentorship-btn');
                 const profileFollowBtn = document.getElementById('profile-follow-btn');
+
+                if (currentUser) {
+                    const role = String(currentUser.role || '').toLowerCase();
+                    const isMentorRole = role === 'senior' || role === 'faculty';
+                    const currentUserId = currentUser.id || currentUser._id;
+
+                    if (isMentorRole && currentUserId) {
+                        try {
+                            const scoreRes = await fetch(API_BASE + '/users/profile/' + currentUserId, {
+                                headers: { 'Authorization': 'Bearer ' + token }
+                            });
+                            const scoreData = await scoreRes.json();
+                            if (scoreData.success && scoreData.user && Number.isFinite(Number(scoreData.user.mentorScore))) {
+                                currentUser.mentorScore = Number(scoreData.user.mentorScore);
+                                currentUser.acceptanceBehaviorScore = Number(scoreData.user.acceptanceBehaviorScore);
+                                currentUser.reactionBehaviorScore = Number(scoreData.user.reactionBehaviorScore);
+                                currentUser.scoringConfidence = Number(scoreData.user.scoringConfidence);
+                            }
+                        } catch (scoreError) {
+                            console.warn('Failed to load mentor score for current user:', scoreError);
+                        }
+                    }
+                }
                 
                 if (currentUser) {
                     activeProfileViewUserId = getEntityId(currentUser);
@@ -5950,8 +6704,7 @@
                     }
 
                     if (profileStrengthLine) {
-                        const strength = Number(currentUser.profileStrength ?? calculateProfileStrength(currentUser));
-                        profileStrengthLine.textContent = `Profile Strength: ${strength}%`;
+                        profileStrengthLine.textContent = formatProfileStrengthText(currentUser);
                     }
 
                     // Ensure create-post box is visible on own profile
@@ -5966,6 +6719,10 @@
                     if (profileRequestBtn) {
                         profileRequestBtn.style.display = 'none';
                         profileRequestBtn.onclick = null;
+                    }
+                    if (profileMessageBtn) {
+                        profileMessageBtn.style.display = 'none';
+                        profileMessageBtn.onclick = null;
                     }
                     if (profileFollowBtn) {
                         profileFollowBtn.style.display = 'none';
@@ -6059,6 +6816,7 @@
                 const profileLinks = document.getElementById('profile-links');
                 const profileShareBox = document.getElementById('profile-share-box');
                 const profileUserActions = document.getElementById('profile-user-actions');
+                const profileMessageBtn = document.getElementById('profile-message-btn');
                 const profileRequestBtn = document.getElementById('profile-request-mentorship-btn');
                 const profileFollowBtn = document.getElementById('profile-follow-btn');
 
@@ -6135,8 +6893,7 @@
                     }
 
                     if (profileStrengthLine) {
-                        const strength = Number(user.profileStrength ?? calculateProfileStrength(user));
-                        profileStrengthLine.textContent = `Profile Strength: ${strength}%`;
+                        profileStrengthLine.textContent = formatProfileStrengthText(user);
                     }
 
                     // Hide create-post box when viewing another user's profile
@@ -6150,6 +6907,12 @@
 
                     if (profileRequestBtn) {
                         configureMentorshipActionButton(profileRequestBtn, user);
+                    }
+
+                    if (profileMessageBtn) {
+                        profileMessageBtn.style.display = 'inline-flex';
+                        profileMessageBtn.textContent = 'Message';
+                        profileMessageBtn.onclick = () => startDirectMessage(user._id);
                     }
 
                     if (profileFollowBtn) {
@@ -6564,10 +7327,11 @@
             const skillsEl = document.getElementById('user-profile-skills');
             const availabilityEl = document.getElementById('user-profile-availability');
             const strengthEl = document.getElementById('user-profile-strength');
+            const messageBtn = document.getElementById('user-profile-message-btn');
             const followBtn = document.getElementById('user-profile-follow-btn');
             const requestBtn = document.getElementById('user-profile-request-btn');
 
-            if (!user || !avatarEl || !nameEl || !handleEl || !metaEl || !bioEl || !linksEl || !countsEl || !followBtn || !requestBtn) {
+            if (!user || !avatarEl || !nameEl || !handleEl || !metaEl || !bioEl || !linksEl || !countsEl || !followBtn || !requestBtn || !messageBtn) {
                 return;
             }
 
@@ -6610,8 +7374,7 @@
             }
 
             if (strengthEl) {
-                const strength = Number(user.profileStrength ?? calculateProfileStrength(user));
-                strengthEl.textContent = `Profile Strength: ${strength}%`;
+                strengthEl.textContent = formatProfileStrengthText(user);
             }
 
             const followerCount = (user.followers || []).length;
@@ -6631,11 +7394,18 @@
             if (currentUser && String(currentUser.id || currentUser._id) === String(user._id)) {
                 followBtn.style.display = 'none';
                 requestBtn.style.display = 'none';
+                messageBtn.style.display = 'none';
                 return;
             }
 
             followBtn.style.display = 'inline-block';
             requestBtn.style.display = 'inline-block';
+            messageBtn.style.display = 'inline-block';
+            messageBtn.textContent = 'Message';
+            messageBtn.onclick = () => {
+                closeModal('user-profile-modal');
+                startDirectMessage(user._id);
+            };
             configureMentorshipActionButton(requestBtn, user);
 
             let isFollowing = false;
@@ -6692,9 +7462,12 @@
                 if (!Array.isArray(currentUser.following)) {
                     currentUser.following = [];
                 }
-                if (nowFollowing) {
-                    if (!currentUser.following.includes(userId)) {
-                        currentUser.following.push(userId);
+                if (Array.isArray(data.followingIds)) {
+                    currentUser.following = data.followingIds.map((id) => String(id));
+                } else if (nowFollowing) {
+                    const hasUser = currentUser.following.some((id) => String(id) === String(userId));
+                    if (!hasUser) {
+                        currentUser.following.push(String(userId));
                     }
                 } else {
                     currentUser.following = currentUser.following.filter(id => String(id) !== String(userId));
@@ -7247,6 +8020,16 @@
 
                 if (userFromApi) {
                     currentUser = userFromApi;
+                    if (!Array.isArray(currentUser.following)) {
+                        currentUser.following = [];
+                    } else {
+                        currentUser.following = currentUser.following.map((id) => String(id));
+                    }
+                    if (!Array.isArray(currentUser.followers)) {
+                        currentUser.followers = [];
+                    } else {
+                        currentUser.followers = currentUser.followers.map((id) => String(id));
+                    }
                     const initial = getInitials(currentUser.name);
 
                     const userAvatarEl = document.getElementById('user-avatar');
@@ -7563,6 +8346,11 @@
         // Logout functionality
         document.getElementById('logout-btn')?.addEventListener('click', (e) => {
             e.preventDefault();
+            endActiveCall(true);
+            if (socketClient) {
+                socketClient.disconnect();
+                socketClient = null;
+            }
             localStorage.removeItem('mentorlink_token');
             localStorage.removeItem('user');
             window.location.href = 'login.html';
