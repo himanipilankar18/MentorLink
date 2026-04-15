@@ -638,6 +638,8 @@ async function updateProfileHandler(req, res) {
       projects,
       mentorshipIntent,
       availability,
+      githubUrl,
+      projectLink,
     } = req.body;
 
     const allowedUpdates = {
@@ -651,6 +653,8 @@ async function updateProfileHandler(req, res) {
       projects,
       mentorshipIntent,
       availability,
+      githubUrl,
+      projectLink,
     };
     
     // Remove undefined fields
@@ -694,6 +698,14 @@ async function updateProfileHandler(req, res) {
       }
 
       allowedUpdates.bio = nextBio;
+    }
+
+    if (allowedUpdates.githubUrl !== undefined) {
+      allowedUpdates.githubUrl = String(allowedUpdates.githubUrl || '').trim();
+    }
+
+    if (allowedUpdates.projectLink !== undefined) {
+      allowedUpdates.projectLink = String(allowedUpdates.projectLink || '').trim();
     }
 
     // Check if significant changes are being made

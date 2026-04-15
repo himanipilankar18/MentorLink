@@ -494,6 +494,204 @@
             margin-top: 6px;
         }
 
+        #edit-profile-modal {
+            background: rgba(0, 0, 0, 0.82);
+            backdrop-filter: blur(2px);
+            -webkit-backdrop-filter: blur(2px);
+        }
+
+        #edit-profile-modal .modal-card {
+            width: min(96vw, 1700px);
+            max-width: none;
+            border-radius: 24px;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            background: #000000;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8);
+            padding: 22px 24px 18px;
+            max-height: none;
+            overflow: visible;
+        }
+
+        #edit-profile-modal .modal-title {
+            font-size: 1.75rem;
+            font-weight: 700;
+            margin-bottom: 6px;
+            letter-spacing: -0.5px;
+            color: #ffffff;
+        }
+
+        #edit-profile-modal .modal-subtitle {
+            font-size: 0.9rem;
+            color: #888888;
+            margin-bottom: 16px;
+        }
+
+        .ep-grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .ep-form-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 12px;
+            align-items: start;
+        }
+
+        @media (min-width: 1200px) {
+            .ep-form-grid {
+                grid-template-columns: repeat(4, minmax(0, 1fr));
+            }
+
+            label[for="edit-profile-name"] {
+                grid-column: span 2;
+            }
+
+            label[for="edit-profile-year"],
+            label[for="edit-profile-department"],
+            label[for="edit-profile-intent"],
+            label[for="edit-profile-availability"],
+            label[for="edit-profile-cgpa"],
+            label[for="edit-profile-skills"],
+            label[for="edit-profile-interests"],
+            label[for="edit-profile-github"],
+            label[for="edit-profile-project-link"] {
+                grid-column: span 1;
+            }
+
+            label[for="edit-profile-bio"],
+            label[for="edit-profile-projects"] {
+                grid-column: span 2;
+            }
+        }
+
+        .ep-span-2 {
+            grid-column: 1 / -1;
+        }
+
+        .ep-field {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            margin-top: 0;
+        }
+
+        .ep-label {
+            color: #cccccc;
+            font-weight: 600;
+            font-size: 0.86rem;
+            letter-spacing: -0.2px;
+        }
+
+        #edit-profile-modal .modal-input {
+            border-radius: 12px;
+            border: 2px solid rgba(255, 255, 255, 0.08);
+            background: rgba(26, 26, 26, 0.8);
+            color: #ffffff;
+            font-size: 0.92rem;
+            padding: 11px 13px;
+            margin-bottom: 0;
+            box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.3);
+            transition: all 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
+        }
+
+        #edit-profile-modal .modal-input:focus {
+            outline: none;
+            border-color: rgba(167, 139, 250, 0.4);
+            background: rgba(31, 31, 31, 0.9);
+            box-shadow: 0 0 0 4px rgba(167, 139, 250, 0.1), inset 0 1px 3px rgba(0, 0, 0, 0.3);
+            transform: translateY(-1px);
+        }
+
+        #edit-profile-modal textarea.modal-input {
+            border-radius: 12px;
+            min-height: 86px;
+            resize: vertical;
+        }
+
+        label[for="edit-profile-bio"],
+        label[for="edit-profile-projects"] {
+            grid-column: span 1;
+        }
+
+        .ep-helper {
+            margin-top: 6px;
+            font-size: 0.75rem;
+            color: #555555;
+        }
+
+        #edit-profile-modal .modal-actions {
+            margin-top: 14px;
+            padding-top: 12px;
+            border-top: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        #edit-profile-modal .btn-send {
+            min-width: 150px;
+            padding: 10px 16px;
+            border-radius: 14px;
+            background: linear-gradient(135deg, #ffffff 0%, #f7f7f7 100%);
+            color: #000000;
+            border: none;
+            font-size: 0.94rem;
+            font-weight: 600;
+            box-shadow: 0 4px 16px rgba(255, 255, 255, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.8);
+        }
+
+        #edit-profile-modal .btn-send:hover {
+            transform: scale(1.02) translateY(-1px);
+            box-shadow: 0 6px 20px rgba(255, 255, 255, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.8);
+        }
+
+        #edit-profile-modal .btn-ghost {
+            min-width: 120px;
+            border-radius: 14px;
+            border: 2px solid rgba(255, 255, 255, 0.08);
+            background: rgba(26, 26, 26, 0.8);
+            color: #888888;
+            font-size: 0.9rem;
+            padding: 9px 14px;
+            font-weight: 600;
+            box-shadow: none;
+        }
+
+        #edit-profile-modal .btn-ghost:hover {
+            color: #aaaaaa;
+            border-color: rgba(255, 255, 255, 0.2);
+            background: rgba(31, 31, 31, 0.9);
+        }
+
+        @media (max-width: 760px) {
+            .ep-grid-2 {
+                grid-template-columns: 1fr;
+            }
+
+            .ep-form-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .ep-span-2 {
+                grid-column: auto;
+            }
+
+            label[for="edit-profile-bio"],
+            label[for="edit-profile-projects"] {
+                grid-column: auto;
+            }
+
+            #edit-profile-modal .modal-card {
+                border-radius: 16px;
+                padding: 20px 16px 16px;
+                max-height: calc(100vh - 24px);
+                overflow-y: auto;
+            }
+
+            #edit-profile-modal .modal-title {
+                font-size: 1.6rem;
+            }
+        }
+
         .btn-ghost {
             padding: 7px 16px;
             border-radius: 999px;
@@ -737,20 +935,32 @@
             display: inline-flex;
             align-items: center;
             gap: 6px;
-            padding: 6px 12px;
-            border-radius: 999px;
-            border: 1px solid rgba(148, 163, 184, 0.4);
-            background: rgba(15, 23, 42, 0.9);
+            padding: 4px 2px;
+            border-radius: 8px;
+            border: none;
+            background: transparent;
             cursor: pointer;
             color: var(--text-secondary);
             font-size: 0.8rem;
-            transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease, transform 0.1s ease;
+            transition: color 0.15s ease, transform 0.1s ease;
         }
 
         .post-action .icon {
             display: inline-flex;
             align-items: center;
             justify-content: center;
+            width: 22px;
+            height: 22px;
+        }
+
+        .post-action .icon svg {
+            width: 22px;
+            height: 22px;
+            stroke: currentColor;
+            fill: none;
+            stroke-width: 2.2;
+            stroke-linecap: round;
+            stroke-linejoin: round;
         }
 
         .post-action .count,
@@ -759,16 +969,16 @@
         }
 
         .post-action:hover {
-            background: rgba(30, 64, 175, 0.6);
-            border-color: rgba(96, 165, 250, 0.9);
             color: #e5e7eb;
             transform: translateY(-1px);
         }
 
         .post-action.like.active {
-            background: rgba(220, 38, 38, 0.18);
-            border-color: rgba(248, 113, 113, 0.9);
-            color: #fecaca;
+            color: #ef4444;
+        }
+
+        .post-action.like.active .icon svg {
+            fill: currentColor;
         }
 
         .post-action.views {
@@ -1090,43 +1300,100 @@
             cursor: not-allowed;
         }
 
-        .chat-call-banner {
+        .chat-call-overlay {
             display: none;
-            margin-bottom: 8px;
-            padding: 10px 12px;
-            border-radius: 12px;
-            border: 1px solid rgba(251, 191, 36, 0.55);
-            background: rgba(120, 53, 15, 0.35);
-            color: #fde68a;
-            font-size: 0.84rem;
+            position: fixed;
+            inset: 0;
+            z-index: 120;
+            background: rgba(2, 6, 23, 0.62);
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .incoming-call-card {
+            width: min(330px, 100%);
+            border-radius: 18px;
+            border: 1px solid rgba(167, 139, 250, 0.4);
+            background: linear-gradient(160deg, rgba(22, 22, 40, 0.98), rgba(10, 10, 18, 0.98));
+            box-shadow: 0 26px 56px rgba(0, 0, 0, 0.62), 0 0 0 1px rgba(236, 72, 153, 0.14) inset;
+            padding: 14px;
+            color: #e2e8f0;
+            text-align: center;
+        }
+
+        .incoming-call-head {
+            display: flex;
             align-items: center;
             justify-content: space-between;
-            gap: 10px;
-            flex-wrap: wrap;
+            margin-bottom: 14px;
+            font-size: 0.72rem;
+        }
+
+        .incoming-call-head strong {
+            color: #f3e8ff;
+            font-weight: 700;
+        }
+
+        .incoming-call-head span {
+            color: #ddd6fe;
+            border: 1px solid rgba(167, 139, 250, 0.55);
+            background: rgba(167, 139, 250, 0.12);
+            border-radius: 999px;
+            padding: 3px 8px;
+        }
+
+        .incoming-call-avatar {
+            width: 84px;
+            height: 84px;
+            border-radius: 50%;
+            margin: 0 auto 10px;
+            display: grid;
+            place-items: center;
+            font-size: 1.45rem;
+            font-weight: 700;
+            background: linear-gradient(145deg, #a78bfa, #ec4899);
+            border: 2px solid rgba(236, 72, 153, 0.45);
+            color: #f8fafc;
+        }
+
+        .incoming-call-name {
+            font-size: 1.15rem;
+            line-height: 1.2;
+            margin-bottom: 3px;
+            color: #f8fafc;
+            font-weight: 700;
+        }
+
+        .incoming-call-subtitle {
+            color: #c4b5fd;
+            font-size: 0.84rem;
+            margin-bottom: 12px;
         }
 
         .chat-call-banner-actions {
-            display: inline-flex;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
             gap: 8px;
         }
 
         .chat-call-accept {
-            border-radius: 999px;
-            padding: 6px 12px;
-            border: 1px solid rgba(16, 185, 129, 0.7);
-            background: rgba(16, 185, 129, 0.2);
-            color: #6ee7b7;
+            border-radius: 8px;
+            padding: 8px 12px;
+            border: 1px solid rgba(34, 197, 94, 0.85);
+            background: linear-gradient(180deg, #22c55e, #16a34a);
+            color: #f8fafc;
             font-size: 0.78rem;
             font-weight: 600;
             cursor: pointer;
         }
 
         .chat-call-decline {
-            border-radius: 999px;
-            padding: 6px 12px;
-            border: 1px solid rgba(239, 68, 68, 0.65);
-            background: rgba(127, 29, 29, 0.35);
-            color: #fca5a5;
+            border-radius: 8px;
+            padding: 8px 12px;
+            border: 1px solid rgba(239, 68, 68, 0.9);
+            background: linear-gradient(180deg, #ef4444, #dc2626);
+            color: #fef2f2;
             font-size: 0.78rem;
             font-weight: 600;
             cursor: pointer;
@@ -1701,6 +1968,27 @@
             gap: 20px;
         }
 
+        .profile-header-actions {
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+        }
+
+        .profile-edit-btn {
+            border-radius: 999px;
+            border: 1px solid rgba(167, 139, 250, 0.6);
+            background: rgba(167, 139, 250, 0.12);
+            color: var(--accent-purple);
+            font-size: 0.8rem;
+            font-weight: 600;
+            padding: 7px 14px;
+            cursor: pointer;
+        }
+
+        .profile-edit-btn:hover {
+            background: rgba(167, 139, 250, 0.22);
+        }
+
         .profile-header-text h2 {
             font-size: 2rem;
             margin-bottom: 4px;
@@ -2026,6 +2314,9 @@
                                 </div>
                             </div>
                         </div>
+                        <div class="profile-header-actions">
+                            <button id="profile-edit-btn" class="profile-edit-btn" type="button" style="display:none;">Edit Profile</button>
+                        </div>
                     </section>
 
                     <section class="profile-main-grid" id="profile-extra">
@@ -2052,7 +2343,7 @@
                 </div>
 
                 <!-- Create Post from Profile (same as feed composer) -->
-                <div class="share-box" id="profile-share-box" style="margin-bottom:24px;">
+                <div class="share-box" id="profile-share-box" style="margin-top:28px;margin-bottom:28px;">
                     <div class="avatar-sm" id="profile-share-avatar">U</div>
                     <div style="flex:1;display:flex;flex-direction:column;gap:8px;">
                         <input type="text" id="profile-post-input" placeholder="Create a post..." style="width:100%;">
@@ -2066,7 +2357,7 @@
                     <button class="btn-send" id="profile-send-post-btn">Send</button>
                 </div>
 
-                <div class="feed-tabs" id="profile-post-tabs" style="margin-top:16px;margin-bottom:24px;">
+                <div class="feed-tabs" id="profile-post-tabs" style="margin-top:22px;margin-bottom:28px;">
                     <span class="feed-tab active" data-profile-scope="personal">My Posts</span>
                     <span class="feed-tab" data-profile-scope="community">Communities</span>
                 </div>
@@ -2112,13 +2403,6 @@
                         <div class="chat-main" style="flex:1;">
                             <div id="chat-header" style="font-size:0.9rem;color:var(--text-secondary);cursor:pointer;">
                                 Select a group to start chatting.
-                            </div>
-                            <div id="chat-call-banner" class="chat-call-banner">
-                                <span id="chat-call-banner-text">Incoming call...</span>
-                                <span class="chat-call-banner-actions">
-                                    <button id="chat-call-accept-btn" type="button" class="chat-call-accept">Accept</button>
-                                    <button id="chat-call-decline-btn" type="button" class="chat-call-decline">Decline</button>
-                                </span>
                             </div>
                             <div id="chat-call-status" class="chat-call-status">
                                 <span id="chat-call-status-text">Call status</span>
@@ -2457,6 +2741,109 @@
         </div>
     </div>
 
+    <div id="edit-profile-modal" class="modal-overlay modal-hidden">
+        <div class="modal-card">
+            <div class="modal-title">Edit profile</div>
+            <div class="modal-subtitle">Update the details you entered during profile setup.</div>
+
+            <div class="ep-form-grid">
+                <label class="ep-field" for="edit-profile-name">
+                    <span class="ep-label">Full Name</span>
+                    <input id="edit-profile-name" class="modal-input" type="text" placeholder="Your full name" autocomplete="off" />
+                </label>
+                <label class="ep-field" for="edit-profile-year">
+                    <span class="ep-label">Year</span>
+                    <input id="edit-profile-year" class="modal-input" type="number" min="1" max="5" placeholder="3" autocomplete="off" />
+                </label>
+
+                <label class="ep-field" for="edit-profile-department">
+                    <span class="ep-label">Department</span>
+                    <select id="edit-profile-department" class="modal-input">
+                        <option value="">Select department</option>
+                        <option value="COMPS">COMPS</option>
+                        <option value="EXTC">EXTC</option>
+                        <option value="CSE">CSE</option>
+                    </select>
+                </label>
+
+                <label class="ep-field" for="edit-profile-intent">
+                    <span class="ep-label">Mentorship Intent</span>
+                    <select id="edit-profile-intent" class="modal-input">
+                        <option value="seeking">Seeking mentorship</option>
+                        <option value="offering">Offering mentorship</option>
+                        <option value="both">Both</option>
+                    </select>
+                </label>
+
+                <label class="ep-field ep-span-2" for="edit-profile-bio">
+                    <span class="ep-label">Bio</span>
+                    <textarea id="edit-profile-bio" rows="3" class="modal-input" placeholder="Write a short bio (10-200 chars)"></textarea>
+                </label>
+
+                <label class="ep-field" for="edit-profile-skills">
+                    <span class="ep-label">Skills</span>
+                    <input id="edit-profile-skills" class="modal-input" type="text" placeholder="Python, Java, React" autocomplete="off" />
+                </label>
+
+                <label class="ep-field" for="edit-profile-interests">
+                    <span class="ep-label">Interests</span>
+                    <input id="edit-profile-interests" class="modal-input" type="text" placeholder="Machine Learning, Web Dev" autocomplete="off" />
+                </label>
+
+                <label class="ep-field" for="edit-profile-availability">
+                    <span class="ep-label">Availability</span>
+                    <select id="edit-profile-availability" class="modal-input">
+                        <option value="flexible">Flexible</option>
+                        <option value="weekdays">Weekdays</option>
+                        <option value="weekends">Weekends</option>
+                    </select>
+                </label>
+
+                <label class="ep-field" for="edit-profile-cgpa">
+                    <span class="ep-label">CGPA</span>
+                    <input id="edit-profile-cgpa" class="modal-input" type="number" min="0" max="10" step="0.01" placeholder="8.7" autocomplete="off" />
+                </label>
+                <label class="ep-field" for="edit-profile-github">
+                    <span class="ep-label">GitHub URL</span>
+                    <input id="edit-profile-github" class="modal-input" type="text" placeholder="https://github.com/username" autocomplete="off" />
+                </label>
+
+            <label class="ep-field" for="edit-profile-project-link">
+                <span class="ep-label">Project URL</span>
+                <input id="edit-profile-project-link" class="modal-input" type="text" placeholder="https://your-project-link.com" autocomplete="off" />
+            </label>
+
+            <label class="ep-field ep-span-2" for="edit-profile-projects">
+                <span class="ep-label">Projects</span>
+                <textarea id="edit-profile-projects" rows="4" class="modal-input" placeholder="One project per line: Title | Description"></textarea>
+                <div class="ep-helper">Example: Resume Analyzer | NLP-based resume scoring tool</div>
+            </label>
+
+            </div>
+
+            <div class="modal-actions">
+                <button type="button" class="btn-ghost" data-close-modal="edit-profile-modal">Cancel</button>
+                <button type="button" id="edit-profile-save" class="btn-send">Save changes</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="chat-call-banner" class="chat-call-overlay" role="dialog" aria-modal="true" aria-label="Incoming call">
+        <div class="incoming-call-card">
+            <div class="incoming-call-head">
+                <strong>MentorLink</strong>
+                <span id="incoming-call-state-badge">Incoming call</span>
+            </div>
+            <div id="incoming-call-caller-avatar" class="incoming-call-avatar">SC</div>
+            <div id="incoming-call-caller-name" class="incoming-call-name">Someone</div>
+            <div id="chat-call-banner-text" class="incoming-call-subtitle">is calling you</div>
+            <span class="chat-call-banner-actions">
+                <button id="chat-call-decline-btn" type="button" class="chat-call-decline">Decline</button>
+                <button id="chat-call-accept-btn" type="button" class="chat-call-accept">Accept</button>
+            </span>
+        </div>
+    </div>
+
     <script src="/socket.io/socket.io.js"></script>
     <script>
         const token = localStorage.getItem('mentorlink_token');
@@ -2493,6 +2880,7 @@
         let ringtoneTimerId = null;
         let ringtoneAudioContext = null;
         let callDurationIntervalId = null;
+        let outgoingCallTimeoutId = null;
         let activeFindPeopleCluster = 'ml-experts';
         let hasInitializedFindPeopleClusters = false;
 
@@ -2878,7 +3266,6 @@
             const author = post.authorId || {};
             const initials = getInitials(author.name);
             const likeClass = post.isLiked ? 'active' : '';
-            const likeIcon = post.isLiked ? '♥' : '♡';
 
             // Feed avatar: show profile picture when available, otherwise initials
             const hasAuthorAvatar = !!author.profilePicture;
@@ -2941,16 +3328,20 @@
                     ${imageHtml}
                     <div class="post-stats">
                         <button type="button" class="post-action like ${likeClass}" data-post-id="${post._id}">
-                            <span class="icon icon-like">${likeIcon}</span>
+                            <span class="icon icon-like" aria-hidden="true">
+                                <svg class="icon-like-svg" viewBox="0 0 24 24">
+                                    <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78Z"></path>
+                                </svg>
+                            </span>
                             <span class="count">${typeof post.likeCount === 'number' ? post.likeCount : 0}</span>
                         </button>
                         <button type="button" class="post-action reply-toggle" data-post-id="${post._id}">
-                            <span class="icon icon-reply">💬</span>
+                            <span class="icon icon-reply" aria-hidden="true">
+                                <svg class="icon-reply-svg" viewBox="0 0 24 24">
+                                    <path d="M21 11.5a8.5 8.5 0 0 1-8.5 8.5H8l-5 3 1.73-5.19A8.5 8.5 0 1 1 21 11.5Z"></path>
+                                </svg>
+                            </span>
                             <span class="count">${post.commentCount > 0 ? post.commentCount : 0}</span>
-                        </button>
-                        <button type="button" class="post-action views" disabled>
-                            <span class="icon icon-views">👁</span>
-                            <span class="count">${formatViews(post.views || 0)}</span>
                         </button>
                     </div>
                     ${commentsHtml}
@@ -3033,13 +3424,9 @@
                 if (data.success) {
                     likeBtn.classList.toggle('active');
                     const countSpan = likeBtn.querySelector('.count');
-                                    const iconSpan = likeBtn.querySelector('.icon-like');
-                                    if (countSpan) {
-                                        countSpan.textContent = data.likeCount > 0 ? data.likeCount : '';
-                                    }
-                                    if (iconSpan) {
-                                        iconSpan.textContent = data.isLiked ? '♥' : '♡';
-                                    }
+                    if (countSpan) {
+                        countSpan.textContent = data.likeCount > 0 ? data.likeCount : '';
+                    }
                 }
             } catch (error) {
                 console.error('Error toggling like:', error);
@@ -3095,6 +3482,9 @@
                             const cAuthor = newComment.authorId || {};
                             const cInitials = getInitials(cAuthor.name || 'User');
                             const cName = cAuthor.name || 'User';
+                            const cAuthorId = String(cAuthor._id || cAuthor.id || newComment.authorId || '');
+                            const currentUserId = currentUser ? String(getEntityId(currentUser) || '') : '';
+                            const isOwnComment = currentUserId && cAuthorId === currentUserId;
                             const hasCommentAvatar = !!cAuthor.profilePicture;
                             const commentAvatarHtml = hasCommentAvatar
                                 ? `<div class="comment-avatar" style="background-image:url('${cAuthor.profilePicture}');background-size:cover;background-position:center;"></div>`
@@ -3102,9 +3492,11 @@
 
                             const wrapper = document.createElement('div');
                             wrapper.className = 'comment-item';
+                            wrapper.dataset.commentId = String(newComment._id || '');
                             wrapper.innerHTML = `
                                 ${commentAvatarHtml}
                                 <div class="comment-body"><strong>${cName}</strong><span>${newComment.content}</span></div>
+                                ${isOwnComment ? `<button type="button" class="comment-delete" data-post-id="${postId}" data-comment-id="${newComment._id || ''}">Delete</button>` : ''}
                             `;
                             list.appendChild(wrapper);
                         }
@@ -3587,7 +3979,14 @@
             });
 
             callDeclineBtn?.addEventListener('click', () => {
-                if (pendingIncomingCall) {
+                const action = callDeclineBtn.dataset.action || '';
+
+                if (action === 'end' && activeCall) {
+                    endActiveCall(true);
+                    return;
+                }
+
+                if (pendingIncomingCall || action === 'decline') {
                     declineIncomingCall('declined');
                 } else {
                     hideCallBanner();
@@ -3718,7 +4117,7 @@
                     selectChatGroup(String(payload.groupId));
                 }
 
-                setCallBanner(`Incoming call from ${pendingIncomingCall.callerName}...`, true);
+                setCallBanner('is calling you', true);
                 startRingtone();
             });
 
@@ -3730,6 +4129,7 @@
                 try {
                     await callPeerConnection.setRemoteDescription(new RTCSessionDescription(payload.answer));
                     activeCall.state = 'connecting';
+                    clearOutgoingCallTimeout();
                     setCallStatus(`Connecting with ${activeCall.peerName || 'user'}...`, true);
                 } catch (error) {
                     console.error('Failed to apply remote answer:', error);
@@ -3738,12 +4138,38 @@
             });
 
             socketClient.on('call:declined', async (payload) => {
-                if (!payload || !activeCall) return;
-                if (String(payload.callId) !== String(activeCall.callId)) return;
+                if (!payload) return;
 
-                const reason = payload.reason === 'busy' ? 'User is busy on another call' : 'Call declined';
-                alert(reason);
-                await endActiveCall(false);
+                if (activeCall && String(payload.callId) === String(activeCall.callId)) {
+                    const peerName = activeCall.peerName || 'Someone';
+                    const reasonMap = {
+                        busy: 'User is busy on another call',
+                        missed: 'Missed call',
+                        declined: 'Call declined',
+                    };
+                    const message = reasonMap[payload.reason] || 'Call declined';
+
+                    await endActiveCall(false);
+                    setCallBanner(message, false, {
+                        callerName: peerName,
+                        badgeText: payload.reason === 'missed' ? 'Missed call' : 'Call update',
+                        declineLabel: 'Dismiss',
+                        declineAction: 'dismiss',
+                    });
+                    return;
+                }
+
+                if (pendingIncomingCall && String(payload.callId) === String(pendingIncomingCall.callId)) {
+                    const callerName = pendingIncomingCall.callerName || 'Someone';
+                    pendingIncomingCall = null;
+                    stopRingtone();
+                    setCallBanner(payload.reason === 'missed' ? 'Missed call' : 'Call cancelled', false, {
+                        callerName,
+                        badgeText: payload.reason === 'missed' ? 'Missed call' : 'Call update',
+                        declineLabel: 'Dismiss',
+                        declineAction: 'dismiss',
+                    });
+                }
             });
 
             socketClient.on('call:ended', async (payload) => {
@@ -5030,43 +5456,66 @@
             line.textContent = getPresenceLabelForUser(counterpart);
         }
 
-        function setCallBanner(text, showAcceptDecline) {
+        function getInitialsFromName(name) {
+            const value = String(name || '').trim();
+            if (!value) return 'SC';
+            const parts = value.split(/\s+/).filter(Boolean);
+            if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+            return `${parts[0][0] || ''}${parts[1][0] || ''}`.toUpperCase();
+        }
+
+        function clearOutgoingCallTimeout() {
+            if (outgoingCallTimeoutId) {
+                clearTimeout(outgoingCallTimeoutId);
+                outgoingCallTimeoutId = null;
+            }
+        }
+
+        function setCallBanner(text, showAcceptDecline, options = {}) {
             const banner = document.getElementById('chat-call-banner');
             const bannerText = document.getElementById('chat-call-banner-text');
+            const badgeEl = document.getElementById('incoming-call-state-badge');
+            const callerNameEl = document.getElementById('incoming-call-caller-name');
+            const callerAvatarEl = document.getElementById('incoming-call-caller-avatar');
             const acceptBtn = document.getElementById('chat-call-accept-btn');
             const declineBtn = document.getElementById('chat-call-decline-btn');
-            if (!banner || !bannerText || !acceptBtn || !declineBtn) return;
+            if (!banner || !bannerText || !badgeEl || !acceptBtn || !declineBtn || !callerNameEl || !callerAvatarEl) return;
 
-            bannerText.textContent = text || 'Incoming call...';
+            const callerName = options.callerName || pendingIncomingCall?.callerName || activeCall?.peerName || 'Someone';
+            callerNameEl.textContent = callerName;
+            callerAvatarEl.textContent = getInitialsFromName(callerName);
+            badgeEl.textContent = options.badgeText || (showAcceptDecline ? 'Incoming call' : 'Call update');
+
+            bannerText.textContent = text || 'is calling you...';
             acceptBtn.style.display = showAcceptDecline ? 'inline-flex' : 'none';
-            declineBtn.textContent = showAcceptDecline ? 'Decline' : 'Dismiss';
+            declineBtn.style.display = options.showDecline === false ? 'none' : 'inline-flex';
+            declineBtn.textContent = options.declineLabel || (showAcceptDecline ? 'Decline' : 'Dismiss');
+            declineBtn.dataset.action = options.declineAction || (showAcceptDecline ? 'decline' : 'dismiss');
             banner.style.display = 'flex';
         }
 
         function hideCallBanner() {
             const banner = document.getElementById('chat-call-banner');
+            const declineBtn = document.getElementById('chat-call-decline-btn');
             if (banner) {
                 banner.style.display = 'none';
+            }
+            if (declineBtn) {
+                declineBtn.dataset.action = '';
             }
         }
 
         function setCallStatus(text, showEndButton = false) {
-            const status = document.getElementById('chat-call-status');
-            const statusText = document.getElementById('chat-call-status-text');
-            const endBtn = document.getElementById('chat-call-end-btn');
-            if (!status || !statusText || !endBtn) return;
-
-            statusText.textContent = text || 'Call status';
-            endBtn.style.display = showEndButton ? 'inline-flex' : 'none';
-            status.style.display = 'flex';
+            setCallBanner(text || 'Call status', false, {
+                callerName: activeCall?.peerName || pendingIncomingCall?.callerName || 'Someone',
+                badgeText: activeCall?.state === 'connected' ? 'On call' : 'Calling',
+                showDecline: true,
+                declineLabel: showEndButton ? 'End call' : 'Dismiss',
+                declineAction: showEndButton ? 'end' : 'dismiss',
+            });
         }
 
         function hideCallStatus() {
-            const status = document.getElementById('chat-call-status');
-            if (status) {
-                status.style.display = 'none';
-            }
-
             if (callDurationIntervalId) {
                 clearInterval(callDurationIntervalId);
                 callDurationIntervalId = null;
@@ -5212,6 +5661,7 @@
                     activeCall.state = 'connected';
                     const startedAt = activeCall.connectedAt || Date.now();
                     activeCall.connectedAt = startedAt;
+                    clearOutgoingCallTimeout();
                     setCallStatus(`In call with ${activeCall.peerName || 'user'} · 00:00`, true);
 
                     if (callDurationIntervalId) {
@@ -5237,6 +5687,7 @@
         async function endActiveCall(emitRemote = true) {
             stopRingtone();
             hideCallBanner();
+            clearOutgoingCallTimeout();
 
             const outgoing = activeCall;
             activeCall = null;
@@ -5275,12 +5726,6 @@
             const callId = `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
 
             try {
-                setCallStatus(`Calling ${context.targetUser?.name || 'user'}...`, true);
-                const pc = await ensureCallPeerConnection(context, callId);
-
-                const offer = await pc.createOffer();
-                await pc.setLocalDescription(offer);
-
                 activeCall = {
                     callId,
                     groupId: context.groupId,
@@ -5289,6 +5734,12 @@
                     state: 'calling',
                 };
 
+                setCallStatus(`Calling ${activeCall.peerName || 'user'}...`, true);
+                const pc = await ensureCallPeerConnection(context, callId);
+
+                const offer = await pc.createOffer();
+                await pc.setLocalDescription(offer);
+
                 socketClient.emit('call:ring', {
                     groupId: context.groupId,
                     targetUserId: context.targetUserId,
@@ -5296,6 +5747,37 @@
                     callerName: currentUser?.name || 'Someone',
                     offer,
                 });
+
+                clearOutgoingCallTimeout();
+                outgoingCallTimeoutId = setTimeout(async () => {
+                    if (!activeCall || String(activeCall.callId) !== String(callId) || activeCall.state !== 'calling') {
+                        return;
+                    }
+
+                    const snapshot = {
+                        groupId: activeCall.groupId,
+                        peerUserId: activeCall.peerUserId,
+                        callId: activeCall.callId,
+                        peerName: activeCall.peerName || 'Someone',
+                    };
+
+                    if (socketClient && socketClient.connected) {
+                        socketClient.emit('call:decline', {
+                            groupId: snapshot.groupId,
+                            targetUserId: snapshot.peerUserId,
+                            callId: snapshot.callId,
+                            reason: 'missed',
+                        });
+                    }
+
+                    await endActiveCall(false);
+                    setCallBanner('Missed call (no answer)', false, {
+                        callerName: snapshot.peerName,
+                        badgeText: 'Missed call',
+                        declineLabel: 'Dismiss',
+                        declineAction: 'dismiss',
+                    });
+                }, 30000);
             } catch (error) {
                 console.error('Failed to start direct call:', error);
                 alert('Could not start call. Please allow microphone access.');
@@ -6585,6 +7067,148 @@
             openModal('post-delete-modal');
         }
 
+        function projectsToTextarea(projects) {
+            if (!Array.isArray(projects) || projects.length === 0) return '';
+            return projects
+                .map((project) => {
+                    const title = String(project && project.title ? project.title : '').trim();
+                    const description = String(project && project.description ? project.description : '').trim();
+                    if (!title && !description) return '';
+                    return description ? `${title} | ${description}` : title;
+                })
+                .filter(Boolean)
+                .join('\n');
+        }
+
+        function parseProjectsFromTextarea(value) {
+            const lines = String(value || '')
+                .split('\n')
+                .map((line) => line.trim())
+                .filter(Boolean);
+
+            return lines.map((line) => {
+                const [rawTitle, ...rest] = line.split('|');
+                const title = String(rawTitle || '').trim();
+                const description = String(rest.join('|') || '').trim();
+                return { title, description };
+            }).filter((project) => project.title);
+        }
+
+        function populateEditProfileModal(user) {
+            if (!user) return;
+
+            const fields = {
+                name: document.getElementById('edit-profile-name'),
+                year: document.getElementById('edit-profile-year'),
+                department: document.getElementById('edit-profile-department'),
+                bio: document.getElementById('edit-profile-bio'),
+                skills: document.getElementById('edit-profile-skills'),
+                interests: document.getElementById('edit-profile-interests'),
+                intent: document.getElementById('edit-profile-intent'),
+                availability: document.getElementById('edit-profile-availability'),
+                cgpa: document.getElementById('edit-profile-cgpa'),
+                github: document.getElementById('edit-profile-github'),
+                projectLink: document.getElementById('edit-profile-project-link'),
+                projects: document.getElementById('edit-profile-projects'),
+            };
+
+            if (fields.name) fields.name.value = user.name || '';
+            if (fields.year) fields.year.value = user.year || '';
+            if (fields.department) fields.department.value = user.department || '';
+            if (fields.bio) fields.bio.value = user.bio || '';
+            if (fields.skills) fields.skills.value = Array.isArray(user.skills) ? user.skills.join(', ') : '';
+            if (fields.interests) fields.interests.value = Array.isArray(user.interests) ? user.interests.join(', ') : '';
+            if (fields.intent) fields.intent.value = user.mentorshipIntent || 'seeking';
+            if (fields.availability) fields.availability.value = user.availability || 'flexible';
+            if (fields.cgpa) fields.cgpa.value = user.cgpa ?? '';
+            if (fields.github) fields.github.value = user.githubUrl || '';
+            if (fields.projectLink) fields.projectLink.value = user.projectLink || '';
+            if (fields.projects) fields.projects.value = projectsToTextarea(user.projects);
+        }
+
+        async function submitEditProfile() {
+            if (!currentUser) return;
+
+            const saveBtn = document.getElementById('edit-profile-save');
+            const payload = {
+                name: String(document.getElementById('edit-profile-name')?.value || '').trim(),
+                year: Number(document.getElementById('edit-profile-year')?.value || 0) || null,
+                department: String(document.getElementById('edit-profile-department')?.value || '').trim(),
+                bio: String(document.getElementById('edit-profile-bio')?.value || '').trim(),
+                skills: String(document.getElementById('edit-profile-skills')?.value || '')
+                    .split(',')
+                    .map((value) => value.trim())
+                    .filter(Boolean),
+                interests: String(document.getElementById('edit-profile-interests')?.value || '')
+                    .split(',')
+                    .map((value) => value.trim())
+                    .filter(Boolean),
+                mentorshipIntent: String(document.getElementById('edit-profile-intent')?.value || 'seeking').trim(),
+                availability: String(document.getElementById('edit-profile-availability')?.value || 'flexible').trim(),
+                cgpa: (() => {
+                    const value = document.getElementById('edit-profile-cgpa')?.value;
+                    return value === '' || value === undefined ? null : Number(value);
+                })(),
+                githubUrl: String(document.getElementById('edit-profile-github')?.value || '').trim(),
+                projectLink: String(document.getElementById('edit-profile-project-link')?.value || '').trim(),
+                projects: parseProjectsFromTextarea(document.getElementById('edit-profile-projects')?.value || ''),
+            };
+
+            if (!payload.name) {
+                alert('Name is required.');
+                return;
+            }
+
+            if (!payload.department) {
+                alert('Department is required.');
+                return;
+            }
+
+            if (!payload.year) {
+                delete payload.year;
+            }
+
+            if (saveBtn) {
+                saveBtn.disabled = true;
+                saveBtn.textContent = 'Saving...';
+            }
+
+            try {
+                const response = await fetch(API_BASE + '/users/profile', {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': 'Bearer ' + token,
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(payload),
+                });
+
+                const data = await response.json();
+                if (!response.ok || !data.success || !data.user) {
+                    throw new Error(data.message || 'Failed to update profile');
+                }
+
+                currentUser = data.user;
+                if (!Array.isArray(currentUser.following)) currentUser.following = [];
+                if (!Array.isArray(currentUser.followers)) currentUser.followers = [];
+
+                const userName = document.getElementById('user-name');
+                const userHandle = document.getElementById('user-handle');
+                if (userName) userName.textContent = currentUser.name || 'User';
+                if (userHandle) userHandle.textContent = '@' + (currentUser.email || 'user').split('@')[0];
+
+                closeModal('edit-profile-modal');
+                await loadUserProfile();
+            } catch (error) {
+                alert(error.message || 'Failed to update profile');
+            } finally {
+                if (saveBtn) {
+                    saveBtn.disabled = false;
+                    saveBtn.textContent = 'Save changes';
+                }
+            }
+        }
+
         // Load user profile
         // Load logged-in user's own profile
         async function loadUserProfile() {
@@ -6603,6 +7227,7 @@
                 const profileProjects = document.getElementById('profile-projects');
                 const profileLinks = document.getElementById('profile-links');
                 const profileShareBox = document.getElementById('profile-share-box');
+                const profileEditBtn = document.getElementById('profile-edit-btn');
                 const profileUserActions = document.getElementById('profile-user-actions');
                 const profileMessageBtn = document.getElementById('profile-message-btn');
                 const profileRequestBtn = document.getElementById('profile-request-mentorship-btn');
@@ -6712,6 +7337,10 @@
                         profileShareBox.style.display = 'flex';
                     }
 
+                    if (profileEditBtn) {
+                        profileEditBtn.style.display = 'inline-flex';
+                    }
+
                     if (profileUserActions) {
                         profileUserActions.style.display = 'none';
                     }
@@ -6815,6 +7444,7 @@
                 const profileProjects = document.getElementById('profile-projects');
                 const profileLinks = document.getElementById('profile-links');
                 const profileShareBox = document.getElementById('profile-share-box');
+                const profileEditBtn = document.getElementById('profile-edit-btn');
                 const profileUserActions = document.getElementById('profile-user-actions');
                 const profileMessageBtn = document.getElementById('profile-message-btn');
                 const profileRequestBtn = document.getElementById('profile-request-mentorship-btn');
@@ -6899,6 +7529,10 @@
                     // Hide create-post box when viewing another user's profile
                     if (profileShareBox) {
                         profileShareBox.style.display = 'none';
+                    }
+
+                    if (profileEditBtn) {
+                        profileEditBtn.style.display = 'none';
                     }
 
                     if (profileUserActions) {
@@ -8137,6 +8771,33 @@
                 if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
                     e.preventDefault();
                     submitMentorshipReject();
+                }
+            });
+        }
+
+        const editProfileBtn = document.getElementById('profile-edit-btn');
+        const editProfileSaveBtn = document.getElementById('edit-profile-save');
+        const editProfileModal = document.getElementById('edit-profile-modal');
+
+        if (editProfileBtn) {
+            editProfileBtn.addEventListener('click', () => {
+                populateEditProfileModal(currentUser);
+                openModal('edit-profile-modal', document.getElementById('edit-profile-name'));
+                const editCard = document.querySelector('#edit-profile-modal .modal-card');
+                if (editCard) {
+                    editCard.scrollTop = 0;
+                }
+            });
+        }
+
+        if (editProfileSaveBtn) {
+            editProfileSaveBtn.addEventListener('click', submitEditProfile);
+        }
+
+        if (editProfileModal) {
+            editProfileModal.addEventListener('click', (e) => {
+                if (e.target === editProfileModal) {
+                    closeModal('edit-profile-modal');
                 }
             });
         }
