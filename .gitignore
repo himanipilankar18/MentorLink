@@ -29,3 +29,29 @@ Thumbs.db
 # Build files
 dist/
 build/
+
+# Keep repo public-safe: non-source docs and reports
+*.md
+*.txt
+*.csv
+
+# Root-level utility and local verification scripts (non-runtime)
+generate-jwt-secret.js
+test-atlas-connection.js
+test-connection.js
+verify-env.js
+
+# Operational/maintenance scripts (seed/check/refresh/test/backfill/cleanup)
+scripts/*.js
+
+# Keep runtime python clustering source tracked
+!scripts/cluster_people.py
+
+# Optional model/training utility scripts not required for app runtime
+scripts/mentor_scoring.py
+
+# Local recommender seed/demo datasets
+recommender_model/data/
+
+# Public uploads generated at runtime
+public/uploads/
