@@ -9,6 +9,7 @@ const { verifyToken, checkRole } = require('../middleware/auth');
 const { validateRegistration, validateLogin, handleValidationErrors, validateEmailDomain } = require('../middleware/validation');
 const { authLimiter } = require('../middleware/security');
 const sendEmail = require('../utils/sendEmail');
+const { getUploadSubdirPath } = require('../utils/uploads');
 
 const router = express.Router();
 const MAX_SKILLS = 10;
@@ -53,7 +54,7 @@ setInterval(() => {
 // Configure multer for profile picture uploads
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    const uploadDir = 'public/uploads/profiles';
+    const uploadDir = getUploadSubdirPath('profiles');
     if (!fs.existsSync(uploadDir)) {
       fs.mkdirSync(uploadDir, { recursive: true });
     }

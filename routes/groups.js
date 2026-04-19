@@ -7,6 +7,7 @@ const Group = require('../models/Group');
 const User = require('../models/User');
 const { verifyToken } = require('../middleware/auth');
 const { apiLimiter } = require('../middleware/security');
+const { getUploadSubdirPath } = require('../utils/uploads');
 
 const router = express.Router();
 
@@ -32,7 +33,7 @@ function isAdminOrOwner(group, userId) {
 // Multer setup for group avatar uploads
 const groupImageStorage = multer.diskStorage({
   destination: function (req, file, cb) {
-    const uploadDir = path.join('public', 'uploads', 'groups');
+    const uploadDir = getUploadSubdirPath('groups');
     if (!fs.existsSync(uploadDir)) {
       fs.mkdirSync(uploadDir, { recursive: true });
     }

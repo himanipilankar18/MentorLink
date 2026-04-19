@@ -55,3 +55,4 @@ recommender_model/data/
 
 # Public uploads generated at runtime
 public/uploads/
+public/uploads/**

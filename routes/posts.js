@@ -7,12 +7,13 @@ const User = require('../models/User');
 const { verifyToken } = require('../middleware/auth');
 const { apiLimiter } = require('../middleware/security');
 const { createAndEmitNotification } = require('../utils/notifications');
+const { getUploadSubdirPath } = require('../utils/uploads');
 const router = express.Router();
 
 // Multer setup for post image uploads (used by community create-post modal)
 const postImageStorage = multer.diskStorage({
   destination: function (req, file, cb) {
-    const uploadDir = path.join('public', 'uploads', 'posts');
+    const uploadDir = getUploadSubdirPath('posts');
     if (!fs.existsSync(uploadDir)) {
       fs.mkdirSync(uploadDir, { recursive: true });
     }

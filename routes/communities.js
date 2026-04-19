@@ -6,12 +6,13 @@ const Community = require('../models/Community');
 const Post = require('../models/Post');
 const { verifyToken } = require('../middleware/auth');
 const { apiLimiter } = require('../middleware/security');
+const { getUploadSubdirPath } = require('../utils/uploads');
 const router = express.Router();
 
 // Multer setup for community icon/banner uploads
 const communityStorage = multer.diskStorage({
   destination: function (req, file, cb) {
-    const uploadDir = path.join('public', 'uploads', 'communities');
+    const uploadDir = getUploadSubdirPath('communities');
     if (!fs.existsSync(uploadDir)) {
       fs.mkdirSync(uploadDir, { recursive: true });
     }
