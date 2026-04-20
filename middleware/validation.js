@@ -106,7 +106,7 @@ exports.validateLogin = [
 // Interaction validation rules
 exports.validateInteraction = [
   body('mentorId')
-    .notEmpty().withMessage('Mentor ID is required')
+    .optional()
     .isMongoId().withMessage('Invalid mentor ID'),
   
   body('mentorshipId')

@@ -52,6 +52,7 @@ app.use('/api/communities', require('./routes/communities'));
 app.use('/api/groups', require('./routes/groups'));
 app.use('/api/chat', require('./routes/chat'));
 app.use('/api/notifications', require('./routes/notifications'));
+app.use('/api/recommendations', require('./routes/recommendations'));
 
 // Fallback handler for /api/groups/my to ensure the
 // "Your groups" view works reliably.

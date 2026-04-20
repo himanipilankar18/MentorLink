@@ -17,8 +17,17 @@ router.post('/',
   handleValidationErrors,
   async (req, res) => {
     try {
-      const { mentorId, mentorshipId, topic, subjectTag, interactionType, duration, satisfactionRating, notes } = req.body;
-      const menteeId = req.user._id;
+      const {
+        mentorId: providedMentorId,
+        mentorshipId,
+        topic,
+        subjectTag,
+        interactionType,
+        duration,
+        satisfactionRating,
+        notes,
+      } = req.body;
+      const actorId = req.user._id;
 
       // Verify mentorship exists and is accepted
       const mentorship = await Mentorship.findById(mentorshipId);
@@ -40,20 +49,26 @@ router.post('/',
       // Verify user is part of this mentorship
       const mentorshipMentorId = mentorship.mentorId || mentorship.recipient;
       const mentorshipMenteeId = mentorship.menteeId || mentorship.requester;
-      const userId = req.user._id.toString();
-      if (
-        !mentorshipMentorId ||
-        !mentorshipMenteeId ||
-        (String(mentorshipMentorId) !== String(mentorId) && String(mentorshipMenteeId) !== String(userId))
-      ) {
+
+      if (!mentorshipMentorId || !mentorshipMenteeId) {
+        return res.status(400).json({
+          success: false,
+          message: 'Mentorship participants are not defined',
+        });
+      }
+
+      const isMentor = String(mentorshipMentorId) === String(actorId);
+      const isMentee = String(mentorshipMenteeId) === String(actorId);
+
+      if (!isMentor && !isMentee) {
         return res.status(403).json({
           success: false,
           message: 'You are not authorized to log interactions for this mentorship'
         });
       }
 
-      // Verify mentorId matches mentorship
-      if (String(mentorshipMentorId) !== String(mentorId)) {
+      // Backward compatibility: if mentorId is supplied by client, validate it.
+      if (providedMentorId && String(mentorshipMentorId) !== String(providedMentorId)) {
         return res.status(400).json({
           success: false,
           message: 'Mentor ID does not match the mentorship'
@@ -62,8 +77,8 @@ router.post('/',
 
       // Create interaction record
       const interaction = await Interaction.create({
-        mentorId,
-        menteeId,
+        mentorId: mentorshipMentorId,
+        menteeId: mentorshipMenteeId,
         mentorshipId,
         topic,
         subjectTag,

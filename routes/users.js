@@ -1,6 +1,6 @@
 const express = require('express');
 const User = require('../models/User');
-const { verifyToken, checkRole } = require('../middleware/auth');
+const { verifyToken } = require('../middleware/auth');
 const { apiLimiter } = require('../middleware/security');
 const sendEmail = require('../utils/sendEmail');
 
@@ -308,10 +308,18 @@ router.get('/profile-completion', verifyToken, apiLimiter, async (req, res) => {
 // @access  Private
 router.get('/mentors', verifyToken, apiLimiter, async (req, res) => {
   try {
-    const { department, subjectTag } = req.query;
-    
+    const { department } = req.query;
+
+    const currentUser = await User.findById(req.user._id).select('year department');
+    if (!currentUser) {
+      return res.status(404).json({
+        success: false,
+        message: 'Current user not found',
+      });
+    }
+
     const query = {
-      role: { $in: ['senior', 'faculty'] },
+      _id: { $ne: req.user._id },
       isActive: true,
       mentorshipIntent: { $in: ['offering', 'both'] },
     };
@@ -320,9 +328,22 @@ router.get('/mentors', verifyToken, apiLimiter, async (req, res) => {
       query.department = department;
     }
 
-    const mentors = await User.find(query)
+    const candidates = await User.find(query)
       .select('-password')
       .sort({ createdAt: -1 });
+
+    const currentYear = Number(currentUser.year);
+    const mentors = candidates.filter((candidate) => {
+      const role = String(candidate.role || '').toLowerCase();
+      if (role === 'faculty' || role === 'admin') return true;
+
+      const candidateYear = Number(candidate.year);
+      if (!Number.isFinite(candidateYear) || !Number.isFinite(currentYear)) {
+        return false;
+      }
+
+      return candidateYear > currentYear;
+    });
 
     res.json({
       success: true,
@@ -438,12 +459,20 @@ router.post('/:id/unfollow', verifyToken, apiLimiter, async (req, res) => {
 // @route   GET /api/users/juniors
 // @desc    Get all juniors (for mentors to see potential mentees)
 // @access  Private (Mentors only)
-router.get('/juniors', verifyToken, checkRole('senior', 'faculty'), apiLimiter, async (req, res) => {
+router.get('/juniors', verifyToken, apiLimiter, async (req, res) => {
   try {
     const { department } = req.query;
+
+    const currentUser = await User.findById(req.user._id).select('year');
+    if (!currentUser) {
+      return res.status(404).json({
+        success: false,
+        message: 'Current user not found',
+      });
+    }
     
     const query = {
-      role: 'junior',
+      _id: { $ne: req.user._id },
       isActive: true,
       $or: [
         { mentorshipIntent: { $in: ['seeking', 'both'] } },
@@ -456,9 +485,22 @@ router.get('/juniors', verifyToken, checkRole('senior', 'faculty'), apiLimiter, 
       query.department = department;
     }
 
-    const juniors = await User.find(query)
+    const candidates = await User.find(query)
       .select('-password')
       .sort({ createdAt: -1 });
+
+    const currentYear = Number(currentUser.year);
+    const juniors = candidates.filter((candidate) => {
+      const role = String(candidate.role || '').toLowerCase();
+      if (role === 'faculty' || role === 'admin') return false;
+
+      const candidateYear = Number(candidate.year);
+      if (!Number.isFinite(candidateYear) || !Number.isFinite(currentYear)) {
+        return false;
+      }
+
+      return candidateYear < currentYear;
+    });
 
     res.json({
       success: true,

@@ -69,20 +69,18 @@ const mentorshipSchema = new mongoose.Schema({
 
 // Keep new/old participant fields synchronized for backward compatibility.
 mentorshipSchema.pre('validate', function(next) {
-  if (!this.requester && this.menteeId) {
+  // Keep participant roles canonical per relationship:
+  // requester <-> mentee and recipient <-> mentor.
+  if (this.requester) {
+    this.menteeId = this.requester;
+  } else if (this.menteeId) {
     this.requester = this.menteeId;
   }
 
-  if (!this.menteeId && this.requester) {
-    this.menteeId = this.requester;
-  }
-
-  if (!this.recipient && this.mentorId) {
-    this.recipient = this.mentorId;
-  }
-
-  if (!this.mentorId && this.recipient) {
+  if (this.recipient) {
     this.mentorId = this.recipient;
+  } else if (this.mentorId) {
+    this.recipient = this.mentorId;
   }
 
   if (typeof this.status === 'string') {
