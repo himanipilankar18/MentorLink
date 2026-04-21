@@ -86,6 +86,12 @@ app.get('/api/groups/my', verifyToken, apiLimiter, async (req, res) => {
 // Serve uploaded profile images (stored under public/uploads)
 app.use('/uploads', express.static('public/uploads'));
 
+// Handle missing uploaded files without bubbling into global 404/error middleware.
+// This avoids noisy stack traces when old/deleted media URLs are requested.
+app.get('/uploads/*', (req, res) => {
+  res.status(404).end();
+});
+
 // Serve static files (frontend dashboard) - after API routes
 app.use(express.static('public'));
 
