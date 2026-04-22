@@ -1276,7 +1276,10 @@
             color: var(--text-primary);
         }
 
-        .suggestion-list { margin-bottom: 32px; }
+        .suggestion-list {
+            margin-bottom: 32px;
+            overflow: visible;
+        }
 
         .suggestion-item {
             display: flex;
@@ -1393,6 +1396,158 @@
 
         .auth-prompt h2 { margin-bottom: 16px; color: var(--text-primary); }
         .auth-prompt p { color: var(--text-secondary); margin-bottom: 24px; }
+        /* ML Recommendation Styles */
+        .ml-suggestion-item {
+            position: relative;
+            z-index: 0;
+            gap: 10px;
+            padding: 10px 8px;
+            border-radius: 12px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+            overflow: visible;
+            transition: background 0.2s ease, transform 0.2s ease, border-color 0.2s ease;
+        }
+
+        .ml-suggestion-item:hover {
+            background: rgba(167, 139, 250, 0.08);
+            border-color: rgba(167, 139, 250, 0.2);
+            transform: translateY(-1px);
+            z-index: 3;
+        }
+
+        .ml-suggestion-item .info {
+            min-width: 0;
+        }
+
+        .ml-suggestion-item .info .name {
+            font-weight: 650;
+            letter-spacing: 0.01em;
+        }
+
+        .ml-status-text {
+            font-size: 0.76rem;
+            color: var(--text-secondary);
+            margin-top: 3px;
+            line-height: 1.35;
+        }
+
+        .ml-score-wrap {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-left: auto;
+            margin-right: 8px;
+            overflow: visible;
+        }
+
+        .ml-score-badge {
+            display: inline-flex !important;
+            align-items: center;
+            justify-content: center;
+            min-width: 48px;
+            padding: 4px 10px;
+            height: 26px;
+            border-radius: 999px;
+            font-weight: 650;
+            font-size: 0.75rem;
+            letter-spacing: 0.02em;
+            cursor: help;
+            transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease;
+            position: relative;
+            background: var(--ml-score-bg, rgba(167, 139, 250, 0.15));
+            color: var(--ml-score-color, var(--accent-purple));
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            backdrop-filter: blur(6px);
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.15);
+        }
+
+        .ml-score-badge:hover {
+            transform: scale(1.04);
+            filter: brightness(1.05);
+            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.32);
+        }
+
+        .ml-tooltip {
+            position: absolute;
+            bottom: calc(100% + 10px);
+            right: 0;
+            background: rgba(10, 15, 30, 0.9);
+            border: 1px solid rgba(167, 139, 250, 0.35);
+            border-radius: 12px;
+            padding: 12px 14px;
+            font-size: 0.78rem;
+            color: var(--text-primary);
+            z-index: 9999;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.4);
+            backdrop-filter: blur(10px);
+            white-space: normal;
+            width: max-content;
+            min-width: 220px;
+            max-width: 290px;
+            line-height: 1.45;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(4px);
+            pointer-events: none;
+            transition: opacity 0.2s ease, transform 0.2s ease, visibility 0.2s ease;
+        }
+
+        .ml-tooltip.is-visible {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+            pointer-events: auto;
+        }
+
+        .ml-tooltip strong {
+            color: var(--accent-purple);
+            display: block;
+            margin-bottom: 7px;
+            font-size: 0.84rem;
+            font-weight: 700;
+        }
+
+        .ml-tooltip .ml-tooltip-body {
+            margin-top: 2px;
+        }
+
+        .ml-tooltip .ml-tooltip-metric {
+            margin: 4px 0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            color: rgba(241, 245, 249, 0.88);
+            font-size: 0.74rem;
+        }
+
+        .ml-tooltip .ml-tooltip-metric span:first-child {
+            color: rgba(226, 232, 240, 0.82);
+            white-space: nowrap;
+        }
+
+        .ml-tooltip .ml-tooltip-metric span:last-child {
+            color: rgba(248, 250, 252, 0.95);
+            font-weight: 600;
+            letter-spacing: 0.01em;
+        }
+
+        .ml-suggestion-item .btn-follow {
+            flex-shrink: 0;
+        }
+
+        @keyframes tooltipFadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(4px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
 
         @media (max-width: 1100px) {
             .right-sidebar { display: none; }
@@ -5889,6 +6044,12 @@
 
         // Load user suggestions
         async function loadSuggestions() {
+            if (window.RecommendationEngine && typeof window.RecommendationEngine.initializeRecommendations === 'function') {
+                console.log('[MentorLink] Loading ML mentor recommendations in sidebar');
+                await window.RecommendationEngine.initializeRecommendations();
+                return;
+            }
+
             try {
                 const response = await fetch(API_BASE + '/users/suggestions?limit=5', {
                     headers: { 'Authorization': 'Bearer ' + token }
@@ -6567,5 +6728,7 @@
             window.location.href = 'login.html';
         });
     </script>
+    <!-- ML-Based Recommendation System -->
+    <script src="/js/recommendations.js"></script>
 </body>
 </html>
