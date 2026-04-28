@@ -1,14 +1,38 @@
 const express = require('express');
 const ChatMessage = require('../models/ChatMessage');
 const Group = require('../models/Group');
+const Mentorship = require('../models/Mentorship');
 const { createAndEmitNotification } = require('../utils/notifications');
 const { verifyToken } = require('../middleware/auth');
 const { apiLimiter } = require('../middleware/security');
 
 const router = express.Router();
 
-// Helper: ensure group exists and user is a member
-async function ensureGroupMember(groupId, userId) {
+function getGroupName(group) {
+  return typeof group?.name === 'string' ? group.name : '';
+}
+
+function isPrivateMentorshipGroup(group) {
+  const name = getGroupName(group);
+  return name.startsWith('mentorship-') || name.startsWith('direct-');
+}
+
+async function findAcceptedMentorshipForGroup(groupId, userId) {
+  return Mentorship.findOne({
+    chatGroupId: groupId,
+    status: 'accepted',
+    $or: [
+      { requester: userId },
+      { recipient: userId },
+      { mentorId: userId },
+      { menteeId: userId },
+    ],
+  }).select('_id chatGroupId status requester recipient mentorId menteeId');
+}
+
+// Helper: ensure group exists, user is a member, and private mentorship chats
+// are only accessible through an accepted mentorship relationship.
+async function ensureChatAccess(groupId, userId) {
   const group = await Group.findById(groupId);
   if (!group || !group.isActive) {
     return { error: { status: 404, message: 'Group not found' } };
@@ -17,6 +41,18 @@ async function ensureGroupMember(groupId, userId) {
   const isMember = group.members.some((m) => String(m.userId) === String(userId));
   if (!isMember) {
     return { error: { status: 403, message: 'You are not a member of this group' } };
+  }
+
+  if (isPrivateMentorshipGroup(group)) {
+    const mentorship = await findAcceptedMentorshipForGroup(groupId, userId);
+    if (!mentorship) {
+      return {
+        error: {
+          status: 403,
+          message: 'Private chat is only available for accepted mentorships',
+        },
+      };
+    }
   }
 
   return { group };
@@ -29,7 +65,7 @@ router.get('/group/:id/messages', verifyToken, apiLimiter, async (req, res) => {
   try {
     const limit = Math.min(parseInt(req.query.limit, 10) || 50, 200);
 
-    const { error } = await ensureGroupMember(req.params.id, req.user._id);
+    const { error } = await ensureChatAccess(req.params.id, req.user._id);
     if (error) {
       return res.status(error.status).json({ success: false, message: error.message });
     }
@@ -72,7 +108,7 @@ router.post('/group/:id/messages', verifyToken, apiLimiter, async (req, res) => 
       });
     }
 
-    const { error } = await ensureGroupMember(req.params.id, req.user._id);
+    const { error } = await ensureChatAccess(req.params.id, req.user._id);
     if (error) {
       return res.status(error.status).json({ success: false, message: error.message });
     }

@@ -9,6 +9,11 @@ const { apiLimiter } = require('../middleware/security');
 const router = express.Router();
 
 // Helper utilities for roles/permissions
+function isPrivateMentorshipGroup(group) {
+  const name = typeof group?.name === 'string' ? group.name : '';
+  return name.startsWith('mentorship-') || name.startsWith('direct-');
+}
+
 function getMemberRole(group, userId) {
   if (!group || !Array.isArray(group.members)) return null;
   const member = group.members.find((m) => String(m.userId) === String(userId));
@@ -141,7 +146,12 @@ router.post('/', verifyToken, apiLimiter, async (req, res) => {
 // @access  Private
 router.get('/', verifyToken, apiLimiter, async (req, res) => {
   try {
-    const groups = await Group.find({ isActive: true })
+    const groups = await Group.find({
+      isActive: true,
+      name: {
+        $not: /^(mentorship-|direct-)/,
+      },
+    })
       .sort({ createdAt: -1 })
       .lean();
 
@@ -210,6 +220,13 @@ router.post('/join', verifyToken, apiLimiter, async (req, res) => {
       return res.status(404).json({
         success: false,
         message: 'Invalid or expired join code',
+      });
+    }
+
+    if (isPrivateMentorshipGroup(group)) {
+      return res.status(403).json({
+        success: false,
+        message: 'Private mentorship chats cannot be joined by code',
       });
     }
 

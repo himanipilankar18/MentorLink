@@ -8,6 +8,7 @@ const connectDB = require('./config/database');
 const { errorHandler, notFound } = require('./middleware/errorHandler');
 const { securityHeaders, apiLimiter } = require('./middleware/security');
 const { verifyToken } = require('./middleware/auth');
+const { ensureUploadSubdirs, getUploadsRoot } = require('./utils/uploads');
 const Group = require('./models/Group');
 const { setupSocketServer } = require('./realtime/socket');
 
@@ -54,6 +55,9 @@ app.use('/api/chat', require('./routes/chat'));
 app.use('/api/notifications', require('./routes/notifications'));
 app.use('/api/recommendations', require('./routes/recommendations'));
 
+// Ensure upload directories exist on boot, even when UPLOADS_DIR points outside repo.
+ensureUploadSubdirs();
+
 // Fallback handler for /api/groups/my to ensure the
 // "Your groups" view works reliably.
 app.get('/api/groups/my', verifyToken, apiLimiter, async (req, res) => {
@@ -84,7 +88,10 @@ app.get('/api/groups/my', verifyToken, apiLimiter, async (req, res) => {
 });
 
 // Serve uploaded profile images (stored under public/uploads)
-app.use('/uploads', express.static('public/uploads'));
+app.use('/uploads', express.static(getUploadsRoot()));
+app.use('/uploads', (req, res) => {
+  res.status(404).end();
+});
 
 // Serve static files (frontend dashboard) - after API routes
 app.use(express.static('public'));
