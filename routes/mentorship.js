@@ -128,6 +128,7 @@ async function ensureDirectMentorshipGroup(requesterUser, recipientUser) {
       name: groupName,
       displayName,
       description,
+      groupType: 'mentorship',
       creatorId: requesterUser._id,
       joinCode,
       members: [
@@ -145,6 +146,13 @@ async function ensureDirectMentorshipGroup(requesterUser, recipientUser) {
     return group;
   }
 
+  let needsSave = false;
+
+  if (group.groupType !== 'mentorship') {
+    group.groupType = 'mentorship';
+    needsSave = true;
+  }
+
   const requesterMemberExists = group.members.some((member) => String(member.userId) === String(requesterUser._id));
   const recipientMemberExists = group.members.some((member) => String(member.userId) === String(recipientUser._id));
 
@@ -157,6 +165,10 @@ async function ensureDirectMentorshipGroup(requesterUser, recipientUser) {
   }
 
   if (!requesterMemberExists || !recipientMemberExists) {
+    needsSave = true;
+  }
+
+  if (needsSave) {
     await group.save();
   }
 
@@ -211,7 +223,7 @@ async function acceptMentorshipRequest(req, res) {
     await mentorship.populate('recipient', 'name email department year role profilePicture');
     await mentorship.populate('mentorId', 'name email department year role profilePicture');
     await mentorship.populate('menteeId', 'name email department year role profilePicture');
-    await mentorship.populate('chatGroupId', 'name displayName joinCode');
+    await mentorship.populate('chatGroupId', 'name displayName joinCode groupType');
 
     const requesterName = requesterUser.name || 'User';
     const recipientName = recipientUser.name || 'User';
@@ -238,6 +250,22 @@ async function acceptMentorshipRequest(req, res) {
       `,
     });
 
+    const mentorshipAcceptedPayload = {
+      mentorshipId: mentorship._id,
+      requesterId: requesterUser._id,
+      recipientId: recipientUser._id,
+      chatGroupId: directChatGroup._id,
+      chatGroup: {
+        id: directChatGroup._id,
+        name: directChatGroup.name,
+        displayName: directChatGroup.displayName,
+        groupType: directChatGroup.groupType || 'mentorship',
+      },
+    };
+
+    io.to(`user:${requesterUser._id}`).emit('mentorship:accepted', mentorshipAcceptedPayload);
+    io.to(`user:${recipientUser._id}`).emit('mentorship:accepted', mentorshipAcceptedPayload);
+
     createAndEmitNotification({
       io,
       userId: requesterUser._id,
@@ -256,6 +284,7 @@ async function acceptMentorshipRequest(req, res) {
         id: directChatGroup._id,
         name: directChatGroup.name,
         displayName: directChatGroup.displayName,
+        groupType: directChatGroup.groupType || 'mentorship',
       },
     });
   } catch (error) {

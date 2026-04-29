@@ -21,6 +21,12 @@ const groupSchema = new mongoose.Schema({
     maxlength: [300, 'Description cannot exceed 300 characters'],
     default: '',
   },
+  groupType: {
+    type: String,
+    enum: ['group', 'mentorship'],
+    default: 'group',
+    index: true,
+  },
   pinnedMessage: {
     type: String,
     trim: true,

@@ -3875,7 +3875,7 @@
             saveNavState('profile');
         }
 
-        function showMessagesView() {
+        async function showMessagesView() {
             hideAllViews();
             document.getElementById('messages-view').style.display = 'block';
             const rightSidebar = document.querySelector('.right-sidebar');
@@ -3883,8 +3883,10 @@
             if (rightSidebar) rightSidebar.style.display = 'none';
             resetNavActive('messages');
             if (!messagesViewInitialized) {
-                initMessagesView();
+                await initMessagesView();
                 messagesViewInitialized = true;
+            } else {
+                await loadMyChatGroups();
             }
             // Ensure the last selected chat mode is reflected when revisiting
             setActiveChatTab(chatMode);
@@ -4247,6 +4249,24 @@
                 setNotificationCount(unreadNotificationCount + 1);
                 renderNotifications();
             });
+
+            socketClient.on('mentorship:accepted', async (payload) => {
+                if (!payload) return;
+
+                await refreshMentorshipRequestState();
+                await loadMyChatGroups();
+
+                if (chatMode === 'personal') {
+                    applyChatMode('personal');
+                } else if (document.getElementById('messages-view')?.style.display === 'block') {
+                    renderChatGroupList();
+                }
+
+                const acceptedChatGroupId = getEntityId(payload.chatGroupId || payload.chatGroup);
+                if (acceptedChatGroupId && chatMode === 'personal') {
+                    selectChatGroup(acceptedChatGroupId);
+                }
+            });
         }
 
         function initRealtimeSocket() {
@@ -4272,9 +4292,19 @@
             });
         }
 
+        function isMentorshipChatGroup(group) {
+            if (!group) return false;
+
+            if (group.groupType === 'mentorship') return true;
+            if (group.isMentorship) return true;
+
+            const name = String(group.name || '');
+            return name.startsWith('mentorship-') || name.startsWith('direct-');
+        }
+
         function getGroupsForMode(mode) {
             return chatGroups.filter((group) => {
-                const isMentorship = !!group.isMentorship;
+                const isMentorship = isMentorshipChatGroup(group);
 
                 if (mode === 'personal') return isMentorship;
                 return !isMentorship;
@@ -4402,49 +4432,87 @@
             list.innerHTML = '<div style="text-align:center;padding:12px;">Loading your groups...</div>';
 
             try {
-                // Fetch only the groups you are part of (created or joined)
-                const response = await fetch(API_BASE + '/groups/my', {
-                    headers: { 'Authorization': 'Bearer ' + token }
-                });
-                const data = await response.json();
+                const [groupsResponse, mentorshipResponse] = await Promise.all([
+                    fetch(API_BASE + '/groups/my', {
+                        headers: { 'Authorization': 'Bearer ' + token }
+                    }),
+                    fetch(API_BASE + '/mentorship/active', {
+                        headers: { 'Authorization': 'Bearer ' + token }
+                    }),
+                ]);
 
-                // If the API itself failed, show the actual error instead of
-                // a confusing "no groups" placeholder.
-                if (!response.ok || !data.success) {
-                    console.error('Failed to load groups:', data.message || response.statusText);
+                const [groupsData, mentorshipData] = await Promise.all([
+                    groupsResponse.json(),
+                    mentorshipResponse.json(),
+                ]);
+
+                if (!groupsResponse.ok || !groupsData.success) {
+                    console.error('Failed to load groups:', groupsData.message || groupsResponse.statusText);
                     chatGroups = [];
-                    list.innerHTML = `<div style="text-align:center;padding:12px;color:#fca5a5;">${data.message || 'Failed to load your groups'}</div>`;
+                    list.innerHTML = `<div style="text-align:center;padding:12px;color:#fca5a5;">${groupsData.message || 'Failed to load your groups'}</div>`;
                     return;
                 }
 
-                const groups = Array.isArray(data.groups) ? data.groups : [];
-                // DEBUG: Log fetched groups
-                console.log('Fetched groups from API:', groups);
-
-                if (groups.length > 0) {
-                    // Always mark groups with name starting 'mentorship-' as mentorship chats for both mentor and mentee.
-                    chatGroups = groups.map((g) => ({
-                        ...g,
-                        isMentorship: (typeof g.name === 'string' && g.name.startsWith('mentorship-'))
-                    }));
-                    // DEBUG: Log chatGroups after mapping
-                    console.log('chatGroups after mapping:', chatGroups);
-
-                    chatGroups.forEach((group) => {
-                        if (!Array.isArray(group.members)) return;
-                        group.members.forEach((member) => {
-                            const memberUser = member && member.userId ? member.userId : null;
-                            if (memberUser && typeof memberUser === 'object') {
-                                cachePresenceFromUser(memberUser);
-                            }
-                        });
-                    });
-
-                    renderChatGroupList();
-                } else {
-                    chatGroups = [];
-                    list.innerHTML = '<div style="text-align:center;padding:12px;">You are not in any groups yet. Create one or join with a code.</div>';
+                if (!mentorshipResponse.ok || !mentorshipData.success) {
+                    console.error('Failed to load active mentorships:', mentorshipData.message || mentorshipResponse.statusText);
                 }
+
+                const groups = Array.isArray(groupsData.groups) ? groupsData.groups : [];
+                const mentorships = Array.isArray(mentorshipData.mentorships) ? mentorshipData.mentorships : [];
+                const merged = new Map();
+
+                groups.forEach((group) => {
+                    if (!group || !group._id) return;
+                    const normalized = {
+                        ...group,
+                        groupType: group.groupType || (isMentorshipChatGroup(group) ? 'mentorship' : 'group'),
+                        isMentorship: isMentorshipChatGroup(group),
+                    };
+                    merged.set(String(group._id), normalized);
+                });
+
+                mentorships.forEach((mentorship) => {
+                    const group = mentorship && mentorship.chatGroupId ? mentorship.chatGroupId : null;
+                    const groupId = getEntityId(group);
+                    if (!groupId) return;
+
+                    const normalized = {
+                        ...group,
+                        _id: groupId,
+                        id: groupId,
+                        groupType: 'mentorship',
+                        isMentorship: true,
+                        mentorshipId: mentorship._id,
+                        chatGroupId: groupId,
+                        members: Array.isArray(group.members) ? group.members : [],
+                    };
+
+                    const existing = merged.get(String(groupId)) || {};
+                    merged.set(String(groupId), {
+                        ...existing,
+                        ...normalized,
+                        members: Array.isArray(existing.members) && existing.members.length ? existing.members : normalized.members,
+                    });
+                });
+
+                chatGroups = Array.from(merged.values());
+
+                chatGroups.forEach((group) => {
+                    if (!Array.isArray(group.members)) return;
+                    group.members.forEach((member) => {
+                        const memberUser = member && member.userId ? member.userId : null;
+                        if (memberUser && typeof memberUser === 'object') {
+                            cachePresenceFromUser(memberUser);
+                        }
+                    });
+                });
+
+                if (!chatGroups.length) {
+                    list.innerHTML = '<div style="text-align:center;padding:12px;">You are not in any groups yet. Create one or join with a code.</div>';
+                    return;
+                }
+
+                renderChatGroupList();
             } catch (error) {
                 console.error('Error loading groups:', error);
                 list.innerHTML = '<div style="text-align:center;padding:12px;color:#fca5a5;">Failed to load your groups</div>';
@@ -4490,7 +4558,7 @@
                         </div>
                         <div style="flex:1;min-width:0;">
                             <div style="font-size:0.9rem;color:var(--text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(title)}</div>
-                            <div style="font-size:0.75rem;color:var(--text-tertiary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${group.description ? escapeHtml(group.description) : (group.isMentorship ? 'Mentorship chat' : 'Group chat')}</div>
+                            <div style="font-size:0.75rem;color:var(--text-tertiary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${group.description ? escapeHtml(group.description) : (isMentorshipChatGroup(group) ? 'Mentorship chat' : 'Group chat')}</div>
                         </div>
                     </div>
                 `;
@@ -4749,7 +4817,7 @@
                 const title = group.displayName || group.name || 'Group chat';
                 const avatarUrl = group.avatarUrl || '';
                 const initials = getInitials(title);
-                const presenceLine = group.isMentorship
+                const presenceLine = isMentorshipChatGroup(group)
                     ? '<div id="chat-presence-line" style="font-size:0.78rem;color:var(--text-tertiary);margin-top:2px;">Last seen recently</div>'
                     : '';
 
@@ -4773,7 +4841,7 @@
                     ? `<img src="${escapeHtml(avatarUrl)}" alt="${escapeHtml(title)}" style="width:100%;height:100%;object-fit:cover;" />`
                     : initials;
 
-                const callActionHtml = group.isMentorship
+                const callActionHtml = isMentorshipChatGroup(group)
                     ? `<button id="chat-call-btn" type="button" class="chat-call-btn">Call</button>`
                     : '';
 
@@ -4807,7 +4875,7 @@
             }
 
             if (group && codeHint) {
-                if (group.joinCode && !group.isMentorship) {
+                if (group.joinCode && !isMentorshipChatGroup(group)) {
                     codeHint.style.display = 'block';
                     codeHint.textContent = `Share this code to invite others: ${group.joinCode}`;
                 } else {

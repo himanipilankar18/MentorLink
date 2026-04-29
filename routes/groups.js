@@ -148,9 +148,10 @@ router.get('/', verifyToken, apiLimiter, async (req, res) => {
   try {
     const groups = await Group.find({
       isActive: true,
-      name: {
-        $not: /^(mentorship-|direct-)/,
-      },
+      $and: [
+        { name: { $not: /^(mentorship-|direct-)/ } },
+        { $or: [{ groupType: { $ne: 'mentorship' } }, { groupType: { $exists: false } }] },
+      ],
     })
       .sort({ createdAt: -1 })
       .lean();
