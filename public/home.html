@@ -2184,10 +2184,6 @@
                     <span>Messages</span>
                     <span class="badge">6</span>
                 </a></li>
-                <li><a href="#" class="nav-item" id="forums-btn" data-nav="forums">
-                    <span class="icon">◍</span>
-                    <span>Forums</span>
-                </a></li>
                 <li><a href="#" class="nav-item" id="communities-btn" data-nav="communities">
                     <span class="icon">◐</span>
                     <span>Communities</span>
@@ -2447,15 +2443,6 @@
                 </div>
             </div>
 
-            <!-- Forums View -->
-            <div id="forums-view" style="display:none;">
-                <h2 style="font-size:1.6rem;margin-bottom:16px;color:var(--text-primary);">Forums</h2>
-                <div class="post-card">
-                    <div class="post-content" style="color:var(--text-secondary);">
-                        Forum threads and Q&A will be available here.
-                    </div>
-                </div>
-            </div>
 
             <!-- Friends View -->
             <div id="friends-view" style="display:none;">
@@ -3744,7 +3731,6 @@
                 'community-detail-view',
                 'profile-view',
                 'messages-view',
-                'forums-view',
                 'friends-view',
                 'media-view',
                 'find-people-view',
@@ -3799,9 +3785,6 @@
                     break;
                 case 'messages':
                     showMessagesView();
-                    break;
-                case 'forums':
-                    showForumsView();
                     break;
                 case 'friends':
                     showFriendsView();
@@ -4435,16 +4418,17 @@
                 }
 
                 const groups = Array.isArray(data.groups) ? data.groups : [];
+                // DEBUG: Log fetched groups
+                console.log('Fetched groups from API:', groups);
 
                 if (groups.length > 0) {
-                    // Mark only accepted mentorship-linked private chats as personal.
+                    // Always mark groups with name starting 'mentorship-' as mentorship chats for both mentor and mentee.
                     chatGroups = groups.map((g) => ({
                         ...g,
-                        isMentorship: (
-                            (typeof g.name === 'string' && g.name.startsWith('mentorship-'))
-                            || Object.values(mentorshipStateByUserId || {}).some((state) => getEntityId(state?.request?.chatGroupId) === String(g._id))
-                        ),
+                        isMentorship: (typeof g.name === 'string' && g.name.startsWith('mentorship-'))
                     }));
+                    // DEBUG: Log chatGroups after mapping
+                    console.log('chatGroups after mapping:', chatGroups);
 
                     chatGroups.forEach((group) => {
                         if (!Array.isArray(group.members)) return;
@@ -5304,14 +5288,6 @@
             }
         }
 
-        function showForumsView() {
-            hideAllViews();
-            document.getElementById('forums-view').style.display = 'block';
-            const rightSidebar = document.querySelector('.right-sidebar');
-            if (rightSidebar) rightSidebar.style.display = 'block';
-            resetNavActive('forums');
-            saveNavState('forums');
-        }
 
         function showFriendsView() {
             hideAllViews();
@@ -8931,10 +8907,6 @@
             navigateTo('messages');
         });
 
-        document.getElementById('forums-btn')?.addEventListener('click', (e) => {
-            e.preventDefault();
-            navigateTo('forums');
-        });
 
         document.getElementById('communities-btn')?.addEventListener('click', (e) => {
             e.preventDefault();
