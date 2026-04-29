@@ -24,7 +24,7 @@ export default function Landing() {
       <div className="landing-container">
         {/* Header */}
         <header className="header">
-          <div className="logo-text">MentorLink</div>
+          <div className="logo-text">MentorConnect</div>
           <nav className="nav-right">
             <a href="#home" className="nav-link">Home</a>
             <a href={`${API_BASE}/login.html`} className="nav-link">Login</a>
@@ -36,7 +36,7 @@ export default function Landing() {
         <section className="hero-center">
           <h1>
             Connect, Grow, Thrive
-            <span className="sub">MentorLink</span>
+            <span className="sub">MentorConnect</span>
           </h1>
           <p>
             Real connections. Real growth. Join the community where mentorship transforms futures.

@@ -176,6 +176,7 @@ router.get('/my', verifyToken, apiLimiter, async (req, res) => {
   try {
     const groups = await Group.find({
       isActive: true,
+      hiddenFor: { $ne: req.user._id },
       $or: [
         { 'members.userId': req.user._id },
         { creatorId: req.user._id },
@@ -232,6 +233,9 @@ router.post('/join', verifyToken, apiLimiter, async (req, res) => {
 
     const isMember = group.members.some((m) => String(m.userId) === String(req.user._id));
     if (isMember) {
+      group.hiddenFor = (group.hiddenFor || []).filter((userId) => String(userId) !== String(req.user._id));
+      await group.save();
+
       return res.json({
         success: true,
         message: 'You are already a member of this group',
@@ -244,6 +248,7 @@ router.post('/join', verifyToken, apiLimiter, async (req, res) => {
       role: 'member',
     });
 
+    group.hiddenFor = (group.hiddenFor || []).filter((userId) => String(userId) !== String(req.user._id));
     await group.save();
 
     res.json({

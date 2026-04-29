@@ -63,6 +63,11 @@ const groupSchema = new mongoose.Schema({
       default: Date.now,
     },
   }],
+  hiddenFor: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    index: true,
+  }],
   isActive: {
     type: Boolean,
     default: true,

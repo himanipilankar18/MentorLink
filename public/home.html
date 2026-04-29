@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>News Feed · MentorLink</title>
+    <title>News Feed · MentorConnect</title>
     <style>
         :root {
             --bg-dark: #0a0a0a;
@@ -1300,6 +1300,31 @@
             cursor: not-allowed;
         }
 
+        .chat-delete-btn {
+            border-radius: 999px;
+            padding: 7px 12px;
+            border: 1px solid rgba(248, 113, 113, 0.55);
+            background: rgba(127, 29, 29, 0.18);
+            color: #fecaca;
+            font-size: 0.78rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            white-space: nowrap;
+        }
+
+        .chat-delete-btn:hover:enabled {
+            background: rgba(220, 38, 38, 0.28);
+            border-color: rgba(248, 113, 113, 0.85);
+            color: #fff;
+            transform: translateY(-1px);
+        }
+
+        .chat-delete-btn:disabled {
+            opacity: 0.65;
+            cursor: not-allowed;
+        }
+
         .chat-call-overlay {
             display: none;
             position: fixed;
@@ -2113,7 +2138,7 @@
 <body>
         <header class="app-header">
             <div class="app-header-inner">
-                <div class="app-logo">MentorLink</div>
+                <div class="app-logo">MentorConnect</div>
                 <div class="header-actions" id="header-actions">
                     <div class="header-project-search">
                         <input id="project-search-input" class="header-project-input" type="text" placeholder="Search projects (e.g. donation)">
@@ -2652,6 +2677,18 @@
         </div>
     </div>
 
+    <!-- Dialog: Delete Chat Confirmation -->
+    <div id="chat-delete-modal" class="modal-overlay modal-hidden">
+        <div class="modal-card" style="max-width:420px;">
+            <div class="modal-title">Delete chat</div>
+            <p id="chat-delete-message" class="modal-subtitle">This chat will be removed from your Messages list.</p>
+            <div class="modal-actions">
+                <button type="button" id="chat-delete-cancel" class="btn-ghost" data-close-modal="chat-delete-modal">Cancel</button>
+                <button type="button" id="chat-delete-confirm" class="btn-send" style="background:#ef4444;border-color:#ef4444;">Delete</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Dialog: Group Created (shows join code) -->
     <div id="group-created-modal" class="modal-overlay modal-hidden">
         <div class="modal-card" style="max-width:440px;">
@@ -2830,7 +2867,7 @@
     <div id="chat-call-banner" class="chat-call-overlay" role="dialog" aria-modal="true" aria-label="Incoming call">
         <div class="incoming-call-card">
             <div class="incoming-call-head">
-                <strong>MentorLink</strong>
+                <strong>MentorConnect</strong>
                 <span id="incoming-call-state-badge">Incoming call</span>
             </div>
             <div id="incoming-call-caller-avatar" class="incoming-call-avatar">SC</div>
@@ -2853,6 +2890,7 @@
         let chatPollIntervalId = null;
         let chatGroups = [];
         let chatMode = 'groups'; // 'groups' or 'personal' or 'direct'
+        let pendingChatDeleteGroupId = null;
         let socketClient = null;
         const presenceByUserId = {};
         const typingUsersByGroupId = {};
@@ -3890,6 +3928,8 @@
             const callDeclineBtn = document.getElementById('chat-call-decline-btn');
             const callEndBtn = document.getElementById('chat-call-end-btn');
 
+            bindChatDeleteModalActions();
+
             if (sendBtn) {
                 sendBtn.addEventListener('click', sendChatMessage);
             }
@@ -4006,7 +4046,7 @@
                 });
 
             // Click outside card closes modal
-            ['create-group-modal', 'join-group-modal', 'group-details-modal', 'create-community-modal', 'group-created-modal', 'community-post-modal', 'community-edit-modal', 'post-delete-modal', 'mentorship-request-modal', 'mentorship-reject-modal', 'user-profile-modal'].forEach((id) => {
+            ['create-group-modal', 'join-group-modal', 'group-details-modal', 'create-community-modal', 'group-created-modal', 'community-post-modal', 'community-edit-modal', 'post-delete-modal', 'chat-delete-modal', 'mentorship-request-modal', 'mentorship-reject-modal', 'user-profile-modal'].forEach((id) => {
                 const overlay = document.getElementById(id);
                 if (!overlay) return;
                 overlay.addEventListener('click', (e) => {
@@ -4764,6 +4804,7 @@
                             ${presenceLine}
                         </div>
                         ${callActionHtml}
+                        <button id="chat-delete-btn" type="button" class="chat-delete-btn" title="Delete chat messages">Delete</button>
                     </div>
                 `;
 
@@ -4775,6 +4816,8 @@
                         startDirectCallFromActiveChat();
                     });
                 }
+
+                bindChatDeleteButton();
 
                 updateActiveChatPresenceLine();
             }
@@ -5014,6 +5057,134 @@
                 console.error('Error sending chat message:', error);
                 alert('Failed to send message');
             }
+        }
+
+        async function deleteSelectedChatMessages() {
+            const groupId = currentChatGroupId;
+            if (!groupId) {
+                alert('Please select a chat first');
+                return;
+            }
+
+            const group = chatGroups.find((g) => String(g._id) === String(groupId));
+            const title = group ? (group.displayName || group.name || 'this chat') : 'this chat';
+            pendingChatDeleteGroupId = groupId;
+
+            const messageEl = document.getElementById('chat-delete-message');
+            if (messageEl) {
+                messageEl.textContent = `Delete ${title}? This chat will be removed from your Messages list.`;
+            }
+
+            openModal('chat-delete-modal');
+        }
+
+        async function confirmDeleteSelectedChat() {
+            const groupId = pendingChatDeleteGroupId;
+            if (!groupId) return;
+
+            const group = chatGroups.find((g) => String(g._id) === String(groupId));
+
+            const deleteBtn = document.getElementById('chat-delete-confirm');
+            if (deleteBtn) {
+                deleteBtn.disabled = true;
+                deleteBtn.textContent = 'Deleting...';
+            }
+
+            try {
+                let response = await fetch(API_BASE + `/chat/group/${groupId}/messages`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': 'Bearer ' + token,
+                    },
+                });
+
+                if (response.status === 404 || response.status === 405) {
+                    response = await fetch(API_BASE + `/chat/group/${groupId}/messages/delete`, {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': 'Bearer ' + token,
+                        },
+                    });
+                }
+
+                const data = await response.json();
+                if (!response.ok || !data.success) {
+                    alert(data.message || 'Failed to delete chat');
+                    return;
+                }
+
+                chatGroups = chatGroups.filter((item) => String(item._id) !== String(groupId));
+                closeModal('chat-delete-modal');
+                pendingChatDeleteGroupId = null;
+
+                if (String(currentChatGroupId) === String(groupId)) {
+                    selectChatGroup(null);
+                }
+
+                renderChatGroupList();
+
+                const groupsToShow = getGroupsForMode(chatMode);
+                if (groupsToShow.length) {
+                    selectChatGroup(groupsToShow[0]._id);
+                }
+
+                if (group) {
+                    await loadMyChatGroups();
+                }
+            } catch (error) {
+                console.error('Error deleting chat:', error);
+                alert('Failed to delete chat');
+            } finally {
+                if (deleteBtn) {
+                    deleteBtn.disabled = false;
+                    deleteBtn.textContent = 'Delete';
+                }
+            }
+        }
+
+        function resetPendingChatDelete() {
+            pendingChatDeleteGroupId = null;
+            const deleteBtn = document.getElementById('chat-delete-confirm');
+            if (deleteBtn) {
+                deleteBtn.disabled = false;
+                deleteBtn.textContent = 'Delete';
+            }
+        }
+
+        function bindChatDeleteModalActions() {
+            const confirmBtn = document.getElementById('chat-delete-confirm');
+            const cancelBtn = document.getElementById('chat-delete-cancel');
+
+            if (confirmBtn && confirmBtn.dataset.chatDeleteBound !== '1') {
+                confirmBtn.dataset.chatDeleteBound = '1';
+                confirmBtn.addEventListener('click', confirmDeleteSelectedChat);
+            }
+
+            if (cancelBtn && cancelBtn.dataset.chatDeleteBound !== '1') {
+                cancelBtn.dataset.chatDeleteBound = '1';
+                cancelBtn.addEventListener('click', resetPendingChatDelete);
+            }
+
+            const modal = document.getElementById('chat-delete-modal');
+            if (modal && modal.dataset.chatDeleteBound !== '1') {
+                modal.dataset.chatDeleteBound = '1';
+                modal.addEventListener('click', (event) => {
+                    if (event.target === modal) {
+                        resetPendingChatDelete();
+                    }
+                });
+            }
+        }
+
+        function bindChatDeleteButton() {
+            const deleteBtn = document.getElementById('chat-delete-btn');
+            if (!deleteBtn) return;
+
+            deleteBtn.addEventListener('click', (event) => {
+                event.preventDefault();
+                event.stopPropagation();
+                deleteSelectedChatMessages();
+            });
         }
 
         async function handleCreateGroup() {

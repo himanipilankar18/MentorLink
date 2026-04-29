@@ -58,6 +58,20 @@ async function ensureChatAccess(groupId, userId) {
   return { group };
 }
 
+async function ensureGroupMemberAccess(groupId, userId) {
+  const group = await Group.findById(groupId);
+  if (!group || !group.isActive) {
+    return { error: { status: 404, message: 'Group not found' } };
+  }
+
+  const isMember = group.members.some((m) => String(m.userId) === String(userId));
+  if (!isMember) {
+    return { error: { status: 403, message: 'You are not a member of this group' } };
+  }
+
+  return { group };
+}
+
 // @route   GET /api/chat/group/:id/messages
 // @desc    Get recent chat messages for a group (separate from communities)
 // @access  Private (any authenticated user)
@@ -158,5 +172,38 @@ router.post('/group/:id/messages', verifyToken, apiLimiter, async (req, res) => 
     });
   }
 });
+
+async function deleteGroupMessages(req, res) {
+  try {
+    const { error } = await ensureGroupMemberAccess(req.params.id, req.user._id);
+    if (error) {
+      return res.status(error.status).json({ success: false, message: error.message });
+    }
+
+    await Group.updateOne(
+      { _id: req.params.id },
+      { $addToSet: { hiddenFor: req.user._id } },
+    );
+
+    return res.json({
+      success: true,
+      message: 'Chat removed from your messages',
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to delete chat',
+      error: error.message,
+    });
+  }
+}
+
+// @route   DELETE /api/chat/group/:id/messages
+// @desc    Remove a group or private mentorship chat from current user's Messages list
+// @access  Private (group member)
+router.delete('/group/:id/messages', verifyToken, apiLimiter, deleteGroupMessages);
+
+// Compatibility alias for clients/proxies that strip or mishandle DELETE on nested paths.
+router.post('/group/:id/messages/delete', verifyToken, apiLimiter, deleteGroupMessages);
 
 module.exports = router;
