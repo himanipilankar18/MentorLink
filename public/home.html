@@ -5595,6 +5595,12 @@
             return counterpartMember.userId || counterpartMember;
         }
 
+        // Backward-compatible alias used by call flow
+        function getCounterpartForDirectChat(group) {
+            // Reuse the existing personal-chat counterpart logic
+            return getCounterpartForPersonalChat(group);
+        }
+
         function updateActiveChatPresenceLine() {
             const line = document.getElementById('chat-presence-line');
             if (!line) return;
@@ -5723,7 +5729,7 @@
 
         function getCallContextForGroup(groupId) {
             const group = chatGroups.find((g) => String(g._id) === String(groupId));
-            if (!group || !group.isMentorship) return null;
+            if (!group || !isMentorshipChatGroup(group)) return null;
 
             const targetUser = getCounterpartForDirectChat(group);
             const targetUserId = getUserId(targetUser);
