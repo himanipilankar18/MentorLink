@@ -17,6 +17,138 @@ function normalizeTextArray(values) {
   return Array.from(new Set(normalized));
 }
 
+function tokenizeProfileText(text) {
+  if (text === null || text === undefined) return [];
+
+  const normalized = String(text)
+    .toLowerCase()
+    .replace(/https?:\/\/\S+/gi, ' ')
+    .replace(/[_]+/g, ' ')
+    .replace(/[^a-z0-9\s+.#/\-]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+  if (!normalized) return [];
+
+  return normalized
+    .split(/\s+/)
+    .map((token) => token.trim())
+    .filter((token) => token && token.length > 1 && !/^[-.#+/]+$/.test(token));
+}
+
+function buildProfileText(user) {
+  const tokens = [];
+
+  if (!user || typeof user !== 'object') return '';
+
+  const addText = (value) => {
+    if (value === null || value === undefined) return;
+    if (Array.isArray(value)) {
+      value.forEach((item) => addText(item));
+      return;
+    }
+
+    if (typeof value === 'object') {
+      Object.values(value).forEach((item) => addText(item));
+      return;
+    }
+
+    const tokenized = tokenizeProfileText(String(value));
+    if (tokenized.length) tokens.push(...tokenized);
+  };
+
+  addText(user.skills);
+  addText(user.interests);
+  addText(user.bio);
+
+  if (Array.isArray(user.projects)) {
+    user.projects.forEach((project) => {
+      addText(project && project.title);
+      addText(project && project.description);
+      addText(project && project.technologies);
+    });
+  }
+
+  return Array.from(new Set(tokens)).join(' ');
+}
+
+function calculateTfIdf(documents) {
+  const validDocuments = documents.map((document) => {
+    if (Array.isArray(document)) return document.filter(Boolean);
+    return tokenizeProfileText(document);
+  });
+
+  const vocabulary = Array.from(new Set(validDocuments.flat())).sort();
+  const vocabIndex = new Map(vocabulary.map((term, index) => [term, index]));
+  const documentCount = validDocuments.length || 1;
+
+  const documentFrequency = new Map();
+  validDocuments.forEach((document) => {
+    const uniqueTerms = new Set(document);
+    uniqueTerms.forEach((term) => {
+      documentFrequency.set(term, (documentFrequency.get(term) || 0) + 1);
+    });
+  });
+
+  const idfMap = new Map();
+  vocabulary.forEach((term) => {
+    const df = documentFrequency.get(term) || 0;
+    idfMap.set(term, Math.log((1 + documentCount) / (1 + df)) + 1);
+  });
+
+  const vectors = validDocuments.map((document) => {
+    const vector = new Array(vocabulary.length).fill(0);
+    if (!document.length) return vector;
+
+    const termCounts = {};
+    document.forEach((term) => {
+      termCounts[term] = (termCounts[term] || 0) + 1;
+    });
+
+    Object.entries(termCounts).forEach(([term, count]) => {
+      const index = vocabIndex.get(term);
+      if (index === undefined) return;
+
+      const tf = count / document.length;
+      const idf = idfMap.get(term) || 1;
+      vector[index] = tf * idf;
+    });
+
+    return vector;
+  });
+
+  return {
+    vocabulary,
+    vectors,
+    documentFrequency,
+    idfMap,
+  };
+}
+
+function cosineSimilarity(vectorA, vectorB) {
+  if (!Array.isArray(vectorA) || !Array.isArray(vectorB)) return 0;
+
+  const length = Math.max(vectorA.length, vectorB.length);
+  let dotProduct = 0;
+  let magnitudeA = 0;
+  let magnitudeB = 0;
+
+  for (let i = 0; i < length; i += 1) {
+    const a = Number(vectorA[i] || 0);
+    const b = Number(vectorB[i] || 0);
+    dotProduct += a * b;
+    magnitudeA += a * a;
+    magnitudeB += b * b;
+  }
+
+  magnitudeA = Math.sqrt(magnitudeA);
+  magnitudeB = Math.sqrt(magnitudeB);
+
+  if (!magnitudeA || !magnitudeB) return 0;
+
+  return clamp(dotProduct / (magnitudeA * magnitudeB), 0, 1);
+}
+
 function profileStrength(user) {
   let score = 0;
 
@@ -252,7 +384,15 @@ function jaccardSimilarity(setA, setB) {
   return union === 0 ? 0 : intersection / union;
 }
 
-function calculateCompatibilityBreakdown(mentee, mentor, analytics, clusterDistance, isPrimaryCluster) {
+function calculateCompatibilityBreakdown(
+  mentee,
+  mentor,
+  analytics,
+  clusterDistance,
+  isPrimaryCluster,
+  contentSimilarity = 0,
+  sharedContentTokens = [],
+) {
   const menteeNeeds = new Set([
     ...normalizeTextArray(mentee.interests),
     ...normalizeTextArray(mentee.skills),
@@ -270,35 +410,48 @@ function calculateCompatibilityBreakdown(mentee, mentor, analytics, clusterDista
   const mentorQuality = clamp((toNumber(analytics.avgSatisfaction, 0) / 5) * 0.6 + toNumber(analytics.completionRate, 0) * 0.4, 0, 1);
   const activitySignal = clamp((toNumber(analytics.totalInteractions, 0) / 60) * 0.5 + toNumber(analytics.recencyScore, 0) * 0.5, 0, 1);
   const clusterFit = clamp(1 - clusterDistance, 0, 1);
+  const mentorProfileStrength = profileStrength(mentor);
+  const normalizedContentSimilarity = clamp(toNumber(contentSimilarity, 0), 0, 1);
 
   const weightedScore = (
-    skillAlignment * 0.28 +
-    sameDepartment * 0.1 +
-    yearProgression * 0.1 +
+    skillAlignment * 0.20 +
+    normalizedContentSimilarity * 0.12 +
+    sameDepartment * 0.10 +
+    yearProgression * 0.10 +
     availability * 0.08 +
     mentorQuality * 0.18 +
     activitySignal * 0.11 +
-    profileStrength(mentor) * 0.1 +
-    clusterFit * 0.05
+    mentorProfileStrength * 0.08 +
+    clusterFit * 0.03
   );
 
-  const clusterBonus = isPrimaryCluster ? 0.08 : 0;
+  const clusterBonus = isPrimaryCluster ? 0.05 : 0;
   const finalScore = clamp(weightedScore + clusterBonus, 0, 1);
+
+  let contentExplanation = 'Limited textual profile overlap.';
+  if (normalizedContentSimilarity >= 0.7) {
+    contentExplanation = 'Strong profile overlap across skills, interests, bio, and project experience.';
+  } else if (normalizedContentSimilarity >= 0.3) {
+    contentExplanation = 'Moderate profile similarity based on shared skills, interests, and profile information.';
+  }
 
   return {
     finalScore,
     score: Math.round(finalScore * 100),
     components: {
       skillAlignment: Math.round(skillAlignment * 100),
+      contentSimilarity: Math.round(normalizedContentSimilarity * 100),
       departmentMatch: Math.round(sameDepartment * 100),
       academicProgression: Math.round(yearProgression * 100),
       availabilityMatch: Math.round(availability * 100),
       mentorQuality: Math.round(mentorQuality * 100),
       activitySignal: Math.round(activitySignal * 100),
-      profileStrength: Math.round(profileStrength(mentor) * 100),
+      profileStrength: Math.round(mentorProfileStrength * 100),
       clusterFit: Math.round(clusterFit * 100),
       clusterBonus: Math.round(clusterBonus * 100),
     },
+    sharedContentTokens: Array.from(new Set((sharedContentTokens || []).map(String))).slice(0, 8),
+    explanation: contentExplanation,
   };
 }
 
@@ -433,6 +586,11 @@ function generateMentorRecommendations({
   const vocabulary = buildSkillVocabulary(mentee, eligibleMentors);
   const mentorVectors = eligibleMentors.map((mentor) => buildMentorFeatureVector(mentor, mentee, vocabulary, mentorAnalytics));
 
+  const profileDocuments = [buildProfileText(mentee), ...eligibleMentors.map((mentor) => buildProfileText(mentor))];
+  const tfidf = calculateTfIdf(profileDocuments);
+  const menteeProfileTokens = tokenizeProfileText(profileDocuments[0]);
+  const mentorSimilarityVectors = tfidf.vectors.slice(1);
+
   const k = chooseClusterCount(eligibleMentors.length);
   const clusteringResult = runKMeans(mentorVectors, k);
 
@@ -457,12 +615,24 @@ function generateMentorRecommendations({
     const clusterDistanceNormalized = clamp(clusterDistance / Math.sqrt(mentorVectors[index].length || 1), 0, 1);
     const isPrimaryCluster = assignedCluster === selectedCluster;
     const analytics = mentorAnalytics[mentorId] || {};
+    const mentorProfileTokens = tokenizeProfileText(buildProfileText(mentor));
+    const mentorTokenSet = new Set(mentorProfileTokens);
+    const sharedContentTokens = Array.from(new Set(menteeProfileTokens.filter((token) => mentorTokenSet.has(token))))
+      .sort()
+      .slice(0, 8);
+
+    const contentSimilarity = tfidf.vectors[0] && mentorSimilarityVectors[index]
+      ? cosineSimilarity(tfidf.vectors[0], mentorSimilarityVectors[index])
+      : 0;
+
     const scoreDetails = calculateCompatibilityBreakdown(
       mentee,
       mentor,
       analytics,
       clusterDistanceNormalized,
       isPrimaryCluster,
+      contentSimilarity,
+      sharedContentTokens,
     );
 
     return {
@@ -477,6 +647,8 @@ function generateMentorRecommendations({
       },
       matchScore: scoreDetails.score,
       scoreComponents: scoreDetails.components,
+      sharedContentTokens: scoreDetails.sharedContentTokens,
+      contentExplanation: scoreDetails.explanation,
       cluster: {
         clusterId: assignedCluster,
         isPrimaryCluster,
@@ -503,4 +675,8 @@ function generateMentorRecommendations({
 
 module.exports = {
   generateMentorRecommendations,
+  buildProfileText,
+  tokenizeProfileText,
+  cosineSimilarity,
+  calculateTfIdf,
 };

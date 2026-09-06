@@ -126,10 +126,7 @@ router.get('/mentors', verifyToken, apiLimiter, async (req, res) => {
       mentorshipIntent: { $in: ['offering', 'both'] },
     };
 
-    if (department) {
-      mentorQuery.department = department;
-    }
-
+    // Department is treated as a soft preference signal for scoring, not a hard eligibility requirement.
     const candidateMentors = await User.find(mentorQuery)
       .select('-password')
       .lean();

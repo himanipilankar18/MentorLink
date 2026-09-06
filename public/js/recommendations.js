@@ -74,6 +74,7 @@ const RecommendationEngine = {
       <hr style="border:none;border-top:1px solid rgba(255,255,255,0.16);margin:8px 0 9px;">
       <div class="ml-tooltip-body">
         <div class="ml-tooltip-metric"><span>🎯 Skill Match</span><span>${c.skillAlignment || 0}%</span></div>
+        <div class="ml-tooltip-metric"><span>🧠 Profile Match</span><span>${c.contentSimilarity || 0}%</span></div>
         <div class="ml-tooltip-metric"><span>⭐ Mentor Quality</span><span>${c.mentorQuality || 0}%</span></div>
         <div class="ml-tooltip-metric"><span>📊 Activity Level</span><span>${c.activitySignal || 0}%</span></div>
         <div class="ml-tooltip-metric"><span>👤 Profile</span><span>${c.profileStrength || 0}%</span></div>
