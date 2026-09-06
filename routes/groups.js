@@ -9,6 +9,11 @@ const { apiLimiter } = require('../middleware/security');
 const router = express.Router();
 
 // Helper utilities for roles/permissions
+function isPrivateMentorshipGroup(group) {
+  const name = typeof group?.name === 'string' ? group.name : '';
+  return name.startsWith('mentorship-') || name.startsWith('direct-');
+}
+
 function getMemberRole(group, userId) {
   if (!group || !Array.isArray(group.members)) return null;
   const member = group.members.find((m) => String(m.userId) === String(userId));
@@ -141,7 +146,13 @@ router.post('/', verifyToken, apiLimiter, async (req, res) => {
 // @access  Private
 router.get('/', verifyToken, apiLimiter, async (req, res) => {
   try {
-    const groups = await Group.find({ isActive: true })
+    const groups = await Group.find({
+      isActive: true,
+      $and: [
+        { name: { $not: /^(mentorship-|direct-)/ } },
+        { $or: [{ groupType: { $ne: 'mentorship' } }, { groupType: { $exists: false } }] },
+      ],
+    })
       .sort({ createdAt: -1 })
       .lean();
 
@@ -166,6 +177,7 @@ router.get('/my', verifyToken, apiLimiter, async (req, res) => {
   try {
     const groups = await Group.find({
       isActive: true,
+      hiddenFor: { $ne: req.user._id },
       $or: [
         { 'members.userId': req.user._id },
         { creatorId: req.user._id },
@@ -213,8 +225,18 @@ router.post('/join', verifyToken, apiLimiter, async (req, res) => {
       });
     }
 
+    if (isPrivateMentorshipGroup(group)) {
+      return res.status(403).json({
+        success: false,
+        message: 'Private mentorship chats cannot be joined by code',
+      });
+    }
+
     const isMember = group.members.some((m) => String(m.userId) === String(req.user._id));
     if (isMember) {
+      group.hiddenFor = (group.hiddenFor || []).filter((userId) => String(userId) !== String(req.user._id));
+      await group.save();
+
       return res.json({
         success: true,
         message: 'You are already a member of this group',
@@ -227,6 +249,7 @@ router.post('/join', verifyToken, apiLimiter, async (req, res) => {
       role: 'member',
     });
 
+    group.hiddenFor = (group.hiddenFor || []).filter((userId) => String(userId) !== String(req.user._id));
     await group.save();
 
     res.json({

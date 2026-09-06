@@ -10,7 +10,7 @@ const notificationSchema = new mongoose.Schema({
   type: {
     type: String,
     required: true,
-    enum: ['MENTORSHIP_REQUEST', 'REQUEST_ACCEPTED', 'REQUEST_REJECTED', 'NEW_MESSAGE'],
+    enum: ['MENTORSHIP_REQUEST', 'REQUEST_ACCEPTED', 'REQUEST_REJECTED', 'NEW_MESSAGE', 'NEW_FOLLOWER'],
   },
   message: {
     type: String,

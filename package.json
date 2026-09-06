@@ -7,6 +7,15 @@
     "start": "node server.js",
     "server": "node server.js",
     "dev": "npm run dev --prefix frontend",
+    "uploads:import": "powershell -ExecutionPolicy Bypass -File scripts/import-uploads.ps1",
+    "uploads:backup": "powershell -ExecutionPolicy Bypass -File scripts/backup-uploads.ps1",
+    "admin:create-first": "node scripts/create-first-admin.js",
+    "users:delete-all": "node scripts/delete-all-users.js",
+    "users:setup-test": "node scripts/setup-test-users.js",
+    "email:test": "node scripts/test-email.js",
+    "registration:test": "node scripts/test-registration.js",
+    "atlas:check": "node scripts/check-atlas-reachability.js",
+    "uploads:cleanup-orphans": "node scripts/cleanup-orphan-content.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [
@@ -20,6 +29,7 @@
   "dependencies": {
     "bcryptjs": "^2.4.3",
     "cors": "^2.8.5",
+    "csv-parse": "^6.2.1",
     "dotenv": "^16.3.1",
     "express": "^4.18.2",
     "express-rate-limit": "^7.1.5",
