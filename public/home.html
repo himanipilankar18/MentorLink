@@ -2197,9 +2197,9 @@
                     <span>Requests</span>
                     <span class="badge">3</span>
                 </a></li>
-                <li><a href="#" class="nav-item" id="find-people-btn" data-nav="find-people">
+                <li><a href="#" class="nav-item" id="find-mentor-btn" data-nav="find-mentor">
                     <span class="icon">◎</span>
-                    <span>Find People</span>
+                    <span>Find Mentor</span>
                 </a></li>
                 <li><a href="#" class="nav-item" id="media-btn" data-nav="media">
                     <span class="icon">◈</span>
@@ -2477,21 +2477,17 @@
                 </div>
             </div>
 
-            <!-- Find People View -->
-            <div id="find-people-view" style="display:none;">
-                <h2 style="font-size:1.6rem;margin-bottom:8px;color:var(--text-primary);">Find People</h2>
-                <div style="color:var(--text-secondary);font-size:0.9rem;margin-bottom:16px;">Cluster people by skills, interests, and project themes.</div>
-
-                <div id="find-people-cluster-toolbar" class="cluster-toolbar">
-                    <button type="button" class="cluster-chip active" data-cluster-key="ml-experts">ML Experts</button>
-                    <button type="button" class="cluster-chip" data-cluster-key="web-dev">Web Dev</button>
-                    <button type="button" class="cluster-chip" data-cluster-key="app-dev">App Dev</button>
-                    <button type="button" class="cluster-chip" data-cluster-key="data-analytics">Data Analytics</button>
-                    <button type="button" class="cluster-chip" data-cluster-key="open-source">Open Source</button>
+            <!-- Find Mentor View -->
+            <div id="find-mentor-view" style="display:none;">
+                <div style="display:flex;justify-content:space-between;align-items:flex-end;gap:16px;margin-bottom:24px;flex-wrap:wrap;">
+                    <div>
+                        <h2 style="font-size:1.8rem;margin:0 0 8px;color:var(--text-primary);">Find Mentor</h2>
+                        <p style="color:var(--text-secondary);font-size:0.92rem;margin:0;">Personalized mentors ranked by your skills, interests, activity, and compatibility.</p>
+                    </div>
+                    <button type="button" class="btn-send" id="refresh-mentor-recommendations">Refresh matches</button>
                 </div>
-
-                <div id="find-people-cluster-status" class="cluster-status">Loading cluster...</div>
-                <div id="find-people-results"></div>
+                <div id="find-mentor-status" style="color:var(--text-secondary);font-size:0.85rem;margin-bottom:16px;"></div>
+                <div id="find-mentor-recommendations" class="mentor-recommendations-grid"></div>
             </div>
 
             <!-- Settings View -->
@@ -2505,21 +2501,6 @@
             </div>
         </main>
 
-        <aside class="right-sidebar">
-            <div class="section-title">People</div>
-            <div style="margin-bottom:12px;">
-                <input id="user-search-input" type="text" placeholder="Search by name..." 
-                    style="width:100%;padding:8px 10px;border-radius:999px;border:1px solid var(--border-subtle);background:rgba(15,23,42,0.9);color:var(--text-primary);font-size:0.85rem;" />
-            </div>
-            <div id="user-search-results" class="suggestion-list" style="margin-bottom:20px;"></div>
-
-            <div class="section-title">Suggestions</div>
-            <div class="suggestion-list" id="suggestions-container">
-                <div class="loading" style="text-align:center;padding:20px;color:var(--text-secondary);font-size:0.85rem;">
-                    Loading suggestions...
-                </div>
-            </div>
-        </aside>
     </div>
 
     <!-- Dialog: Create Group -->
@@ -3733,7 +3714,7 @@
                 'messages-view',
                 'friends-view',
                 'media-view',
-                'find-people-view',
+                'find-mentor-view',
                 'settings-view'
             ];
             ids.forEach(id => {
@@ -3792,8 +3773,8 @@
                 case 'media':
                     showMediaView();
                     break;
-                case 'find-people':
-                    showFindPeopleView();
+                case 'find-mentor':
+                    showFindMentorView();
                     break;
                 case 'settings':
                     showSettingsView();
@@ -5376,16 +5357,21 @@
             saveNavState('media');
         }
 
-        function showFindPeopleView() {
+        function showFindMentorView() {
             hideAllViews();
-            document.getElementById('find-people-view').style.display = 'block';
-            const rightSidebar = document.querySelector('.right-sidebar');
-            if (rightSidebar) rightSidebar.style.display = 'none';
-            resetNavActive('find-people');
-            initFindPeopleClusters();
-            loadFindPeopleCluster(activeFindPeopleCluster);
-            saveNavState('find-people');
+            document.getElementById('find-mentor-view').style.display = 'block';
+            resetNavActive('find-mentor');
+            if (window.RecommendationEngine && typeof window.RecommendationEngine.initializeRecommendations === 'function') {
+                window.RecommendationEngine.initializeRecommendations('find-mentor-recommendations');
+            }
+            saveNavState('find-mentor');
         }
+
+        document.getElementById('refresh-mentor-recommendations')?.addEventListener('click', () => {
+            if (window.RecommendationEngine && typeof window.RecommendationEngine.resetRecommendations === 'function') {
+                window.RecommendationEngine.resetRecommendations('find-mentor-recommendations');
+            }
+        });
 
         function showSettingsView() {
             hideAllViews();
@@ -8015,85 +8001,6 @@
             loadOtherUserProfile(userId);
         }
 
-        // Load user suggestions
-        async function loadSuggestions() {
-            try {
-                const response = await fetch(API_BASE + '/users/suggestions?limit=5', {
-                    headers: { 'Authorization': 'Bearer ' + token }
-                });
-                const data = await response.json();
-                
-                const container = document.getElementById('suggestions-container');
-                
-                if (data.success && data.users && data.users.length > 0) {
-                    const suggestionsHTML = data.users.map(user => {
-                        const initials = getInitials(user.name || 'User');
-                        const isFollowing = !!user.isFollowing;
-                        const userId = user.id || user._id;
-                        return `
-                            <div class="suggestion-item" data-user-id="${userId}">
-                                <div class="avatar-sm" data-user-id="${userId}">${initials}</div>
-                                <div class="info" data-user-id="${userId}">
-                                    <div class="name">${user.name || 'Anonymous'}</div>
-                                    <div class="presence-label" style="font-size:0.74rem;color:var(--text-tertiary);margin-top:2px;">${escapeHtml(getPresenceLabelForUser(user))}</div>
-                                </div>
-                                <button class="btn-follow ${isFollowing ? 'joined' : ''}" data-user-id="${userId}">${isFollowing ? 'Following' : 'Follow'}</button>
-                            </div>
-                        `;
-                    }).join('');
-                    
-                    container.innerHTML = suggestionsHTML + '<button type="button" class="see-all" id="see-all-suggestions">See all</button>';
-
-                    // Enhance avatars with profile pictures when available and wire up events
-                    data.users.forEach(user => {
-                        const userId = user.id || user._id;
-                        const item = container.querySelector(`.suggestion-item[data-user-id="${userId}"]`);
-                        if (!item) return;
-
-                        const avatarEl = item.querySelector('.avatar-sm');
-                        const infoEl = item.querySelector('.info');
-                        const followBtn = item.querySelector('.btn-follow');
-
-                        if (user.profilePicture && avatarEl) {
-                            avatarEl.style.backgroundImage = `url(${user.profilePicture})`;
-                            avatarEl.style.backgroundSize = 'cover';
-                            avatarEl.style.backgroundPosition = 'center';
-                            avatarEl.textContent = '';
-                        }
-
-                        if (avatarEl) {
-                            avatarEl.addEventListener('click', () => openUserProfilePage(userId));
-                        }
-                        if (infoEl) {
-                            infoEl.addEventListener('click', () => openUserProfilePage(userId));
-                        }
-
-                        if (followBtn) {
-                            followBtn.addEventListener('click', () => handleFollowToggle(user, followBtn));
-                        }
-                    });
-
-                    const seeAllBtn = document.getElementById('see-all-suggestions');
-                    if (seeAllBtn) {
-                        seeAllBtn.addEventListener('click', loadAllSuggestionsIntoPeople);
-                    }
-                } else {
-                    container.innerHTML = `
-                        <div style="text-align:center;padding:20px;color:var(--text-secondary);font-size:0.85rem;">
-                            No suggestions available
-                        </div>
-                    `;
-                }
-            } catch (error) {
-                console.error('Error loading suggestions:', error);
-                document.getElementById('suggestions-container').innerHTML = `
-                    <div style="text-align:center;padding:20px;color:#ff6b6b;font-size:0.85rem;">
-                        Failed to load suggestions
-                    </div>
-                `;
-            }
-        }
-
         async function openUserProfileModal(userId) {
             if (!userId) return;
             try {
@@ -8360,47 +8267,6 @@
                     }
                 }
             });
-        }
-
-        async function loadAllSuggestionsIntoPeople() {
-            if (!userSearchResults) return;
-
-            try {
-                const response = await fetch(API_BASE + '/users/suggestions?limit=30', {
-                    headers: { 'Authorization': 'Bearer ' + token }
-                });
-                const data = await response.json();
-
-                if (!data.success) {
-                    userSearchResults.innerHTML = `
-                        <div style="text-align:center;padding:10px 0;color:#ff6b6b;font-size:0.8rem;">
-                            Failed to load all suggestions
-                        </div>
-                    `;
-                    return;
-                }
-
-                if (userSearchInput) {
-                    userSearchInput.value = '';
-                    userSearchInput.focus();
-                }
-
-                // Show all suggested people only in the top "People" list
-                renderPeopleList(data.users || [], 'No suggestions available', 'Suggested people');
-
-                // Hide the smaller "Suggestions" block to avoid duplicate lists
-                const suggestionsContainer = document.getElementById('suggestions-container');
-                if (suggestionsContainer) {
-                    suggestionsContainer.style.display = 'none';
-                }
-            } catch (err) {
-                console.error('Error loading all suggestions:', err);
-                userSearchResults.innerHTML = `
-                    <div style="text-align:center;padding:10px 0;color:#ff6b6b;font-size:0.8rem;">
-                        Failed to load all suggestions
-                    </div>
-                `;
-            }
         }
 
         async function searchUsersByName(query) {
@@ -8861,7 +8727,6 @@
                     
                     // Load dynamic content
                     loadPosts();
-                    loadSuggestions();
                     loadCommunitiesDropdown();
                     refreshMentorshipRequestState();
                     loadNotifications();
@@ -9002,9 +8867,9 @@
             navigateTo('media');
         });
 
-        document.getElementById('find-people-btn')?.addEventListener('click', (e) => {
+        document.getElementById('find-mentor-btn')?.addEventListener('click', (e) => {
             e.preventDefault();
-            navigateTo('find-people');
+            navigateTo('find-mentor');
         });
 
         document.getElementById('settings-btn')?.addEventListener('click', (e) => {
@@ -9176,7 +9041,7 @@
     <script>
         window.addEventListener('load', () => {
             if (window.RecommendationEngine && typeof window.RecommendationEngine.initializeRecommendations === 'function') {
-                window.RecommendationEngine.initializeRecommendations().catch((error) => {
+                window.RecommendationEngine.initializeRecommendations('find-mentor-recommendations').catch((error) => {
                     console.warn('Failed to initialize recommendations:', error);
                 });
             }
