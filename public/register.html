@@ -20,7 +20,8 @@
             justify-content: center;
             padding: 0;
             position: relative;
-            overflow: hidden;
+            overflow-x: hidden;
+            overflow-y: auto;
             -webkit-font-smoothing: antialiased;
             -moz-osx-font-smoothing: grayscale;
         }
@@ -29,7 +30,7 @@
             display: grid;
             grid-template-columns: 1fr 1fr;
             width: 100vw;
-            height: 100vh;
+            min-height: 100vh;
         }
 
         .register-container {
@@ -37,11 +38,13 @@
             padding: 25px 45px;
             display: flex;
             flex-direction: column;
-            justify-content: center;
+            justify-content: flex-start;
+            align-items: center;
             position: relative;
             z-index: 1;
             animation: fadeIn 0.5s ease;
-            overflow-y: auto;
+            overflow: visible;
+            min-height: 0;
         }
 
         .form-box {
@@ -50,21 +53,10 @@
             -webkit-backdrop-filter: blur(20px) saturate(180%);
             border: 2px solid rgba(255, 255, 255, 0.1);
             border-radius: 24px;
-            padding: 25px;
+            width: min(100%, 700px);
+            max-height: none;
+            padding: 24px 28px 20px;
             box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.05);
-        }
-
-        .register-container::-webkit-scrollbar {
-            width: 4px;
-        }
-
-        .register-container::-webkit-scrollbar-track {
-            background: transparent;
-        }
-
-        .register-container::-webkit-scrollbar-thumb {
-            background: rgba(255, 255, 255, 0.2);
-            border-radius: 10px;
         }
 
         @keyframes fadeIn {
@@ -74,7 +66,7 @@
 
         .header {
             text-align: left;
-            margin-bottom: 24px;
+            margin-bottom: 16px;
         }
 
         .welcome-text {
@@ -380,14 +372,14 @@
         .shape:nth-child(4) { bottom: 45px; right: 50px; }
 
         .form-group {
-            margin-bottom: 14px;
+            margin-bottom: 10px;
         }
 
         .form-group label {
             display: block;
             color: #cccccc;
             font-weight: 600;
-            margin-bottom: 5px;
+            margin-bottom: 4px;
             font-size: 0.85rem;
             letter-spacing: -0.2px;
         }
@@ -395,7 +387,8 @@
         .form-group input,
         .form-group select {
             width: 100%;
-            padding: 11px 14px;
+            height: 42px;
+            padding: 9px 12px;
             background: rgba(26, 26, 26, 0.8);
             border: 2px solid rgba(255, 255, 255, 0.08);
             border-radius: 12px;
@@ -448,7 +441,78 @@
         .form-row {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 12px;
+            gap: 10px;
+        }
+
+        .segmented-control {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 4px;
+            padding: 4px;
+            margin-bottom: 14px;
+            background: #171717;
+            border: 1px solid #2a2a2a;
+            border-radius: 14px;
+        }
+
+        .segmented-control button {
+            padding: 10px 8px;
+            border: 0;
+            border-radius: 10px;
+            background: transparent;
+            color: #888;
+            font: inherit;
+            font-size: 0.82rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.25s ease;
+        }
+
+        .segmented-control button.active {
+            color: #17101f;
+            background: linear-gradient(135deg, #fef3c7, #fde68a);
+            box-shadow: 0 3px 12px rgba(253, 230, 138, 0.18);
+        }
+
+        .optional-section {
+            margin: 12px 0 2px;
+            padding-top: 12px;
+            border-top: 1px solid #292929;
+        }
+
+        .optional-section h3 {
+            color: #fef3c7;
+            font-size: 0.95rem;
+            margin-bottom: 8px;
+        }
+
+        .checkbox-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 6px;
+        }
+
+        .checkbox-label {
+            display: flex !important;
+            align-items: center;
+            min-height: 30px;
+            padding: 5px 7px;
+            gap: 5px;
+            color: #aaa !important;
+            font-size: 0.78rem !important;
+            font-weight: 500 !important;
+            background: rgba(255, 255, 255, 0.035);
+            border: 1px solid rgba(255, 255, 255, 0.07);
+            border-radius: 8px;
+        }
+
+        .checkbox-label input {
+            width: auto;
+            accent-color: #a78bfa;
+        }
+
+        .hidden {
+            display: none !important;
         }
 
         .helper-text {
@@ -468,7 +532,8 @@
             font-weight: 600;
             cursor: pointer;
             transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-            margin-top: 15px;
+            height: 44px;
+            margin-top: 8px;
             box-shadow: 0 4px 16px rgba(255, 255, 255, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.8);
             letter-spacing: -0.3px;
         }
@@ -540,6 +605,12 @@
             font-size: 0.8rem;
             margin-bottom: 20px;
             font-weight: 500;
+            width: min(100%, 700px);
+            flex: 0 0 auto;
+        }
+
+        #examMetrics {
+            grid-template-columns: 1fr 1fr;
         }
 
         .back-link:hover {
@@ -556,13 +627,17 @@
             }
 
             .register-container {
-                padding: 50px 40px;
+                padding: 20px 24px;
+            }
+
+            .form-box {
+                max-height: none;
             }
         }
 
         @media (max-width: 600px) {
             .register-container {
-                padding: 40px 30px;
+                padding: 16px;
             }
 
             .header h2 {
@@ -571,6 +646,16 @@
 
             .form-row {
                 grid-template-columns: 1fr;
+            }
+
+            .checkbox-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+
+            .form-box {
+                max-height: calc(100vh - 56px);
+                padding: 20px 18px 16px;
+                border-radius: 18px;
             }
         }
     </style>
@@ -592,41 +677,93 @@
 
                 <div id="message" class="message"></div>
 
+                <div class="segmented-control" role="tablist" aria-label="Account type">
+                    <button type="button" class="active" data-user-type="EXTERNAL">External</button>
+                    <button type="button" data-user-type="INSTITUTE_MEMBER">Institute Member</button>
+                </div>
+
                 <form id="registerForm">
-                    <div class="form-group">
-                        <label for="name">Full Name *</label>
-                        <input type="text" id="name" name="name" required placeholder="Enter your full name">
+                    <input type="hidden" id="userType" value="EXTERNAL">
+                    <div id="instituteRoleSelector" class="segmented-control hidden" role="tablist" aria-label="Institute role">
+                        <button type="button" class="active" data-institute-role="CURRENT_STUDENT">Current Student</button>
+                        <button type="button" data-institute-role="ALUMNI">Alumni</button>
                     </div>
 
                     <div class="form-group">
-                        <label for="email">SPIT Email *</label>
-                        <input type="email" id="email" name="email" required placeholder="your.name@spit.ac.in">
-                        <div class="helper-text">Use your official SPIT email address</div>
+                        <label for="name">Full Name *</label>
+                        <input type="text" id="name" required placeholder="Enter your full name">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="email" id="emailLabel">Email *</label>
+                        <input type="email" id="email" required placeholder="you@example.com">
+                        <div class="helper-text" id="emailHelper"></div>
+                    </div>
+
+                    <div id="studentFields" class="form-row hidden">
+                        <div class="form-group">
+                            <label for="year">Year *</label>
+                            <select id="year">
+                                <option value="">Select</option><option value="1">1st Year</option><option value="2">2nd Year</option><option value="3">3rd Year</option><option value="4">4th Year</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="branch">Branch *</label>
+                            <select id="branch">
+                                <option value="">Select</option><option value="COMPS">COMPS</option><option value="CSE">CSE</option><option value="IT">IT</option><option value="EXTC">EXTC</option><option value="ECE">ECE</option><option value="MECH">MECH</option><option value="OTHER">Other</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div id="alumniFields" class="form-row hidden">
+                        <div class="form-group">
+                            <label for="graduationYear">Graduation Year *</label>
+                            <input type="number" id="graduationYear" min="1900" max="2200" placeholder="e.g. 2024">
+                        </div>
+                        <div class="form-group">
+                            <label for="alumniBranch">Branch *</label>
+                            <select id="alumniBranch">
+                                <option value="">Select</option><option value="COMPS">COMPS</option><option value="CSE">CSE</option><option value="IT">IT</option><option value="EXTC">EXTC</option><option value="ECE">ECE</option><option value="MECH">MECH</option><option value="OTHER">Other</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div id="admissionFields" class="optional-section">
+                        <h3>Admission Information <span class="helper-text">(optional)</span></h3>
+                        <div class="form-group">
+                            <label for="entranceExam">Entrance Exam</label>
+                            <select id="entranceExam"><option value="">Select</option><option>JEE Main</option><option>MHT-CET</option><option>GATE</option><option>Other</option><option>Not Appeared</option><option>Prefer not to say</option></select>
+                        </div>
+                        <div id="examNameGroup" class="form-group hidden"><label for="examName">Exam Name</label><input type="text" id="examName" placeholder="Enter exam name"></div>
+                        <div id="examMetrics" class="form-row">
+                            <div class="form-group"><label for="score">Score</label><input type="text" id="score"></div>
+                            <div class="form-group"><label for="percentile">Percentile</label><input type="text" id="percentile"></div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group"><label for="rank">Rank</label><input type="text" id="rank"></div>
+                            <div class="form-group"><label for="interestedProgram">Interested Program</label><input type="text" id="interestedProgram"></div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group"><label for="interestedBranch">Interested Branch</label><input type="text" id="interestedBranch"></div>
+                            <div class="form-group"><label for="admissionStatus">Admission Status</label><input type="text" id="admissionStatus" placeholder="Optional"></div>
+                        </div>
+                        <div class="form-group"><label>Guidance Topics</label><div class="checkbox-grid">
+                            <label class="checkbox-label"><input type="checkbox" name="guidanceTopics" value="Academics"> Academics</label>
+                            <label class="checkbox-label"><input type="checkbox" name="guidanceTopics" value="Placements"> Placements</label>
+                            <label class="checkbox-label"><input type="checkbox" name="guidanceTopics" value="Campus Life"> Campus Life</label>
+                            <label class="checkbox-label"><input type="checkbox" name="guidanceTopics" value="Internships"> Internships</label>
+                            <label class="checkbox-label"><input type="checkbox" name="guidanceTopics" value="Projects"> Projects</label>
+                            <label class="checkbox-label"><input type="checkbox" name="guidanceTopics" value="Clubs & Activities"> Clubs &amp; Activities</label>
+                            <label class="checkbox-label"><input type="checkbox" name="guidanceTopics" value="Branch Experience"> Branch Experience</label>
+                            <label class="checkbox-label"><input type="checkbox" name="guidanceTopics" value="Student Life"> Student Life</label>
+                            <label class="checkbox-label"><input type="checkbox" name="guidanceTopics" value="Admission Process"> Admission Process</label>
+                        </div></div>
                     </div>
 
                     <div class="form-row">
-                        <div class="form-group">
-                            <label for="year">Year *</label>
-                            <select id="year" name="year" required>
-                                <option value="">Select</option>
-                                <option value="1">1st Year</option>
-                                <option value="2">2nd Year</option>
-                                <option value="3">3rd Year</option>
-                                <option value="4">4th Year</option>
-                            </select>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="branch">Branch *</label>
-                            <select id="branch" name="branch" required>
-                                <option value="">Select</option>
-                                <option value="COMPS">COMPS</option>
-                                <option value="CSE">CSE</option>
-                                <option value="EXTC">EXTC</option>
-                            </select>
-                        </div>
+                        <div class="form-group"><label for="password">Password *</label><input type="password" id="password" required minlength="6" placeholder="Minimum 6 characters"></div>
+                        <div class="form-group"><label for="confirmPassword">Confirm Password *</label><input type="password" id="confirmPassword" required minlength="6" placeholder="Repeat password"></div>
                     </div>
-
                     <button type="submit" class="btn" id="submitBtn">Continue</button>
                 </form>
 
@@ -687,7 +824,47 @@
         const otpMessage = document.getElementById('otpMessage');
         const verifyBtn = document.getElementById('verifyBtn');
         const emailDisplay = document.getElementById('emailDisplay');
+        const userTypeInput = document.getElementById('userType');
+        const instituteRoleSelector = document.getElementById('instituteRoleSelector');
+        let instituteRole = 'CURRENT_STUDENT';
         let userEmail = '';
+
+        function setRequired(selector, required) {
+            document.querySelectorAll(selector).forEach(input => { input.required = required; });
+        }
+
+        function updateRegistrationMode() {
+            const isInstitute = userTypeInput.value === 'INSTITUTE_MEMBER';
+            const isAlumni = instituteRole === 'ALUMNI';
+            instituteRoleSelector.classList.toggle('hidden', !isInstitute);
+            document.getElementById('admissionFields').classList.toggle('hidden', isInstitute);
+            document.getElementById('studentFields').classList.toggle('hidden', !isInstitute || isAlumni);
+            document.getElementById('alumniFields').classList.toggle('hidden', !isInstitute || !isAlumni);
+            document.getElementById('emailLabel').textContent = isInstitute && !isAlumni ? 'SPIT Email *' : 'Email *';
+            document.getElementById('email').placeholder = isInstitute && !isAlumni ? 'your.name@spit.ac.in' : 'you@example.com';
+            document.getElementById('emailHelper').textContent = isInstitute && !isAlumni ? 'Use your official SPIT email address' : '';
+            setRequired('#studentFields select', isInstitute && !isAlumni);
+            setRequired('#alumniFields input, #alumniFields select', isInstitute && isAlumni);
+        }
+
+        document.querySelectorAll('[data-user-type]').forEach(button => button.addEventListener('click', () => {
+            document.querySelectorAll('[data-user-type]').forEach(item => item.classList.remove('active'));
+            button.classList.add('active');
+            userTypeInput.value = button.dataset.userType;
+            updateRegistrationMode();
+        }));
+        document.querySelectorAll('[data-institute-role]').forEach(button => button.addEventListener('click', () => {
+            document.querySelectorAll('[data-institute-role]').forEach(item => item.classList.remove('active'));
+            button.classList.add('active');
+            instituteRole = button.dataset.instituteRole;
+            updateRegistrationMode();
+        }));
+        document.getElementById('entranceExam').addEventListener('change', event => {
+            const hiddenMetrics = ['Not Appeared', 'Prefer not to say'].includes(event.target.value);
+            document.getElementById('examNameGroup').classList.toggle('hidden', event.target.value !== 'Other');
+            document.getElementById('examMetrics').classList.toggle('hidden', hiddenMetrics);
+        });
+        updateRegistrationMode();
 
         function showMessage(element, text, type) {
             element.textContent = text;
@@ -717,24 +894,25 @@
             submitBtn.disabled = true;
             submitBtn.textContent = 'Sending OTP...';
 
-            const year = parseInt(document.getElementById('year').value);
-            
-            // Auto-detect role based on year: 1-2 = junior, 3-4 = senior
-            let role;
-            if (year === 1 || year === 2) {
-                role = 'junior';
-            } else if (year === 3 || year === 4) {
-                role = 'senior';
-            } else {
-                role = 'junior';
-            }
-
             const formData = {
                 name: document.getElementById('name').value.trim(),
                 email: document.getElementById('email').value.trim().toLowerCase(),
-                year: year,
-                branch: document.getElementById('branch').value,
-                role: role
+                password: document.getElementById('password').value,
+                confirmPassword: document.getElementById('confirmPassword').value,
+                userType: userTypeInput.value,
+                instituteRole,
+                year: document.getElementById('year').value,
+                branch: userTypeInput.value === 'INSTITUTE_MEMBER' ? (instituteRole === 'ALUMNI' ? document.getElementById('alumniBranch').value : document.getElementById('branch').value) : '',
+                graduationYear: document.getElementById('graduationYear').value,
+                entranceExam: document.getElementById('entranceExam').value,
+                examName: document.getElementById('examName').value.trim(),
+                score: document.getElementById('score').value.trim(),
+                percentile: document.getElementById('percentile').value.trim(),
+                rank: document.getElementById('rank').value.trim(),
+                interestedProgram: document.getElementById('interestedProgram').value.trim(),
+                interestedBranch: document.getElementById('interestedBranch').value.trim(),
+                admissionStatus: document.getElementById('admissionStatus').value.trim(),
+                guidanceTopics: Array.from(document.querySelectorAll('input[name="guidanceTopics"]:checked')).map(input => input.value)
             };
 
             try {
@@ -752,9 +930,6 @@
                     showMessage(messageDiv, 'OTP sent! Check your email.', 'success');
                     sessionStorage.setItem('verifyEmail', formData.email);
                     sessionStorage.setItem('userName', formData.name);
-                    sessionStorage.setItem('userYear', formData.year);
-                    sessionStorage.setItem('userBranch', formData.branch);
-                    sessionStorage.setItem('userRole', formData.role);
                     
                     setTimeout(() => {
                         showOTPModal(formData.email);
@@ -803,10 +978,18 @@
                 const data = await response.json();
 
                 if (response.ok) {
-                    showMessage(otpMessage, 'Email verified! Redirecting...', 'success');
+                    showMessage(otpMessage, 'Registration complete! Redirecting...', 'success');
+                    if (data.token) {
+                        localStorage.setItem('mentorlink_token', data.token);
+                    }
+                    if (data.user) {
+                        localStorage.setItem('user', JSON.stringify(data.user));
+                    }
                     
                     setTimeout(() => {
-                        window.location.href = 'profile-setup.html';
+                        window.location.href = data.user && data.user.userType === 'EXTERNAL'
+                            ? 'complete-external-profile.html'
+                            : 'home.html';
                     }, 1000);
                 } else {
                     showMessage(otpMessage, data.message || 'Invalid or expired OTP', 'error');

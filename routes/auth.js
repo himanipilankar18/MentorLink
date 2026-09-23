@@ -83,6 +83,8 @@ const upload = multer({
 // Security: Whitelist of roles allowed for public registration
 // Admin role can only be created through protected endpoint
 const ALLOWED_REGISTRATION_ROLES = ['junior', 'senior', 'faculty'];
+const ADMISSION_EXAMS = ['JEE Main', 'MHT-CET', 'GATE', 'Other', 'Not Appeared', 'Prefer not to say'];
+const GUIDANCE_TOPICS = ['Academics', 'Placements', 'Campus Life', 'Internships', 'Projects', 'Clubs & Activities', 'Branch Experience', 'Student Life', 'Admission Process'];
 
 // Generate JWT Token
 const generateToken = (id) => {
@@ -96,21 +98,55 @@ const generateToken = (id) => {
 // @access  Public
 router.post('/register', 
   authLimiter,
-  validateEmailDomain(process.env.ALLOWED_DOMAINS || 'spit.ac.in'),
   async (req, res) => {
     try {
-      const { name, email, year, branch, role } = req.body;
+      const {
+        name, email, password, confirmPassword, userType = 'EXTERNAL', instituteRole,
+        year, branch, graduationYear, entranceExam, examName, score, percentile, rank,
+        interestedProgram, interestedBranch, admissionStatus, guidanceTopics
+      } = req.body;
+      const normalizedEmail = String(email || '').trim().toLowerCase();
+      const normalizedUserType = String(userType).toUpperCase();
 
       // Validate required fields
-      if (!name || !email || !year || !branch) {
+      if (!name || !normalizedEmail || !password || !confirmPassword) {
         return res.status(400).json({
           success: false,
-          message: 'Please provide name, email, year, and branch'
+          message: 'Please provide all required fields'
         });
+      }
+      if (!/^\S+@\S+\.\S+$/.test(normalizedEmail)) {
+        return res.status(400).json({ success: false, message: 'Please provide a valid email address' });
+      }
+
+      if (!['EXTERNAL', 'INSTITUTE_MEMBER'].includes(normalizedUserType)) {
+        return res.status(400).json({ success: false, message: 'Invalid user type' });
+      }
+      if (password !== confirmPassword || password.length < 6 || !/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(password)) {
+        return res.status(400).json({ success: false, message: 'Password must be at least 6 characters and contain uppercase, lowercase, and a number' });
+      }
+
+      if (normalizedUserType === 'INSTITUTE_MEMBER') {
+        if (!['CURRENT_STUDENT', 'ALUMNI'].includes(instituteRole) || !['CSE', 'IT', 'ECE', 'EEE', 'MECH', 'CIVIL', 'CHEM', 'OTHER', 'COMPS', 'EXTC'].includes(branch)) {
+          return res.status(400).json({ success: false, message: 'Please choose an institute role and branch' });
+        }
+        if (instituteRole === 'CURRENT_STUDENT' && (!year || !Number.isInteger(Number(year)) || Number(year) < 1 || Number(year) > 5)) {
+          return res.status(400).json({ success: false, message: 'Please provide a valid current year' });
+        }
+        if (instituteRole === 'ALUMNI' && (!graduationYear || !Number.isInteger(Number(graduationYear)))) {
+          return res.status(400).json({ success: false, message: 'Please provide a valid graduation year' });
+        }
+        if (instituteRole === 'CURRENT_STUDENT' && !normalizedEmail.endsWith('@spit.ac.in')) {
+          return res.status(400).json({ success: false, message: 'Current students must use their SPIT email address' });
+        }
+      }
+
+      if (normalizedUserType === 'EXTERNAL' && entranceExam && !ADMISSION_EXAMS.includes(entranceExam)) {
+        return res.status(400).json({ success: false, message: 'Invalid entrance exam' });
       }
 
       // Check if user already exists
-      const existingUser = await User.findOne({ email: email.toLowerCase() });
+      const existingUser = await User.findOne({ email: normalizedEmail });
       if (existingUser) {
         return res.status(400).json({
           success: false,
@@ -119,7 +155,7 @@ router.post('/register',
       }
 
       // Check if there's a pending registration for this email
-      if (pendingRegistrations.has(email.toLowerCase())) {
+      if (pendingRegistrations.has(normalizedEmail)) {
         return res.status(400).json({
           success: false,
           message: 'A registration is already pending for this email. Please check your email for the OTP or wait for it to expire.'
@@ -127,19 +163,34 @@ router.post('/register',
       }
 
       // Auto-detect role based on year: 1-2 = junior, 3-4 = senior
-      const sanitizedRole = ALLOWED_REGISTRATION_ROLES.includes(role) ? role : 'junior';
+      const sanitizedRole = normalizedUserType === 'INSTITUTE_MEMBER' && instituteRole === 'ALUMNI' ? 'senior' : 'junior';
 
       // Generate 6-digit OTP for email verification
       const otp = Math.floor(100000 + Math.random() * 900000).toString();
       const otpExpires = Date.now() + 15 * 60 * 1000; // 15 minutes
 
       // Store user data temporarily (NOT in database yet)
-      pendingRegistrations.set(email.toLowerCase(), {
+      pendingRegistrations.set(normalizedEmail, {
         name,
-        email: email.toLowerCase(),
-        year,
-        department: branch,
+        email: normalizedEmail,
+        password,
+        userType: normalizedUserType,
+        instituteRole: normalizedUserType === 'INSTITUTE_MEMBER' ? instituteRole : null,
+        year: year ? Number(year) : null,
+        graduationYear: graduationYear ? Number(graduationYear) : null,
+        department: branch || undefined,
         role: sanitizedRole,
+        admissionInfo: normalizedUserType === 'EXTERNAL' ? {
+          entranceExam: entranceExam || null,
+          examName: entranceExam === 'Other' ? String(examName || '').trim() : '',
+          score: ['Not Appeared', 'Prefer not to say'].includes(entranceExam) ? '' : String(score || '').trim(),
+          percentile: ['Not Appeared', 'Prefer not to say'].includes(entranceExam) ? '' : String(percentile || '').trim(),
+          rank: ['Not Appeared', 'Prefer not to say'].includes(entranceExam) ? '' : String(rank || '').trim(),
+          interestedProgram: String(interestedProgram || '').trim(),
+          interestedBranch: String(interestedBranch || '').trim(),
+          admissionStatus: String(admissionStatus || '').trim(),
+          guidanceTopics: Array.isArray(guidanceTopics) ? guidanceTopics.filter(topic => GUIDANCE_TOPICS.includes(topic)) : []
+        } : undefined,
         otp,
         otpExpires,
         createdAt: Date.now()
@@ -155,14 +206,14 @@ router.post('/register',
       `;
 
       // Send email with better error handling
-      console.log(`📧 Sending OTP to ${email.toLowerCase()}, OTP: ${otp}`);
+      console.log(`📧 Sending OTP to ${normalizedEmail}, OTP: ${otp}`);
       try {
-        await sendEmail({ to: email.toLowerCase(), subject: 'Verify your MentorLink email', html });
-        console.log(`✅ OTP email sent successfully to ${email.toLowerCase()}`);
+        await sendEmail({ to: normalizedEmail, subject: 'Verify your MentorLink email', html });
+        console.log(`✅ OTP email sent successfully to ${normalizedEmail}`);
       } catch (emailError) {
         console.error(`❌ Failed to send OTP email to ${email.toLowerCase()}:`, emailError);
         // Clear pending registration if email fails
-        pendingRegistrations.delete(email.toLowerCase());
+        pendingRegistrations.delete(normalizedEmail);
         return res.status(500).json({
           success: false,
           message: 'Failed to send verification email. Please try again.'
@@ -172,7 +223,7 @@ router.post('/register',
       res.status(200).json({
         success: true,
         message: 'OTP sent successfully. Please check your SPIT email for verification.',
-        email: email.toLowerCase()
+        email: normalizedEmail
       });
     } catch (error) {
       res.status(500).json({
@@ -280,7 +331,7 @@ router.post('/login',
   handleValidationErrors,
   async (req, res) => {
     try {
-      const { email, password } = req.body;
+      const { email, password, userType = 'EXTERNAL' } = req.body;
 
       // Check if user exists and get password + verification fields
       const user = await User.findOne({ email }).select('+password');
@@ -288,6 +339,14 @@ router.post('/login',
         return res.status(401).json({
           success: false,
           message: 'Invalid credentials'
+        });
+      }
+
+      const storedUserType = user.userType || 'INSTITUTE_MEMBER';
+      if (storedUserType !== String(userType).toUpperCase()) {
+        return res.status(401).json({
+          success: false,
+          message: 'This account belongs to a different account type'
         });
       }
 
@@ -365,6 +424,8 @@ router.post('/login',
           year: user.year,
           department: user.department,
           role: user.role,
+          userType: storedUserType,
+          instituteRole: user.instituteRole,
           skills: user.skills,
           interests: user.interests,
           cgpa: user.cgpa
@@ -403,6 +464,8 @@ router.get('/me', verifyToken, async (req, res) => {
         year: user.year,
         department: user.department,
         role: user.role,
+        userType: user.userType || 'INSTITUTE_MEMBER',
+        instituteRole: user.instituteRole,
         skills: user.skills,
         interests: user.interests,
         cgpa: user.cgpa,
@@ -520,11 +583,16 @@ router.post('/verify-otp',
       const user = new User({
         name: pendingUser.name,
         email: pendingUser.email,
+        password: pendingUser.password,
+        userType: pendingUser.userType,
+        instituteRole: pendingUser.instituteRole,
         year: pendingUser.year,
+        graduationYear: pendingUser.graduationYear,
         department: pendingUser.department,
         role: pendingUser.role,
+        admissionInfo: pendingUser.admissionInfo,
         isVerified: true,
-        profileComplete: false
+        profileComplete: true
       });
 
       await user.save({ validateBeforeSave: false }); // Skip password validation
@@ -540,13 +608,12 @@ router.post('/verify-otp',
         <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 20px; border-radius: 10px; color: white; margin: 20px 0;">
           <h3 style="margin: 0 0 10px 0; color: white;">What's Next?</h3>
           <ul style="margin: 10px 0; padding-left: 20px;">
-            <li style="margin: 8px 0;">Complete your profile with password and interests</li>
-            <li style="margin: 8px 0;">Upload your profile picture</li>
+            <li style="margin: 8px 0;">Explore your MentorLink home page</li>
             <li style="margin: 8px 0;">Connect with peers and mentors</li>
             <li style="margin: 8px 0;">Join discussions and share projects</li>
           </ul>
         </div>
-        <p><a href="${process.env.BACKEND_BASE_URL || 'http://localhost:5000'}/profile-setup.html" style="display: inline-block; padding: 12px 24px; background: #667eea; color: white; text-decoration: none; border-radius: 5px; margin: 10px 0;">Complete Your Profile</a></p>
+        <p><a href="${process.env.BACKEND_BASE_URL || 'http://localhost:5000'}/home.html" style="display: inline-block; padding: 12px 24px; background: #667eea; color: white; text-decoration: none; border-radius: 5px; margin: 10px 0;">Open MentorLink</a></p>
         <p>If you have any questions, feel free to reach out to our support team.</p>
         <hr style="margin: 20px 0; border: none; border-top: 1px solid #e0e0e0;">
         <p style="color: #666; font-size: 0.9em;">You're receiving this email because you registered for MentorLink at SPIT.</p>
@@ -560,17 +627,139 @@ router.post('/verify-otp',
 
       return res.json({
         success: true,
-        message: 'Email verified successfully! Please complete your profile.',
+        message: 'Registration completed successfully.',
+        token: generateToken(user._id),
         user: {
           id: user._id,
           name: user.name,
-          email: user.email
+          email: user.email,
+          userType: user.userType,
+          instituteRole: user.instituteRole,
+          role: user.role
         }
       });
     } catch (error) {
       res.status(500).json({
         success: false,
         message: 'OTP verification failed',
+        error: error.message
+      });
+    }
+  }
+);
+
+// @route   POST /api/auth/external-profile
+// @desc    Enrich an External user's profile after registration
+// @access  Private (External users only)
+router.post('/external-profile',
+  verifyToken,
+  upload.single('profilePicture'),
+  async (req, res) => {
+    try {
+      if ((req.user.userType || 'INSTITUTE_MEMBER') !== 'EXTERNAL') {
+        return res.status(403).json({
+          success: false,
+          message: 'This profile step is only available to External users'
+        });
+      }
+
+      const {
+        bio,
+        mentorshipIntent,
+        availability,
+        interests,
+        skills,
+        projectLink,
+        githubUrl
+      } = req.body;
+
+      const updates = {};
+
+      if (bio !== undefined) {
+        const normalizedBio = String(bio).trim();
+        if (normalizedBio && (normalizedBio.length < 10 || normalizedBio.length > 200)) {
+          return res.status(400).json({
+            success: false,
+            message: 'Bio must be between 10 and 200 characters when provided'
+          });
+        }
+        updates.bio = normalizedBio;
+      }
+
+      if (!['seeking', 'offering', 'both'].includes(mentorshipIntent)) {
+        return res.status(400).json({
+          success: false,
+          message: 'Please select a valid mentorship intent'
+        });
+      }
+      if (!['weekdays', 'weekends', 'flexible'].includes(availability)) {
+        return res.status(400).json({
+          success: false,
+          message: 'Please select a valid availability value'
+        });
+      }
+
+      updates.mentorshipIntent = mentorshipIntent;
+      updates.availability = availability;
+
+      for (const field of ['interests', 'skills']) {
+        if (field !== 'skills' && interests === undefined) continue;
+        if (field === 'skills' && skills === undefined) continue;
+
+        const rawValue = field === 'skills' ? skills : interests;
+        const values = Array.isArray(rawValue)
+          ? rawValue
+          : String(rawValue || '').split(',');
+        const normalizedValues = values.map(value => String(value).trim()).filter(Boolean);
+
+        if (field === 'skills') {
+          const normalizedSkills = normalizeSkills(normalizedValues);
+          if (normalizedSkills.length > MAX_SKILLS) {
+            return res.status(400).json({
+              success: false,
+              message: `Skills cannot exceed ${MAX_SKILLS} items`
+            });
+          }
+          updates.skills = normalizedSkills;
+        } else {
+          updates.interests = normalizedValues;
+        }
+      }
+
+      if (projectLink !== undefined) updates.projectLink = String(projectLink).trim();
+      if (githubUrl !== undefined) updates.githubUrl = String(githubUrl).trim();
+      if (req.file) updates.profilePicture = `/uploads/profiles/${req.file.filename}`;
+
+      const user = await User.findByIdAndUpdate(
+        req.user._id,
+        { $set: updates },
+        { new: true, runValidators: true }
+      ).select('-password');
+
+      if (!user) {
+        return res.status(404).json({ success: false, message: 'User not found' });
+      }
+
+      return res.json({
+        success: true,
+        message: 'External profile updated successfully',
+        user: {
+          ...user.toObject(),
+          mentorshipIntent: user.mentorshipIntent || 'seeking',
+          availability: user.availability || 'flexible',
+          profileStrength: calculateProfileStrength(user)
+        }
+      });
+    } catch (error) {
+      if (error && error.name === 'ValidationError') {
+        return res.status(400).json({
+          success: false,
+          message: Object.values(error.errors).map(entry => entry.message).join('. ')
+        });
+      }
+      return res.status(500).json({
+        success: false,
+        message: 'Failed to update External profile',
         error: error.message
       });
     }

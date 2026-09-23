@@ -318,6 +318,36 @@
             color: #555555;
         }
 
+        .segmented-control {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 4px;
+            padding: 4px;
+            margin-bottom: 22px;
+            background: #171717;
+            border: 1px solid #2a2a2a;
+            border-radius: 14px;
+        }
+
+        .segmented-control button {
+            padding: 10px 8px;
+            border: 0;
+            border-radius: 10px;
+            background: transparent;
+            color: #888;
+            font: inherit;
+            font-size: 0.84rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.25s ease;
+        }
+
+        .segmented-control button.active {
+            color: #17101f;
+            background: linear-gradient(135deg, #fef3c7, #fde68a);
+            box-shadow: 0 3px 12px rgba(253, 230, 138, 0.18);
+        }
+
         .forgot-password {
             display: inline-block;
             margin-top: 6px;
@@ -463,10 +493,15 @@
 
                 <div id="message" class="message"></div>
 
+                <div class="segmented-control" role="tablist" aria-label="Account type">
+                    <button type="button" class="active" data-user-type="EXTERNAL">External</button>
+                    <button type="button" data-user-type="INSTITUTE_MEMBER">Institute Member</button>
+                </div>
+
                 <form id="loginForm">
                     <div class="form-group">
-                        <label for="email">SPIT Email</label>
-                        <input type="email" id="email" name="email" required placeholder="your.name@spit.ac.in">
+                        <label for="email" id="emailLabel">Email</label>
+                        <input type="email" id="email" name="email" required placeholder="you@example.com">
                     </div>
 
                     <div class="form-group">
@@ -513,6 +548,16 @@
         const form = document.getElementById('loginForm');
         const messageDiv = document.getElementById('message');
         const submitBtn = document.getElementById('submitBtn');
+        let userType = 'EXTERNAL';
+
+        document.querySelectorAll('[data-user-type]').forEach(button => button.addEventListener('click', () => {
+            document.querySelectorAll('[data-user-type]').forEach(item => item.classList.remove('active'));
+            button.classList.add('active');
+            userType = button.dataset.userType;
+            const instituteMember = userType === 'INSTITUTE_MEMBER';
+            document.getElementById('emailLabel').textContent = instituteMember ? 'Institute Email' : 'Email';
+            document.getElementById('email').placeholder = instituteMember ? 'your.name@spit.ac.in' : 'you@example.com';
+        }));
 
         function showMessage(text, type) {
             messageDiv.textContent = text;
@@ -532,7 +577,8 @@
 
             const formData = {
                 email: document.getElementById('email').value.trim().toLowerCase(),
-                password: document.getElementById('password').value
+                password: document.getElementById('password').value,
+                userType
             };
 
             try {

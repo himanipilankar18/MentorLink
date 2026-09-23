@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Complete Your Profile - MentorConnect</title>
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+            color: #fff;
+            background: #0a0a0a;
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", system-ui, sans-serif;
+        }
+        .profile-wrapper {
+            width: min(100%, 1080px);
+            min-height: 620px;
+            display: grid;
+            grid-template-columns: 0.85fr 1.15fr;
+            overflow: hidden;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 24px;
+            background: #000;
+            box-shadow: 0 20px 70px rgba(0, 0, 0, 0.65);
+        }
+        .intro {
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 42px;
+            overflow: hidden;
+            background: linear-gradient(145deg, #171126, #090909 70%);
+        }
+        .intro-copy { position: relative; z-index: 1; max-width: 320px; }
+        .eyebrow {
+            margin-bottom: 12px;
+            color: #fef3c7;
+            font-size: 0.78rem;
+            font-weight: 700;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+        }
+        h1 { margin: 0 0 14px; font-size: 2.35rem; line-height: 1.05; }
+        .intro p { margin: 0; color: #aaa; line-height: 1.65; font-size: 0.95rem; }
+        .orb {
+            position: absolute;
+            width: 290px;
+            height: 290px;
+            right: -90px;
+            bottom: -70px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #8b5cf6, #c4b5fd);
+            opacity: 0.72;
+            box-shadow: 0 20px 70px rgba(139, 92, 246, 0.3);
+        }
+        .form-panel {
+            padding: 38px 44px;
+            overflow-y: auto;
+            background: rgba(10, 10, 10, 0.96);
+        }
+        .panel-header { margin-bottom: 24px; }
+        .panel-header h2 { margin: 0 0 6px; font-size: 1.65rem; }
+        .panel-header p { margin: 0; color: #888; font-size: 0.88rem; }
+        .message {
+            display: none;
+            margin-bottom: 16px;
+            padding: 10px 12px;
+            border-radius: 10px;
+            font-size: 0.84rem;
+        }
+        .message.error { display: block; color: #991b1b; background: #fee2e2; border: 1px solid #fca5a5; }
+        .message.success { display: block; color: #065f46; background: #d1fae5; border: 1px solid #6ee7b7; }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .form-group { margin-bottom: 14px; }
+        label { display: block; margin-bottom: 5px; color: #ccc; font-size: 0.83rem; font-weight: 600; }
+        input, textarea, select {
+            width: 100%;
+            border: 2px solid rgba(255, 255, 255, 0.08);
+            border-radius: 12px;
+            background: rgba(26, 26, 26, 0.86);
+            color: #fff;
+            font: inherit;
+            font-size: 0.9rem;
+        }
+        input, select { height: 42px; padding: 9px 12px; }
+        textarea { min-height: 88px; padding: 10px 12px; resize: vertical; }
+        input:focus, textarea:focus, select:focus { outline: none; border-color: rgba(167, 139, 250, 0.65); box-shadow: 0 0 0 4px rgba(167, 139, 250, 0.12); }
+        .helper { margin-top: 4px; color: #666; font-size: 0.74rem; }
+        .file-input { padding: 8px 10px; }
+        .actions { display: flex; gap: 10px; margin-top: 20px; }
+        button { border: 0; border-radius: 12px; padding: 12px 16px; font: inherit; font-size: 0.9rem; font-weight: 700; cursor: pointer; }
+        .primary { flex: 1; color: #17101f; background: linear-gradient(135deg, #fff, #fef3c7); }
+        .secondary { color: #bbb; background: #1b1b1b; border: 1px solid #333; }
+        button:disabled { opacity: 0.6; cursor: not-allowed; }
+        @media (max-width: 760px) {
+            body { align-items: flex-start; padding: 14px; }
+            .profile-wrapper { display: block; min-height: 0; }
+            .intro { min-height: 210px; padding: 28px; }
+            .intro-copy { max-width: none; }
+            .intro h1 { font-size: 1.8rem; }
+            .form-panel { padding: 28px 22px; }
+        }
+        @media (max-width: 520px) {
+            .form-row { grid-template-columns: 1fr; gap: 0; }
+            .actions { flex-direction: column; }
+        }
+    </style>
+</head>
+<body>
+    <main class="profile-wrapper">
+        <section class="intro" aria-labelledby="pageTitle">
+            <div class="intro-copy">
+                <div class="eyebrow">One last step</div>
+                <h1 id="pageTitle">Make your profile yours.</h1>
+                <p>Add the details that help people understand how you can connect and collaborate. You can skip this and update it later from your profile.</p>
+            </div>
+            <div class="orb" aria-hidden="true"></div>
+        </section>
+
+        <section class="form-panel">
+            <div class="panel-header">
+                <h2>Complete your profile</h2>
+                <p>These details are optional except for mentorship intent and availability.</p>
+            </div>
+            <div id="message" class="message" role="status"></div>
+
+            <form id="externalProfileForm">
+                <div class="form-group">
+                    <label for="profilePicture">Profile picture</label>
+                    <input class="file-input" type="file" id="profilePicture" accept="image/jpeg,image/jpg,image/png,image/gif,image/webp">
+                    <div class="helper">Optional. Images only, maximum 5 MB.</div>
+                </div>
+
+                <div class="form-group">
+                    <label for="bio">Bio</label>
+                    <textarea id="bio" maxlength="200" placeholder="Tell people a little about yourself"></textarea>
+                    <div class="helper">Optional. If provided, use 10–200 characters.</div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="mentorshipIntent">Mentorship intent *</label>
+                        <select id="mentorshipIntent" required>
+                            <option value="">Select intent</option>
+                            <option value="seeking">Seeking mentorship</option>
+                            <option value="offering">Offering mentorship</option>
+                            <option value="both">Both</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="availability">Availability *</label>
+                        <select id="availability" required>
+                            <option value="">Select availability</option>
+                            <option value="weekdays">Weekdays</option>
+                            <option value="weekends">Weekends</option>
+                            <option value="flexible">Flexible</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="interests">Interests</label>
+                    <input type="text" id="interests" placeholder="Web development, AI, design">
+                    <div class="helper">Optional. Separate interests with commas.</div>
+                </div>
+
+                <div class="form-group">
+                    <label for="skills">Skills</label>
+                    <input type="text" id="skills" placeholder="JavaScript, Python, React">
+                    <div class="helper">Optional. Separate skills with commas; maximum 10.</div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="projectLink">Project link</label>
+                        <input type="url" id="projectLink" placeholder="https://...">
+                    </div>
+                    <div class="form-group">
+                        <label for="githubUrl">GitHub URL</label>
+                        <input type="url" id="githubUrl" placeholder="https://github.com/...">
+                    </div>
+                </div>
+
+                <div class="actions">
+                    <button type="button" class="secondary" id="skipButton">Skip for now</button>
+                    <button type="submit" class="primary" id="submitButton">Save and continue</button>
+                </div>
+            </form>
+        </section>
+    </main>
+
+    <script>
+        const token = localStorage.getItem('mentorlink_token');
+        const form = document.getElementById('externalProfileForm');
+        const message = document.getElementById('message');
+        const submitButton = document.getElementById('submitButton');
+        const skipButton = document.getElementById('skipButton');
+
+        if (!token) {
+            window.location.href = 'login.html';
+        }
+
+        function showMessage(text, type) {
+            message.textContent = text;
+            message.className = `message ${type}`;
+        }
+
+        function goHome() {
+            window.location.href = 'home.html';
+        }
+
+        skipButton.addEventListener('click', goHome);
+
+        form.addEventListener('submit', async (event) => {
+            event.preventDefault();
+
+            const bio = document.getElementById('bio').value.trim();
+            if (bio && (bio.length < 10 || bio.length > 200)) {
+                showMessage('Bio must be between 10 and 200 characters when provided.', 'error');
+                return;
+            }
+
+            const skillValues = document.getElementById('skills').value.split(',').map(value => value.trim()).filter(Boolean);
+            if (skillValues.length > 10) {
+                showMessage('Please provide a maximum of 10 skills.', 'error');
+                return;
+            }
+
+            submitButton.disabled = true;
+            skipButton.disabled = true;
+            submitButton.textContent = 'Saving...';
+
+            const data = new FormData();
+            data.append('bio', bio);
+            data.append('mentorshipIntent', document.getElementById('mentorshipIntent').value);
+            data.append('availability', document.getElementById('availability').value);
+            data.append('interests', document.getElementById('interests').value);
+            data.append('skills', skillValues.join(','));
+            data.append('projectLink', document.getElementById('projectLink').value.trim());
+            data.append('githubUrl', document.getElementById('githubUrl').value.trim());
+
+            const profilePicture = document.getElementById('profilePicture').files[0];
+            if (profilePicture) data.append('profilePicture', profilePicture);
+
+            try {
+                const response = await fetch('/api/auth/external-profile', {
+                    method: 'POST',
+                    headers: { Authorization: `Bearer ${token}` },
+                    body: data
+                });
+                const result = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(result.message || 'Could not save your profile');
+                }
+
+                if (result.user) localStorage.setItem('user', JSON.stringify(result.user));
+                goHome();
+            } catch (error) {
+                showMessage(error.message, 'error');
+                submitButton.disabled = false;
+                skipButton.disabled = false;
+                submitButton.textContent = 'Save and continue';
+            }
+        });
+    </script>
+</body>
+</html>

@@ -452,6 +452,7 @@
             <div class="nav-links">
                 <a href="dashboard.html">Dashboard</a>
                 <a href="profile.html">Profile</a>
+                <a href="complete-external-profile.html" id="externalProfileLink" style="display: none;">Enrich Profile</a>
                 <button class="logout-btn" onclick="logout()">Logout</button>
             </div>
         </div>
@@ -629,6 +630,11 @@
                 // Safety check
                 if (!userData || !userData.name) {
                     throw new Error('Invalid user data');
+                }
+
+                const externalProfileLink = document.getElementById('externalProfileLink');
+                if (externalProfileLink) {
+                    externalProfileLink.style.display = userData.userType === 'EXTERNAL' ? 'inline' : 'none';
                 }
 
                 renderProfile();

@@ -50,6 +50,41 @@ const userSchema = new mongoose.Schema({
     trim: true,
     match: [/^\S+@\S+\.\S+$/, 'Please provide a valid email']
   },
+  userType: {
+    type: String,
+    enum: ['EXTERNAL', 'INSTITUTE_MEMBER'],
+    default: undefined
+  },
+  instituteRole: {
+    type: String,
+    enum: ['CURRENT_STUDENT', 'ALUMNI', null],
+    default: null
+  },
+  graduationYear: {
+    type: Number,
+    min: [1900, 'Graduation year is invalid'],
+    max: [2200, 'Graduation year is invalid'],
+    default: null
+  },
+  admissionInfo: {
+    type: {
+      entranceExam: {
+        type: String,
+        enum: ['JEE Main', 'MHT-CET', 'GATE', 'Other', 'Not Appeared', 'Prefer not to say', null],
+        default: null
+      },
+      examName: { type: String, trim: true, maxlength: 100, default: '' },
+      score: { type: String, trim: true, maxlength: 50, default: '' },
+      percentile: { type: String, trim: true, maxlength: 50, default: '' },
+      rank: { type: String, trim: true, maxlength: 50, default: '' },
+      interestedProgram: { type: String, trim: true, maxlength: 100, default: '' },
+      interestedBranch: { type: String, trim: true, maxlength: 100, default: '' },
+      admissionStatus: { type: String, trim: true, maxlength: 100, default: '' },
+      guidanceTopics: { type: [String], default: [] }
+    },
+    select: false,
+    default: undefined
+  },
   whatsapp: {
     type: String,
     trim: true,
@@ -92,7 +127,7 @@ const userSchema = new mongoose.Schema({
   },
   department: {
     type: String,
-    required: [true, 'Department is required'],
+    required: false,
     trim: true,
     enum: {
       values: ['CSE', 'IT', 'ECE', 'EEE', 'MECH', 'CIVIL', 'CHEM', 'OTHER', 'COMPS', 'EXTC'],
@@ -101,7 +136,8 @@ const userSchema = new mongoose.Schema({
   },
   role: {
     type: String,
-    required: [true, 'Role is required'],
+    required: false,
+    default: 'junior',
     enum: {
       values: ['junior', 'senior', 'faculty', 'admin'],
       message: 'Role must be junior, senior, faculty, or admin'
