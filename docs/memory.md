@@ -28,6 +28,11 @@ This file is an append-only decision journal. Add new entries rather than rewrit
 
 ## Decisions and Constraints
 
+- External guidance is an explicit opt-in defaulting to off. Any mentor change locks the choice through the current academic-year end to prevent casual reversal and stranded External contacts.
+- The academic-year-end source is the singleton `AcademicYearConfig` document, admin-editable through `/api/users/academic-year-config`, with a June 30 fallback for first initialization.
+- An admin early-unlock override was deferred; mentors cannot self-unlock because the server rejects all changes while the lock date is future.
+- The consent fields and tag are intentionally not exposed to External-facing routes; the tag is informational for Institute Members only. This is a prerequisite for the External matching/dashboard phase and that phase must not start until this feature is live and verified.
+
 - Treat mounted routes, route handlers, models, and current UI callers as the source of truth when they conflict with older reports.
 - Keep `userType`/`instituteRole` identity separate from legacy `User.role` authorization until a deliberate migration decision is made.
 - Treat `admissionInfo` as private schema data because it is configured with `select: false`; do not expose it through public profile responses by accident.
@@ -52,3 +57,30 @@ This file is an append-only decision journal. Add new entries rather than rewrit
 - Should External users participate in recommendations, and which missing academic fields should be optional defaults?
 - Which admin capabilities are required beyond protected admin creation and the current dashboard page?
 - TODO: Confirm production deployment, email provider, MongoDB topology, and supported environment matrix from maintainers.
+
+## 2026-10-05 - External guidance terms and Phase A
+
+- Added optional `externalGuidanceTermsVersion` and `externalGuidanceTermsAcceptedAt` fields without defaults or migration.
+- Added the reviewable draft terms and `MENTOR_GUIDANCE_TERMS_VERSION` in `config/externalGuidanceTerms.js`; institute/legal review is still required.
+- Enabling requires the current accepted terms version; disabling does not. Both directions lock until the academic-year end date.
+- Consent metadata is self-only for institute mentors. Institute users may see only the informational availability tag; External users see none of the guidance fields.
+- Added an admin-only verification summary returning opted-in mentor name, department, and year only.
+- Source syntax/load checks passed for the changed backend modules. Seeded test-DB endpoint/UI verification remains outstanding because no runtime test was run in this phase.
+
+## 2026-10-05 - Consent modal refinement
+
+- Refined the mentor ON flow so the switch never changes before a successful PATCH; terms appear only in the opened modal, with the fetched lock date and a reset, checkbox-gated Confirm button.
+- Cancel, Escape, outside click, request errors, and network errors preserve the previous switch state. OFF still confirms the lock-on-both-directions decision without terms.
+- Restyled the guidance section and modal to match profile.html's existing light theme. Seeded test-DB and browser interaction verification remains outstanding.
+
+## 2026-10-05 - Live profile editor and academic-year date display
+
+- Confirmed the live profile editor is `public/home.html` `#profile`; its guidance control now uses the Phase A modal flow and the general profile save no longer sends guidance state.
+- Kept `public/profile.html` as a supported fallback and aligned its consent date formatting with the live editor.
+- Chose fixed UTC date-only formatting for academic-year end dates because the stored value is an end-of-day UTC instant; this displays `2027-06-30T23:59:59.999Z` as June 30, 2027 instead of allowing local timezone rollover.
+
+## 2026-10-05 - Live profile guidance badge
+
+- Diagnosed the missing self-profile tag in `home.html#profile`: the header read `availableForExternalGuidance`, but used a strict `userType === 'INSTITUTE_MEMBER'` comparison instead of the page's normalized Institute Member fallback.
+- Centralized the badge gate for own and other-user profile views, preserving the informational boolean for Institute viewers while keeping External viewers filtered. Successful toggle saves now update the local user and header immediately; turning off removes the tag.
+- The seeded mentor fixture uses legacy `User.role: 'senior'`; live DB/API verification was not run because the configured database was not verified as test-only.

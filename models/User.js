@@ -185,6 +185,22 @@ const userSchema = new mongoose.Schema({
     },
     default: 'flexible'
   },
+  // Explicit mentor consent for future External-user guidance; this is off by default.
+  availableForExternalGuidance: {
+    type: Boolean,
+    default: false
+  },
+  // When set, the consent choice is read-only until this academic-year end date.
+  externalGuidanceLockedUntil: {
+    type: Date,
+    default: null
+  },
+  externalGuidanceTermsVersion: {
+    type: String
+  },
+  externalGuidanceTermsAcceptedAt: {
+    type: Date
+  },
   projects: {
     type: [{
       title: {

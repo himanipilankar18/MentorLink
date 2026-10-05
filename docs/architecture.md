@@ -144,6 +144,18 @@ Do not merge or remove these paths without an explicit decision; see [rules.md](
 
 ## Key Feature Flows
 
+### External guidance consent
+
+`User.availableForExternalGuidance` defaults to `false` and is only changed through `PATCH /api/users/profile/external-guidance`, which uses the authenticated user's ID and accepts only legacy `User.role` values `senior` and `faculty`. The optional `externalGuidanceTermsVersion` and `externalGuidanceTermsAcceptedAt` fields have no defaults and require no migration. Turning on requires the current `MENTOR_GUIDANCE_TERMS_VERSION` from `config/externalGuidanceTerms.js`; the server stores that version and the acceptance timestamp with the change. Turning off does not require terms.
+
+A successful change also stores `externalGuidanceLockedUntil`; both enabling and disabling are locked until that date, and a second change is rejected while the date is still in the future. The lock is evaluated at request time, so no reset job is required. The response includes `availableForExternalGuidance`, `externalGuidanceLockedUntil`, and `termsVersion`.
+
+The lock date comes from the singleton `AcademicYearConfig` document (`key: current`, `yearEndDate`). It is created with a June 30 fallback when first read and can be changed by an admin through `PATCH /api/users/academic-year-config`. This is the only academic-year calendar value introduced for this feature.
+
+The mentor's own `/api/auth/me` and `/api/users/profile/:id` responses include consent state, lock date, accepted version, and current terms version. Other-user payloads omit lock and terms metadata; External-user payloads omit all guidance fields. Institute-member profile and recommendation payloads may show the informational `Open to External Guidance` tag. `GET /api/users/external-guidance/admin-summary` is restricted to `verifyToken` plus `checkRole('admin')` and returns only the count and opted-in mentors' name, department, and year.
+
+The live mentor profile editor is the `#profile` view in `public/home.html`; its guidance control opens the terms modal using the academic-year config endpoint, while disabling uses the same in-page confirmation modal. The standalone `public/profile.html` page remains a supported fallback using the same consent route. This work does not expose External matching, dashboard, or messaging capability. An admin early-unlock override is deferred because the consent endpoint has no mentor self-unlock path.
+
 ### Profile completion
 
 External users now have a separate post-OTP enrichment page at `complete-external-profile.html`. It accepts an already-issued Bearer JWT and updates only profile picture, bio, mentorship intent, availability, interests, skills, project link, and GitHub URL through `POST /api/auth/external-profile`. The step can be skipped and always ends at `home.html`.

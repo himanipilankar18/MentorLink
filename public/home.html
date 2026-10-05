@@ -2319,6 +2319,7 @@
                                 <h2 id="profile-name">User</h2>
                                 <div class="profile-badges-row">
                                     <div id="profile-intent-badge" class="profile-pill">Seeking Mentorship</div>
+                                    <div id="profile-guidance-badge" class="profile-pill" style="display:none;background:rgba(16,185,129,0.18);border-color:rgba(16,185,129,0.45);color:#6ee7b7;">Open to External Guidance</div>
                                 </div>
                                 <p id="profile-handle" class="profile-stats-line">@user</p>
                                 <p id="profile-primary-link" class="profile-links-list" style="margin-top:2px;"></p>
@@ -2803,6 +2804,12 @@
                     </select>
                 </label>
 
+                <label class="ep-field ep-span-2" id="external-guidance-field" style="display:none;">
+                    <span class="ep-label">Open to External Guidance</span>
+                    <input id="edit-profile-external-guidance" type="checkbox" style="width:20px;height:20px;accent-color:#10b981;" />
+                    <span id="external-guidance-helper" class="ep-helper">Opted-in mentors appear to External users. External users can send guidance requests that you can accept or decline.</span>
+                </label>
+
                 <label class="ep-field" for="edit-profile-cgpa">
                     <span class="ep-label">CGPA</span>
                     <input id="edit-profile-cgpa" class="modal-input" type="number" min="0" max="10" step="0.01" placeholder="8.7" autocomplete="off" />
@@ -2828,6 +2835,24 @@
             <div class="modal-actions">
                 <button type="button" class="btn-ghost" data-close-modal="edit-profile-modal">Cancel</button>
                 <button type="button" id="edit-profile-save" class="btn-send">Save changes</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="external-guidance-modal" class="modal-overlay modal-hidden" role="dialog" aria-modal="true" aria-labelledby="external-guidance-modal-title">
+        <div class="modal-card" style="max-width:560px;">
+            <div class="modal-title" id="external-guidance-modal-title">External Guidance terms</div>
+            <div class="modal-subtitle" id="external-guidance-modal-subtitle">Review these terms before opening your profile to External users.</div>
+            <div id="external-guidance-lock-date" class="modal-subtitle">Loading lock date...</div>
+            <ul id="external-guidance-terms-list" style="margin:0 0 14px 20px;color:var(--text-secondary);line-height:1.55;"></ul>
+            <label id="external-guidance-terms-label" for="external-guidance-terms-checkbox" style="display:flex;gap:8px;align-items:flex-start;color:var(--text-primary);font-size:0.85rem;">
+                <input id="external-guidance-terms-checkbox" type="checkbox" />
+                <span>I have read and agree to these terms</span>
+            </label>
+            <div id="external-guidance-modal-error" role="alert" style="display:none;color:#fca5a5;margin-top:10px;font-size:0.82rem;"></div>
+            <div class="modal-actions" style="margin-top:14px;">
+                <button type="button" id="external-guidance-modal-cancel" class="btn-ghost">Cancel</button>
+                <button type="button" id="external-guidance-modal-confirm" class="btn-send" disabled>Save changes</button>
             </div>
         </div>
     </div>
@@ -7260,6 +7285,7 @@
                 github: document.getElementById('edit-profile-github'),
                 projectLink: document.getElementById('edit-profile-project-link'),
                 projects: document.getElementById('edit-profile-projects'),
+                externalGuidance: document.getElementById('edit-profile-external-guidance'),
             };
 
             if (fields.name) fields.name.value = user.name || '';
@@ -7274,6 +7300,186 @@
             if (fields.github) fields.github.value = user.githubUrl || '';
             if (fields.projectLink) fields.projectLink.value = user.projectLink || '';
             if (fields.projects) fields.projects.value = projectsToTextarea(user.projects);
+            const guidanceField = document.getElementById('external-guidance-field');
+            const isMentor = ['senior', 'faculty'].includes(String(user.role || '').toLowerCase());
+            const isInstituteMember = String(user.userType || 'INSTITUTE_MEMBER').toUpperCase() === 'INSTITUTE_MEMBER';
+            if (guidanceField) guidanceField.style.display = isMentor && isInstituteMember ? 'flex' : 'none';
+            if (fields.externalGuidance && isMentor && isInstituteMember) {
+                renderExternalGuidanceControl(user);
+            }
+        }
+
+        let externalGuidanceModalLastFocus = null;
+        let externalGuidanceTermsVersion = null;
+        let externalGuidanceTermsReady = false;
+        let externalGuidanceRequestPending = false;
+
+        function formatAcademicYearEndDate(value) {
+            if (!value) return 'the academic-year end date';
+            return new Intl.DateTimeFormat('en-US', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+                timeZone: 'UTC',
+            }).format(new Date(value));
+        }
+
+        function renderExternalGuidanceControl(user) {
+            const toggle = document.getElementById('edit-profile-external-guidance');
+            const helper = document.getElementById('external-guidance-helper');
+            const locked = user.externalGuidanceLockedUntil
+                && Date.now() <= new Date(user.externalGuidanceLockedUntil).getTime();
+            toggle.checked = user.availableForExternalGuidance === true;
+            toggle.disabled = Boolean(locked);
+            helper.textContent = locked
+                ? `Locked until ${formatAcademicYearEndDate(user.externalGuidanceLockedUntil)}. This setting cannot be changed until then.`
+                : 'Opted-in mentors appear to External users. External users can send guidance requests that you can accept or decline.';
+        }
+
+            function renderProfileGuidanceBadge(viewedUser, viewerUser = currentUser) {
+                const badge = document.getElementById('profile-guidance-badge');
+                if (!badge) return;
+                const viewerIsInstituteMember = String(viewerUser?.userType || 'INSTITUTE_MEMBER').toUpperCase() === 'INSTITUTE_MEMBER';
+                const viewedUserIsMentor = ['senior', 'faculty'].includes(String(viewedUser?.role || '').toLowerCase());
+                badge.style.display = viewerIsInstituteMember && viewedUserIsMentor && viewedUser?.availableForExternalGuidance === true
+                ? 'inline-flex'
+                : 'none';
+            }
+
+        function setExternalGuidanceModalError(message) {
+            const error = document.getElementById('external-guidance-modal-error');
+            error.textContent = message || '';
+            error.style.display = message ? 'block' : 'none';
+        }
+
+        function setExternalGuidanceModalBusy(isBusy) {
+            externalGuidanceRequestPending = isBusy;
+            document.getElementById('external-guidance-terms-checkbox').disabled = isBusy;
+            document.getElementById('external-guidance-modal-cancel').disabled = isBusy;
+            document.getElementById('external-guidance-modal-confirm').disabled = isBusy
+                || !externalGuidanceTermsReady
+                || !document.getElementById('external-guidance-terms-checkbox').checked;
+            document.getElementById('external-guidance-modal-confirm').textContent = isBusy ? 'Saving...' : 'Save changes';
+        }
+
+        function closeExternalGuidanceModal() {
+            if (externalGuidanceRequestPending) return;
+            closeModal('external-guidance-modal');
+            document.getElementById('edit-profile-external-guidance').checked = currentUser.availableForExternalGuidance === true;
+            document.getElementById('external-guidance-terms-checkbox').checked = false;
+            externalGuidanceTermsReady = false;
+            setExternalGuidanceModalBusy(false);
+            setExternalGuidanceModalError('');
+            if (externalGuidanceModalLastFocus) externalGuidanceModalLastFocus.focus();
+        }
+
+        function trapExternalGuidanceFocus(event) {
+            if (event.key !== 'Tab') return;
+            const modal = document.getElementById('external-guidance-modal');
+            const focusable = [...modal.querySelectorAll('button, input')].filter((element) => !element.disabled);
+            if (!focusable.length) return;
+            const first = focusable[0];
+            const last = focusable[focusable.length - 1];
+            if (event.shiftKey && document.activeElement === first) {
+                event.preventDefault();
+                last.focus();
+            } else if (!event.shiftKey && document.activeElement === last) {
+                event.preventDefault();
+                first.focus();
+            }
+        }
+
+        async function openExternalGuidanceModal(nextValue) {
+            const toggle = document.getElementById('edit-profile-external-guidance');
+            externalGuidanceModalLastFocus = toggle;
+            toggle.checked = currentUser.availableForExternalGuidance === true;
+
+            const modalTitle = document.getElementById('external-guidance-modal-title');
+            const modalSubtitle = document.getElementById('external-guidance-modal-subtitle');
+            const lockDate = document.getElementById('external-guidance-lock-date');
+            const termsList = document.getElementById('external-guidance-terms-list');
+            const termsLabel = document.getElementById('external-guidance-terms-label');
+            const termsCheckbox = document.getElementById('external-guidance-terms-checkbox');
+
+            if (!nextValue) {
+                modalTitle.textContent = 'Turn off External Guidance?';
+                modalSubtitle.textContent = 'This setting will still be locked until the academic-year end date.';
+                lockDate.textContent = `Locked until ${formatAcademicYearEndDate(currentUser.externalGuidanceLockedUntil)}`;
+                termsList.style.display = 'none';
+                termsLabel.style.display = 'none';
+                externalGuidanceTermsReady = true;
+                termsCheckbox.checked = false;
+                document.getElementById('external-guidance-modal-confirm').disabled = false;
+                setExternalGuidanceModalError('');
+                openModal('external-guidance-modal', document.getElementById('external-guidance-modal-confirm'));
+                return;
+            }
+
+            modalTitle.textContent = 'External Guidance terms';
+            modalSubtitle.textContent = 'Review these terms before opening your profile to External users.';
+            termsList.style.display = 'block';
+            termsLabel.style.display = 'flex';
+            termsCheckbox.checked = false;
+            externalGuidanceTermsReady = false;
+            setExternalGuidanceModalError('');
+            termsList.innerHTML = '<li>Loading terms...</li>';
+            lockDate.textContent = 'Loading lock date...';
+            document.getElementById('external-guidance-modal-confirm').disabled = true;
+            openModal('external-guidance-modal', termsCheckbox);
+
+            try {
+                const response = await fetch(API_BASE + '/users/academic-year-config', { headers: { 'Authorization': 'Bearer ' + token } });
+                const config = await response.json();
+                if (!response.ok || !config.success) throw new Error(config.message || 'Could not load terms.');
+                externalGuidanceTermsVersion = config.termsVersion;
+                termsList.innerHTML = (config.terms || []).map((term) => `<li>${term}</li>`).join('');
+                lockDate.textContent = `If confirmed, this choice will be locked until ${formatAcademicYearEndDate(config.yearEndDate)}.`;
+                externalGuidanceTermsReady = true;
+                document.getElementById('external-guidance-terms-checkbox').focus();
+            } catch (error) {
+                setExternalGuidanceModalError(error.message || 'Terms could not be loaded.');
+            }
+        }
+
+        async function updateExternalGuidanceFromHome(nextValue) {
+            const toggle = document.getElementById('edit-profile-external-guidance');
+            if (nextValue) setExternalGuidanceModalBusy(true);
+            else {
+                externalGuidanceRequestPending = true;
+                toggle.disabled = true;
+                document.getElementById('external-guidance-modal-confirm').disabled = true;
+            }
+
+            try {
+                const response = await fetch(API_BASE + '/users/profile/external-guidance', {
+                    method: 'PATCH',
+                    headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        availableForExternalGuidance: nextValue,
+                        ...(nextValue ? { acceptedTermsVersion: externalGuidanceTermsVersion } : {}),
+                    }),
+                });
+                const data = await response.json();
+                if (!response.ok || !data.success) {
+                    const message = data.code === 'TERMS_REQUIRED' ? 'Terms required.' : (data.message || 'Could not update External Guidance.');
+                    throw new Error(message);
+                }
+                currentUser = { ...currentUser, ...data.user, externalGuidanceLockedUntil: data.externalGuidanceLockedUntil };
+                renderExternalGuidanceControl(currentUser);
+                renderProfileGuidanceBadge(currentUser, currentUser);
+                externalGuidanceRequestPending = false;
+                closeExternalGuidanceModal();
+                return true;
+            } catch (error) {
+                toggle.checked = currentUser.availableForExternalGuidance === true;
+                if (nextValue) setExternalGuidanceModalError(error.message || 'Could not update External Guidance.');
+                else setExternalGuidanceModalError(error.message || 'Could not update External Guidance.');
+                return false;
+            } finally {
+                externalGuidanceRequestPending = false;
+                if (!nextValue) renderExternalGuidanceControl(currentUser);
+                else setExternalGuidanceModalBusy(false);
+            }
         }
 
         async function submitEditProfile() {
@@ -7369,6 +7575,7 @@
                 const profileBio = document.getElementById('profile-bio');
                 const profileMeta = document.getElementById('profile-meta');
                 const profileIntentBadge = document.getElementById('profile-intent-badge');
+                const profileGuidanceBadge = document.getElementById('profile-guidance-badge');
                 const profilePrimaryLink = document.getElementById('profile-primary-link');
                 const profileSkillsLine = document.getElementById('profile-skills-line');
                 const profileAvailabilityLine = document.getElementById('profile-availability-line');
@@ -7452,6 +7659,7 @@
                     profileMeta.textContent = parts.filter(Boolean).join(' · ');
 
                     applyIntentBadge(profileIntentBadge, currentUser.mentorshipIntent || 'seeking');
+                    renderProfileGuidanceBadge(currentUser, currentUser);
 
                     // Primary link directly under handle (e.g., GitHub)
                     if (profilePrimaryLink) {
@@ -7587,6 +7795,7 @@
                 const profileBio = document.getElementById('profile-bio');
                 const profileMeta = document.getElementById('profile-meta');
                 const profileIntentBadge = document.getElementById('profile-intent-badge');
+                const profileGuidanceBadge = document.getElementById('profile-guidance-badge');
                 const profileSkillsLine = document.getElementById('profile-skills-line');
                 const profileAvailabilityLine = document.getElementById('profile-availability-line');
                 const profileStrengthLine = document.getElementById('profile-strength-line');
@@ -7660,6 +7869,7 @@
                     profileMeta.textContent = parts.filter(Boolean).join(' · ');
 
                     applyIntentBadge(profileIntentBadge, user.mentorshipIntent || 'seeking');
+                    renderProfileGuidanceBadge(user, currentUser);
 
                     if (profileSkillsLine) {
                         const skillsText = Array.isArray(user.skills) && user.skills.length
@@ -8825,6 +9035,41 @@
                 }
             });
         }
+
+        const externalGuidanceToggle = document.getElementById('edit-profile-external-guidance');
+        const externalGuidanceModal = document.getElementById('external-guidance-modal');
+        const externalGuidanceTermsCheckbox = document.getElementById('external-guidance-terms-checkbox');
+        const externalGuidanceModalConfirm = document.getElementById('external-guidance-modal-confirm');
+
+        externalGuidanceToggle?.addEventListener('change', (event) => {
+            openExternalGuidanceModal(event.target.checked);
+        });
+
+        externalGuidanceTermsCheckbox?.addEventListener('change', (event) => {
+            externalGuidanceModalConfirm.disabled = externalGuidanceRequestPending
+                || !externalGuidanceTermsReady
+                || !event.target.checked;
+        });
+
+        document.getElementById('external-guidance-modal-cancel')?.addEventListener('click', closeExternalGuidanceModal);
+        externalGuidanceModalConfirm?.addEventListener('click', async () => {
+            const nextValue = externalGuidanceTermsReady && document.getElementById('external-guidance-terms-label').style.display !== 'none';
+            const updated = await updateExternalGuidanceFromHome(nextValue);
+            if (!updated) return;
+        });
+
+        externalGuidanceModal?.addEventListener('click', (event) => {
+            if (event.target === event.currentTarget) closeExternalGuidanceModal();
+        });
+
+        externalGuidanceModal?.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape') {
+                event.preventDefault();
+                closeExternalGuidanceModal();
+                return;
+            }
+            trapExternalGuidanceFocus(event);
+        });
 
         if (userSearchInput) {
             let searchTimeout = null;

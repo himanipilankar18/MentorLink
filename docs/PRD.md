@@ -6,7 +6,7 @@ Last updated: 2026-09-23
 
 ## Product Snapshot
 
-MentorConnect connects students, alumni, faculty, and external users around academic guidance, peer interaction, mentorship requests, communities, discussions, and project-oriented networking. The project is in active development; route and model evidence is more authoritative than completion claims in older project reports.
+MentorConnect connects students, alumni, and external users around academic guidance, peer interaction, mentorship requests, communities, discussions, and project-oriented networking. The project is in active development; route and model evidence is more authoritative than completion claims in older project reports.
 
 ## Problem
 

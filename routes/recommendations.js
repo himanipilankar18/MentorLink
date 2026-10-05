@@ -149,10 +149,23 @@ router.get('/mentors', verifyToken, apiLimiter, async (req, res) => {
       limit,
     });
 
+    const recommendations = result.recommendations.map((recommendation) => {
+      const {
+        externalGuidanceLockedUntil,
+        externalGuidanceTermsVersion,
+        externalGuidanceTermsAcceptedAt,
+        termsVersion,
+        ...safeRecommendation
+      } = recommendation;
+      if (String(req.user.userType || 'INSTITUTE_MEMBER').toUpperCase() === 'INSTITUTE_MEMBER') return safeRecommendation;
+      delete safeRecommendation.availableForExternalGuidance;
+      return safeRecommendation;
+    });
+
     res.json({
       success: true,
-      count: result.recommendations.length,
-      recommendations: result.recommendations,
+      count: recommendations.length,
+      recommendations,
       clustering: result.clustering,
     });
   } catch (error) {
@@ -223,9 +236,20 @@ router.get('/mentors/:mentorId/explain', verifyToken, apiLimiter, async (req, re
       });
     }
 
+    const {
+      externalGuidanceLockedUntil,
+      externalGuidanceTermsVersion,
+      externalGuidanceTermsAcceptedAt,
+      termsVersion,
+      ...safeExplanation
+    } = explanation;
+    if (String(req.user.userType || 'INSTITUTE_MEMBER').toUpperCase() !== 'INSTITUTE_MEMBER') {
+      delete safeExplanation.availableForExternalGuidance;
+    }
+
     res.json({
       success: true,
-      recommendation: explanation,
+      recommendation: safeExplanation,
       clustering: result.clustering,
     });
   } catch (error) {

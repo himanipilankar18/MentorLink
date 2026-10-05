@@ -86,6 +86,16 @@ Status: `⚠️ Legacy (needs cleanup)`.
 - Editable fields include name, year, department, skills, interests, CGPA, bio, projects, mentorship intent, availability, and links.
 - Password and account identity fields are not part of the normal profile update payload.
 
+### Mentor External Guidance Settings
+
+1. A senior or faculty Institute Member opens their own profile in the live `home.html` `#profile` view and uses the Edit Profile guidance control. The standalone `profile.html` page remains a supported consistent fallback with the same consent route.
+2. The `Open to External Guidance` switch shows the current state and, after a change, the academic-year lock date. Juniors, other users, and External accounts do not see this setting.
+3. Turning the switch on leaves the switch unchanged and opens the terms modal. The modal fetches the current academic-year end date and draft terms from `/api/users/academic-year-config`; terms are not shown on the profile by default.
+4. The checkbox starts unchecked on every open, and the real Confirm button remains disabled until `I have read and agree to these terms` is checked. Cancel, Escape, and clicking outside reset the checkbox and leave the switch unchanged.
+5. Confirm sends `availableForExternalGuidance: true` and the current `acceptedTermsVersion`. Controls are disabled while saving, and the switch changes only after a successful response. Errors such as `TERMS_REQUIRED`, lock conflicts, authorization failures, or network failures leave the switch unchanged and remain visible in the flow.
+6. Turning the switch off uses a confirmation dialog because the same lock applies in both directions; it requires no terms checkbox and changes only after the PATCH succeeds. A locked switch is disabled and states `Locked until <date>`.
+7. The endpoint requires `acceptedTermsVersion` to equal the current terms version when enabling and returns `TERMS_REQUIRED` otherwise. The mentor's own profile includes consent state, lock date, accepted version, and terms version; other profiles do not expose those fields.
+
 ## Mentorship
 
 **User flow**

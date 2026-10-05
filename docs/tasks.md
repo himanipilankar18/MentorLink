@@ -70,6 +70,20 @@ See [architecture.md](architecture.md) for the current flow and [rules.md](rules
 - [ ] Add a supported automated test strategy; the root `npm test` script currently exits intentionally.
 - [ ] Document deployment and environment requirements from `.env.example` and operational scripts.
 
+## External-user Work
+
+## Phase A: Mentor External Guidance Consent
+
+- [x] Add optional versioned consent fields and server-enforced terms acceptance with academic-year locking (verified in `User.js`, `routes/users.js`, and syntax/load checks).
+- [x] Add mentor-only profile settings UI with terms modal, OFF confirmation, disabled lock state, non-optimistic updates, and live header visibility (verified in `public/home.html`; `public/profile.html` remains a supported fallback).
+- [x] Preserve institute-only informational visibility tags and add admin-only opted-in mentor count/list (verified in `routes/users.js` and `public/js/recommendations.js`).
+- [ ] Execute seeded test-DB endpoint and browser verification for ON, OFF, lock, role, and payload-redaction cases.
+
+- [x] Add the mentor-only `Available for External Guidance` opt-in with academic-year lock-in, institute-member-only informational tags, and server-side enforcement.
+- [ ] Add an admin early-unlock override with persistent audit logging if operational policy requires exceptions.
+
+Prerequisite for External matching/dashboard phase — do not start that phase until this is confirmed live and verified.
+
 ## Status Rules
 
 - Update this file whenever a task status changes.

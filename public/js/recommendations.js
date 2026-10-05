@@ -591,6 +591,7 @@ function renderMLRecommendations(container, recommendations) {
           <div class="avatar-sm ml-card-avatar" style="background:var(--gradient-splash);">${mentorInitials}</div>
           <div class="info ml-card-info">
             <div class="name ml-card-name">${escapeHtml(name)}</div>
+            ${mentor.availableForExternalGuidance === true ? '<span style="display:inline-flex;width:max-content;margin-top:4px;padding:3px 8px;border-radius:999px;background:rgba(16,185,129,0.18);border:1px solid rgba(16,185,129,0.45);color:#6ee7b7;font-size:0.72rem;font-weight:700;">Open to External Guidance</span>' : ''}
             <div class="ml-card-role">${escapeHtml(roleLine)}</div>
             <div class="presence-label ml-status-text">${escapeHtml(status)}</div>
           </div>

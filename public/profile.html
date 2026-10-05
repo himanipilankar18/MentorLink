@@ -191,6 +191,18 @@
             margin-bottom: 8px;
         }
 
+        .external-guidance-badge {
+            display: inline-flex;
+            padding: 4px 10px;
+            border-radius: 999px;
+            background: rgba(16, 185, 129, 0.12);
+            color: #047857;
+            border: 1px solid rgba(16, 185, 129, 0.35);
+            font-size: 0.78em;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
         .profile-strength-wrap {
             margin-top: 8px;
             max-width: 280px;
@@ -443,6 +455,133 @@
             min-height: 100px;
             resize: vertical;
         }
+
+        .guidance-settings {
+            background: #fff;
+            color: #333;
+            border: 0;
+        }
+
+        .guidance-settings .section-title,
+        .guidance-settings .info-label,
+        .guidance-settings .info-value {
+            color: #333;
+        }
+
+        .guidance-settings .section-header {
+            border-color: #e0e0e0;
+        }
+
+        .guidance-settings .section-content {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 20px;
+        }
+
+        .guidance-helper,
+        .guidance-status {
+            color: #666;
+            font-size: 0.9em;
+            line-height: 1.5;
+        }
+
+        .guidance-status {
+            color: #333;
+            margin-top: 5px;
+        }
+
+        .guidance-switch {
+            width: 52px;
+            height: 30px;
+            flex: 0 0 auto;
+            accent-color: #667eea;
+            cursor: pointer;
+        }
+
+        .guidance-settings button {
+            border-radius: 12px;
+        }
+
+        .guidance-modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.55);
+        }
+
+        .guidance-modal.open {
+            display: flex;
+        }
+
+        .guidance-modal-content {
+            width: min(100%, 520px);
+            max-height: 90vh;
+            overflow: auto;
+            background: #fff;
+            color: #333;
+            border: 1px solid #e0e0e0;
+            border-radius: 24px;
+            padding: 28px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8);
+        }
+
+        .guidance-modal-content h2 {
+            margin-bottom: 8px;
+        }
+
+        .guidance-modal-content p,
+        .guidance-modal-content li {
+            color: #666;
+            line-height: 1.55;
+        }
+
+        .guidance-modal-content ul {
+            padding-left: 20px;
+            margin: 16px 0;
+        }
+
+        .guidance-modal-content button {
+            padding: 10px 16px;
+            border: 0;
+            border-radius: 12px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        .guidance-modal-content button:focus-visible,
+        .guidance-switch:focus-visible {
+            outline: 3px solid #667eea;
+            outline-offset: 2px;
+        }
+
+        .guidance-confirm {
+            background: #667eea;
+            color: #fff;
+        }
+
+        .guidance-confirm:disabled {
+            background: #c7c7c7;
+            color: #666;
+            cursor: not-allowed;
+        }
+
+        .guidance-cancel {
+            background: #f5f7fa;
+            color: #333;
+            border: 1px solid #d1d5db !important;
+            margin-right: 8px;
+        }
+
+        .guidance-modal-actions {
+            display: flex;
+            justify-content: flex-end;
+            margin-top: 20px;
+        }
     </style>
 </head>
 <body>
@@ -469,6 +608,7 @@
                 <div class="profile-name-section">
                     <div class="profile-name" id="profileName">Loading...</div>
                     <div class="intent-badge" id="profileIntentBadge">Seeking Mentorship</div>
+                    <div class="external-guidance-badge" id="externalGuidanceBadge" style="display: none;">Open to External Guidance</div>
                     <div class="profile-role" id="profileRole">Loading...</div>
                     <div class="profile-availability" id="profileAvailability">Availability: Flexible</div>
                     <div class="profile-strength-wrap">
@@ -512,6 +652,20 @@
                 <div class="info-grid" id="basicInfo">
                     <!-- Will be populated by JavaScript -->
                 </div>
+            </div>
+        </div>
+
+        <div class="profile-card guidance-settings" id="externalGuidanceSettings" style="display: none;">
+            <div class="section-header">
+                <div class="section-title">Profile Settings</div>
+            </div>
+            <div class="section-content">
+                <div>
+                    <div class="info-label">Open to External Guidance</div>
+                    <div class="guidance-helper">Allow External users to send informal mentorship requests.</div>
+                    <div class="guidance-status" id="externalGuidanceStatus">Currently closed</div>
+                </div>
+                <input class="guidance-switch" type="checkbox" id="externalGuidanceSwitch" aria-label="Open to External Guidance">
             </div>
         </div>
 
@@ -580,6 +734,21 @@
                 <div id="projectsContent">
                     <!-- Will be populated by JavaScript -->
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="guidance-modal" id="externalGuidanceModal" role="dialog" aria-modal="true" aria-labelledby="guidanceModalTitle">
+        <div class="guidance-modal-content">
+            <h2 id="guidanceModalTitle">External Guidance terms</h2>
+            <p id="guidanceModalIntro">Please review these draft terms before opening your profile to External users.</p>
+            <p id="guidanceLockDate"></p>
+            <ul id="guidanceTermsList"></ul>
+            <label for="guidanceTermsCheckbox"><input type="checkbox" id="guidanceTermsCheckbox"> I have read and agree to these terms</label>
+            <div id="guidanceModalError" role="alert" style="display: none; color: #b91c1c; margin-top: 12px;"></div>
+            <div class="guidance-modal-actions">
+                <button type="button" class="guidance-cancel" id="guidanceModalCancel">Cancel</button>
+                <button type="button" class="guidance-confirm" id="guidanceModalConfirm" disabled>Confirm</button>
             </div>
         </div>
     </div>
@@ -654,6 +823,10 @@
                 intentBadge.textContent = formatIntentLabel(intent);
                 intentBadge.className = `intent-badge ${intent}`;
             }
+            const guidanceBadge = document.getElementById('externalGuidanceBadge');
+            const isMentor = userData.role === 'senior' || userData.role === 'faculty';
+            const isInstituteViewer = String(userData.userType || 'INSTITUTE_MEMBER').toUpperCase() === 'INSTITUTE_MEMBER';
+            if (guidanceBadge) guidanceBadge.style.display = isMentor && isInstituteViewer && userData.availableForExternalGuidance === true ? 'inline-flex' : 'none';
             document.getElementById('profileRole').textContent = `${userData.role.charAt(0).toUpperCase() + userData.role.slice(1)} • ${userData.email}`;
             document.getElementById('profileAvailability').textContent = `Availability: ${formatAvailabilityLabel(userData.availability)}`;
             document.getElementById('statYear').textContent = userData.year || 'N/A';
@@ -677,6 +850,8 @@
             
             // Projects section
             renderProjects();
+
+            renderExternalGuidanceSettings();
         }
 
         function renderBasicInfo() {
@@ -714,6 +889,11 @@
                     <div class="info-label">Availability</div>
                     <div class="info-value">${formatAvailabilityLabel(userData.availability || 'flexible')}</div>
                 </div>
+                ${userData.role === 'senior' || userData.role === 'faculty' ? `
+                <div class="info-item">
+                    <div class="info-label">External Guidance</div>
+                    <div class="info-value">${userData.availableForExternalGuidance === true ? 'Open to External Guidance' : 'Not available'}</div>
+                </div>` : ''}
             `;
         }
 
@@ -884,6 +1064,38 @@
             `;
         }
 
+        function isGuidanceMentor() {
+            return ['senior', 'faculty'].includes(String(userData.role || '').toLowerCase())
+                && String(userData.userType || 'INSTITUTE_MEMBER').toUpperCase() === 'INSTITUTE_MEMBER';
+        }
+
+        function formatLockDate(value) {
+            return value
+                ? new Intl.DateTimeFormat('en-US', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                    timeZone: 'UTC',
+                }).format(new Date(value))
+                : 'the academic-year end date';
+        }
+
+        function renderExternalGuidanceSettings() {
+            const settings = document.getElementById('externalGuidanceSettings');
+            if (!settings || !isGuidanceMentor()) return;
+
+            settings.style.display = 'block';
+            const toggle = document.getElementById('externalGuidanceSwitch');
+            const status = document.getElementById('externalGuidanceStatus');
+            const locked = userData.externalGuidanceLockedUntil
+                && Date.now() <= new Date(userData.externalGuidanceLockedUntil).getTime();
+            toggle.checked = userData.availableForExternalGuidance === true;
+            toggle.disabled = Boolean(locked);
+            status.textContent = locked
+                ? `${toggle.checked ? 'Currently open' : 'Currently closed'}. Locked until ${formatLockDate(userData.externalGuidanceLockedUntil)}.`
+                : `${toggle.checked ? 'Currently open' : 'Currently closed'}. Changing this setting locks it until the academic-year end date.`;
+        }
+
         function renderAboutEdit() {
             const aboutContent = document.getElementById('aboutContent');
             aboutContent.innerHTML = `<textarea id="editBio" placeholder="Write a brief introduction about yourself...">${userData.bio || ''}</textarea>`;
@@ -972,6 +1184,142 @@
             editingData.projects.push({ title: '', description: '' });
             renderProjectsEdit();
         }
+
+        let guidanceModalLastFocus = null;
+        let guidanceModalMode = 'enable';
+        let guidanceYearEndDate = null;
+        let guidanceTermsVersion = null;
+        let guidanceRequestPending = false;
+        let guidanceTermsReady = false;
+
+        function setGuidanceModalBusy(isBusy) {
+            guidanceRequestPending = isBusy;
+            document.getElementById('guidanceTermsCheckbox').disabled = isBusy;
+            document.getElementById('guidanceModalCancel').disabled = isBusy;
+            document.getElementById('guidanceModalConfirm').disabled = isBusy || !guidanceTermsReady || !document.getElementById('guidanceTermsCheckbox').checked;
+            document.getElementById('guidanceModalConfirm').textContent = isBusy ? 'Saving...' : 'Confirm';
+            const locked = userData.externalGuidanceLockedUntil
+                && Date.now() <= new Date(userData.externalGuidanceLockedUntil).getTime();
+            document.getElementById('externalGuidanceSwitch').disabled = isBusy || Boolean(locked);
+        }
+
+        function setGuidanceModalError(message) {
+            const error = document.getElementById('guidanceModalError');
+            error.textContent = message || '';
+            error.style.display = message ? 'block' : 'none';
+        }
+
+        function closeGuidanceModal() {
+            if (guidanceRequestPending) return;
+            const modal = document.getElementById('externalGuidanceModal');
+            modal.classList.remove('open');
+            document.getElementById('externalGuidanceSwitch').checked = userData.availableForExternalGuidance === true;
+            document.getElementById('guidanceTermsCheckbox').checked = false;
+            setGuidanceModalBusy(false);
+            guidanceTermsReady = false;
+            setGuidanceModalError('');
+            if (guidanceModalLastFocus) guidanceModalLastFocus.focus();
+        }
+
+        function trapGuidanceFocus(event) {
+            const modal = document.getElementById('externalGuidanceModal');
+            if (!modal.classList.contains('open') || event.key !== 'Tab') return;
+            const focusable = [...modal.querySelectorAll('button, input')].filter((element) => !element.disabled);
+            if (!focusable.length) return;
+            const first = focusable[0];
+            const last = focusable[focusable.length - 1];
+            if (event.shiftKey && document.activeElement === first) {
+                event.preventDefault();
+                last.focus();
+            } else if (!event.shiftKey && document.activeElement === last) {
+                event.preventDefault();
+                first.focus();
+            }
+        }
+
+        async function openGuidanceModal(nextValue) {
+            guidanceModalMode = nextValue ? 'enable' : 'disable';
+            guidanceModalLastFocus = document.getElementById('externalGuidanceSwitch');
+            guidanceModalLastFocus.checked = userData.availableForExternalGuidance === true;
+            if (guidanceModalMode === 'disable') {
+                const shouldDisable = window.confirm('Turn off External Guidance? This setting will still be locked until the academic-year end date.');
+                if (shouldDisable) await updateExternalGuidance(false);
+                return;
+            }
+
+            const modal = document.getElementById('externalGuidanceModal');
+            const list = document.getElementById('guidanceTermsList');
+            const lockDate = document.getElementById('guidanceLockDate');
+            document.getElementById('guidanceTermsCheckbox').checked = false;
+            document.getElementById('guidanceModalConfirm').disabled = true;
+            guidanceTermsReady = false;
+            setGuidanceModalError('');
+            list.innerHTML = '<li>Loading terms...</li>';
+            lockDate.textContent = 'Loading lock date...';
+            modal.classList.add('open');
+            document.getElementById('guidanceTermsCheckbox').focus();
+            try {
+                const response = await fetch('/api/users/academic-year-config', { headers: { 'Authorization': `Bearer ${token}` } });
+                const config = await response.json();
+                if (!response.ok || !config.success) throw new Error(config.message || 'Could not load terms');
+                guidanceYearEndDate = config.yearEndDate;
+                guidanceTermsVersion = config.termsVersion;
+                list.innerHTML = (config.terms || []).map((term) => `<li>${term}</li>`).join('');
+                lockDate.textContent = `If confirmed, this choice will be locked until ${formatLockDate(guidanceYearEndDate)}.`;
+                guidanceTermsReady = true;
+                document.getElementById('guidanceModalConfirm').disabled = true;
+            } catch (error) {
+                setGuidanceModalError(error.message || 'Terms could not be loaded.');
+            }
+        }
+
+        async function updateExternalGuidance(nextValue) {
+            if (nextValue) setGuidanceModalBusy(true);
+            else document.getElementById('externalGuidanceSwitch').disabled = true;
+            const body = { availableForExternalGuidance: nextValue };
+            if (nextValue) body.acceptedTermsVersion = guidanceTermsVersion;
+            try {
+                const response = await fetch('/api/users/profile/external-guidance', {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                    body: JSON.stringify(body),
+                });
+                const data = await response.json();
+                if (!response.ok) throw new Error(data.code === 'TERMS_REQUIRED' ? 'Terms required.' : (data.message || 'Could not update External Guidance.'));
+                userData = { ...userData, ...data.user, externalGuidanceLockedUntil: data.externalGuidanceLockedUntil };
+                renderProfile();
+                showMessage(`External Guidance updated. Locked until ${formatLockDate(data.externalGuidanceLockedUntil)}.`, 'success');
+                setGuidanceModalBusy(false);
+                return true;
+            } catch (error) {
+                document.getElementById('externalGuidanceSwitch').checked = userData.availableForExternalGuidance === true;
+                if (nextValue) setGuidanceModalError(error.message || 'Could not update External Guidance.');
+                else showMessage(error.message || 'Could not update External Guidance.', 'error');
+                return false;
+            } finally {
+                if (!nextValue) renderExternalGuidanceSettings();
+                if (nextValue) setGuidanceModalBusy(false);
+            }
+        }
+
+        document.getElementById('externalGuidanceSwitch')?.addEventListener('change', (event) => {
+            openGuidanceModal(event.target.checked);
+        });
+        document.getElementById('guidanceTermsCheckbox')?.addEventListener('change', (event) => {
+            document.getElementById('guidanceModalConfirm').disabled = !guidanceTermsReady || !event.target.checked;
+        });
+        document.getElementById('guidanceModalCancel')?.addEventListener('click', closeGuidanceModal);
+        document.getElementById('guidanceModalConfirm')?.addEventListener('click', async () => {
+            const updated = await updateExternalGuidance(true);
+            if (updated) closeGuidanceModal();
+        });
+        document.getElementById('externalGuidanceModal')?.addEventListener('click', (event) => {
+            if (event.target === event.currentTarget) closeGuidanceModal();
+        });
+        document.getElementById('externalGuidanceModal')?.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape') closeGuidanceModal();
+            trapGuidanceFocus(event);
+        });
 
         async function saveSection(section) {
             let updateData = {};

@@ -3,6 +3,7 @@ const fs = require('fs');
 const path = require('path');
 const { spawnSync } = require('child_process');
 const User = require('../models/User');
+const AcademicYearConfig = require('../models/AcademicYearConfig');
 const Interaction = require('../models/Interaction');
 const Mentorship = require('../models/Mentorship');
 const { verifyToken, checkRole } = require('../middleware/auth');
@@ -10,6 +11,11 @@ const { apiLimiter } = require('../middleware/security');
 const sendEmail = require('../utils/sendEmail');
 const { createAndEmitNotification } = require('../utils/notifications');
 const { buildPeerRecommendations } = require('../recommender_model/src/peerMatcher');
+const { getAcademicYearEndDate } = require('../utils/academicYear');
+const {
+  MENTOR_GUIDANCE_TERMS_VERSION,
+  MENTOR_GUIDANCE_TERMS,
+} = require('../config/externalGuidanceTerms');
 
 const router = express.Router();
 
@@ -270,6 +276,24 @@ function normalizeTextArray(values) {
     .filter(Boolean);
 }
 
+function canViewExternalGuidance(viewer) {
+  return String(viewer?.userType || 'INSTITUTE_MEMBER').toUpperCase() === 'INSTITUTE_MEMBER';
+}
+
+function canViewOwnGuidanceConsent(viewer, target) {
+  return String(viewer?._id) === String(target?._id)
+    && String(target?.userType || 'INSTITUTE_MEMBER').toUpperCase() === 'INSTITUTE_MEMBER'
+    && ['senior', 'faculty'].includes(String(target?.role || '').toLowerCase());
+}
+
+function removeGuidanceConsentFields(payload) {
+  delete payload.externalGuidanceLockedUntil;
+  delete payload.externalGuidanceTermsVersion;
+  delete payload.externalGuidanceTermsAcceptedAt;
+  delete payload.termsVersion;
+  return payload;
+}
+
 const PEOPLE_CLUSTERS = {
   'ml-experts': {
     label: 'Machine Learning Experts',
@@ -474,6 +498,9 @@ router.get('/profile/:id', verifyToken, apiLimiter, async (req, res) => {
     }
 
     const payload = user.toObject();
+    if (!canViewExternalGuidance(req.user)) delete payload.availableForExternalGuidance;
+    if (!canViewOwnGuidanceConsent(req.user, user)) removeGuidanceConsentFields(payload);
+    if (canViewOwnGuidanceConsent(req.user, user)) payload.termsVersion = MENTOR_GUIDANCE_TERMS_VERSION;
     const role = String(payload.role || '').toLowerCase();
     const isMentorRole = role === 'senior' || role === 'faculty';
 
@@ -651,6 +678,14 @@ async function updateProfileHandler(req, res) {
       projectLink,
     } = req.body;
 
+    if (Object.prototype.hasOwnProperty.call(req.body, 'availableForExternalGuidance') ||
+        Object.prototype.hasOwnProperty.call(req.body, 'externalGuidanceLockedUntil')) {
+      return res.status(400).json({
+        success: false,
+        message: 'Use the external guidance consent endpoint to update this setting',
+      });
+    }
+
     const allowedUpdates = {
       name,
       year,
@@ -768,15 +803,19 @@ async function updateProfileHandler(req, res) {
       }).catch(console.error);
     }
 
+    const responseUser = {
+      ...user.toObject(),
+      mentorshipIntent: user.mentorshipIntent || 'seeking',
+      availability: user.availability || 'flexible',
+      profileStrength: calculateProfileStrength(user),
+    };
+    if (!canViewOwnGuidanceConsent(req.user, user)) removeGuidanceConsentFields(responseUser);
+    if (!canViewExternalGuidance(req.user)) delete responseUser.availableForExternalGuidance;
+
     res.json({
       success: true,
       message: 'Profile updated successfully',
-      user: {
-        ...user.toObject(),
-        mentorshipIntent: user.mentorshipIntent || 'seeking',
-        availability: user.availability || 'flexible',
-        profileStrength: calculateProfileStrength(user),
-      }
+      user: responseUser,
     });
   } catch (error) {
     if (error && error.name === 'ValidationError') {
@@ -803,6 +842,133 @@ router.put('/profile', verifyToken, apiLimiter, updateProfileHandler);
 // @desc    Partially update own profile
 // @access  Private
 router.patch('/profile', verifyToken, apiLimiter, updateProfileHandler);
+
+// @route   PATCH /api/users/profile/external-guidance
+// @desc    Update the authenticated mentor's External guidance consent
+// @access  Private mentors only
+router.patch('/profile/external-guidance', verifyToken, checkRole('senior', 'faculty'), apiLimiter, async (req, res) => {
+  try {
+    if (typeof req.body.availableForExternalGuidance !== 'boolean') {
+      return res.status(400).json({
+        success: false,
+        message: 'availableForExternalGuidance must be a boolean',
+      });
+    }
+
+    const user = await User.findById(req.user._id).select('-password');
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    if (req.body.availableForExternalGuidance === true
+      && req.body.acceptedTermsVersion !== MENTOR_GUIDANCE_TERMS_VERSION) {
+      return res.status(400).json({
+        success: false,
+        code: 'TERMS_REQUIRED',
+        message: 'You must accept the current External Guidance terms before turning this setting on.',
+        termsVersion: MENTOR_GUIDANCE_TERMS_VERSION,
+      });
+    }
+
+    if (user.externalGuidanceLockedUntil && Date.now() <= user.externalGuidanceLockedUntil.getTime()) {
+      return res.status(409).json({
+        success: false,
+        message: `This setting is locked until ${user.externalGuidanceLockedUntil.toISOString()} and can't be changed until then.`,
+        code: 'GUIDANCE_LOCKED',
+        lockedUntil: user.externalGuidanceLockedUntil,
+        termsVersion: MENTOR_GUIDANCE_TERMS_VERSION,
+      });
+    }
+
+    user.availableForExternalGuidance = req.body.availableForExternalGuidance;
+    user.externalGuidanceLockedUntil = await getAcademicYearEndDate();
+    if (req.body.availableForExternalGuidance === true) {
+      user.externalGuidanceTermsVersion = MENTOR_GUIDANCE_TERMS_VERSION;
+      user.externalGuidanceTermsAcceptedAt = new Date();
+    }
+    await user.save();
+
+    const responseUser = {
+      ...user.toObject(),
+      mentorshipIntent: user.mentorshipIntent || 'seeking',
+      availability: user.availability || 'flexible',
+      profileStrength: calculateProfileStrength(user),
+    };
+    if (!canViewOwnGuidanceConsent(req.user, user)) removeGuidanceConsentFields(responseUser);
+    if (!canViewExternalGuidance(req.user)) delete responseUser.availableForExternalGuidance;
+
+    res.json({
+      success: true,
+      message: 'External guidance availability updated',
+      user: responseUser,
+      academicYearEndDate: user.externalGuidanceLockedUntil,
+      externalGuidanceLockedUntil: user.externalGuidanceLockedUntil,
+      termsVersion: MENTOR_GUIDANCE_TERMS_VERSION,
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Failed to update External guidance availability', error: error.message });
+  }
+});
+
+// @route   GET /api/users/academic-year-config
+// @desc    Get the current academic-year end date for mentor settings
+// @access  Private mentors and admins
+router.get('/academic-year-config', verifyToken, checkRole('senior', 'faculty', 'admin'), apiLimiter, async (req, res) => {
+  try {
+    const yearEndDate = await getAcademicYearEndDate();
+    res.json({
+      success: true,
+      yearEndDate,
+      termsVersion: MENTOR_GUIDANCE_TERMS_VERSION,
+      terms: MENTOR_GUIDANCE_TERMS,
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Failed to load academic-year configuration', error: error.message });
+  }
+});
+
+// @route   GET /api/users/external-guidance/admin-summary
+// @desc    Verify opted-in mentors without exposing consent metadata
+// @access  Admin only
+router.get('/external-guidance/admin-summary', verifyToken, checkRole('admin'), apiLimiter, async (req, res) => {
+  try {
+    const mentors = await User.find({
+      role: { $in: ['senior', 'faculty'] },
+      availableForExternalGuidance: true,
+      isActive: true,
+    })
+      .select('name department year -_id')
+      .sort({ name: 1 })
+      .lean();
+
+    res.json({ success: true, count: mentors.length, mentors });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Failed to load External Guidance admin summary' });
+  }
+});
+
+// @route   PATCH /api/users/academic-year-config
+// @desc    Set the current academic-year end date
+// @access  Admin only
+router.patch('/academic-year-config', verifyToken, checkRole('admin'), apiLimiter, async (req, res) => {
+  try {
+    const yearEndDate = new Date(req.body.yearEndDate);
+    if (!req.body.yearEndDate || Number.isNaN(yearEndDate.getTime())) {
+      return res.status(400).json({ success: false, message: 'A valid yearEndDate is required' });
+    }
+
+    const config = await AcademicYearConfig.findOneAndUpdate(
+      { key: 'current' },
+      { $set: { yearEndDate } },
+      { new: true, upsert: true, setDefaultsOnInsert: true, runValidators: true }
+    );
+
+    console.info(`[AUDIT] Admin ${req.user._id} updated academic year end date to ${config.yearEndDate.toISOString()}`);
+    res.json({ success: true, yearEndDate: config.yearEndDate });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Failed to update academic-year configuration', error: error.message });
+  }
+});
 
 // @route   GET /api/users/profile-completion
 // @desc    Get profile completion percentage
@@ -910,7 +1076,11 @@ router.get('/mentors', verifyToken, apiLimiter, async (req, res) => {
       return res.json({
         success: true,
         count: mentors.length,
-        mentors,
+          mentors: mentors.map((mentor) => {
+            removeGuidanceConsentFields(mentor);
+            if (!canViewExternalGuidance(req.user)) delete mentor.availableForExternalGuidance;
+            return mentor;
+          }),
       });
     }
 
@@ -1064,7 +1234,7 @@ router.get('/mentors', verifyToken, apiLimiter, async (req, res) => {
         const scoreRow = scoreById.get(mentorId) || computeMentorScoreFallback(statsByMentorId.get(mentorId));
         const stats = statsByMentorId.get(mentorId) || {};
 
-        return {
+        const enrichedMentor = {
           ...mentor,
           mentorScore: toFiniteNumber(scoreRow.mentorScore, 0),
           acceptanceBehaviorScore: toFiniteNumber(scoreRow.acceptanceBehaviorScore, 0),
@@ -1081,6 +1251,13 @@ router.get('/mentors', verifyToken, apiLimiter, async (req, res) => {
             recentInteractionsCount: toFiniteNumber(stats.recentInteractionsCount, 0),
           },
         };
+
+        if (!canViewExternalGuidance(req.user)) {
+          delete enrichedMentor.availableForExternalGuidance;
+        }
+        removeGuidanceConsentFields(enrichedMentor);
+
+        return enrichedMentor;
       })
       .sort((a, b) => {
         if (b.mentorScore !== a.mentorScore) return b.mentorScore - a.mentorScore;
@@ -1834,14 +2011,19 @@ router.get('/:id', verifyToken, apiLimiter, async (req, res) => {
       });
     }
 
+    const responseUser = {
+      ...user,
+      mentorshipIntent: user.mentorshipIntent || 'seeking',
+      availability: user.availability || 'flexible',
+      profileStrength: calculateProfileStrength(user),
+    };
+    if (!canViewExternalGuidance(req.user)) delete responseUser.availableForExternalGuidance;
+    if (!canViewOwnGuidanceConsent(req.user, user)) removeGuidanceConsentFields(responseUser);
+    if (canViewOwnGuidanceConsent(req.user, user)) responseUser.termsVersion = MENTOR_GUIDANCE_TERMS_VERSION;
+
     return res.json({
       success: true,
-      user: {
-        ...user,
-        mentorshipIntent: user.mentorshipIntent || 'seeking',
-        availability: user.availability || 'flexible',
-        profileStrength: calculateProfileStrength(user),
-      },
+      user: responseUser,
     });
   } catch (error) {
     return res.status(500).json({

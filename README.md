@@ -19,7 +19,7 @@ mentoring and discussion event as clean, analytics-ready data.
 
 ## 🎯 Project Objectives
 
-- Provide a **verified, institute-only platform** for academic mentoring (no outside users).
+- Provide a **verified institute platform** for academic mentoring, with controlled External-user visibility for mentors who opt in to External Guidance.
 - Enable **structured interaction** between juniors and seniors for guidance and collaboration.
 - Capture mentoring and discussion activity as **structured transactional data**.
 - Apply **data mining and analytics** (clustering, recommendations, association rules, trends).
@@ -50,6 +50,8 @@ mentoring and discussion event as clean, analytics-ready data.
   - Year, department, role (junior/senior/faculty/admin).
   - Skills, interests, optional CGPA.
 - APIs to fetch mentors and juniors with filters.
+- Mentor-only External Guidance consent with academic-year locking and versioned terms acceptance.
+- Institute-member-only informational visibility of opted-in mentors; External-user payloads omit consent metadata.
 
 ### C. Mentorship Module
 - Juniors can request mentorship from seniors/faculty.
@@ -160,6 +162,9 @@ npm start
 ### Users
 - `GET /api/users/profile/:id` - Get user profile
 - `PUT /api/users/profile` - Update own profile
+- `PATCH /api/users/profile/external-guidance` - Update mentor External Guidance consent
+- `GET /api/users/academic-year-config` - Get the academic-year end date and current guidance terms version
+- `GET /api/users/external-guidance/admin-summary` - Admin-only opted-in mentor verification summary
 - `GET /api/users/mentors` - Get all mentors
 - `GET /api/users/juniors` - Get all juniors (mentors only)
 
@@ -202,6 +207,8 @@ Authorization: Bearer <your_jwt_token>
 - year, department, role
 - skills[], interests[]
 - cgpa (optional)
+- availableForExternalGuidance, externalGuidanceLockedUntil
+- externalGuidanceTermsVersion, externalGuidanceTermsAcceptedAt (optional consent metadata)
 
 ### Mentorship Schema
 - mentorId, menteeId

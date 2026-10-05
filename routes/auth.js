@@ -5,6 +5,7 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 const User = require('../models/User');
+const { MENTOR_GUIDANCE_TERMS_VERSION } = require('../config/externalGuidanceTerms');
 const { verifyToken, checkRole } = require('../middleware/auth');
 const { validateRegistration, validateLogin, handleValidationErrors, validateEmailDomain } = require('../middleware/validation');
 const { authLimiter } = require('../middleware/security');
@@ -479,6 +480,13 @@ router.get('/me', verifyToken, async (req, res) => {
         lastActiveAt: user.lastActiveAt,
         mentorshipIntent: user.mentorshipIntent || 'seeking',
         availability: user.availability || 'flexible',
+        ...(String(user.userType || 'INSTITUTE_MEMBER').toUpperCase() === 'INSTITUTE_MEMBER' && ['senior', 'faculty'].includes(user.role) ? {
+          availableForExternalGuidance: user.availableForExternalGuidance === true,
+          externalGuidanceLockedUntil: user.externalGuidanceLockedUntil || null,
+          externalGuidanceTermsVersion: user.externalGuidanceTermsVersion,
+          externalGuidanceTermsAcceptedAt: user.externalGuidanceTermsAcceptedAt,
+          termsVersion: MENTOR_GUIDANCE_TERMS_VERSION,
+        } : {}),
         profileStrength: calculateProfileStrength(user),
         createdAt: user.createdAt
       }
