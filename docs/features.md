@@ -185,3 +185,11 @@ Status: `⚠️ Legacy (needs cleanup)`.
 ## Legacy API Dashboard
 
 `api-dashboard.html` is a manual API testing surface. Its registration widget expects an older response with an immediate token and performs client-side SPIT-only validation. It is not a reliable representation of the active registration contract.
+
+## Phase 2 status (2026-10-07)
+
+- `✅ Live`: External dashboard navigation, profile enrichment cards, Media tab retention, External request inbox labeling, and External mentor recommendation filtering.
+- `✅ Live`: Community visibility flags with legacy-safe defaults and request-time 404 enforcement through `utils/communityAccess.js`.
+- `✅ Live`: Internal-only community creation with labeled internal/external visibility controls and owner/admin editing.
+- `⚠️ Deferred`: External peer recommendations/connections, calls, and groups.
+- `⚠️ Verification outstanding`: Test-database verification of the named SPIT and Machine Learning communities and browser/endpoint regression coverage.

@@ -5,7 +5,13 @@ const multer = require('multer');
 const Post = require('../models/Post');
 const { verifyToken } = require('../middleware/auth');
 const { apiLimiter } = require('../middleware/security');
+const { getAccessibleCommunity } = require('../utils/communityAccess');
 const router = express.Router();
+
+async function ensurePostCommunityAccess(post, user) {
+  if (!post?.communityId) return true;
+  return Boolean(await getAccessibleCommunity(post.communityId, user));
+}
 
 // Multer setup for post image uploads (used by community create-post modal)
 const postImageStorage = multer.diskStorage({
@@ -88,6 +94,16 @@ router.post('/', verifyToken, apiLimiter, async (req, res) => {
 
     if (title) postData.title = title.trim();
     if (communityId) postData.communityId = communityId;
+
+    if (communityId) {
+      const community = await getAccessibleCommunity(communityId, req.user);
+      if (!community) {
+        return res.status(404).json({ success: false, message: 'Community not found' });
+      }
+      if (!community.isMember(req.user._id) && String(community.creatorId) !== String(req.user._id)) {
+        return res.status(403).json({ success: false, message: 'Join the community before posting' });
+      }
+    }
 
     if (imageUrl && typeof imageUrl === 'string' && imageUrl.trim()) {
       postData.media = [{
@@ -181,6 +197,10 @@ router.get('/:id', verifyToken, apiLimiter, async (req, res) => {
       });
     }
 
+    if (!(await ensurePostCommunityAccess(post, req.user))) {
+      return res.status(404).json({ success: false, message: 'Post not found' });
+    }
+
     // Increment view count
     post.views += 1;
     await post.save();
@@ -210,6 +230,10 @@ router.post('/:id/like', verifyToken, apiLimiter, async (req, res) => {
         success: false,
         message: 'Post not found'
       });
+    }
+
+    if (!(await ensurePostCommunityAccess(post, req.user))) {
+      return res.status(404).json({ success: false, message: 'Post not found' });
     }
 
     await post.toggleLike(req.user._id);
@@ -254,6 +278,10 @@ router.post('/:id/comment', verifyToken, apiLimiter, async (req, res) => {
       });
     }
 
+    if (!(await ensurePostCommunityAccess(post, req.user))) {
+      return res.status(404).json({ success: false, message: 'Post not found' });
+    }
+
     await post.addComment(req.user._id, content.trim());
     await post.populate('comments.authorId', 'name profilePicture');
 
@@ -283,6 +311,10 @@ router.delete('/:id', verifyToken, apiLimiter, async (req, res) => {
         success: false,
         message: 'Post not found'
       });
+    }
+
+    if (!(await ensurePostCommunityAccess(post, req.user))) {
+      return res.status(404).json({ success: false, message: 'Post not found' });
     }
 
     // Check if user is the author

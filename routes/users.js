@@ -1053,6 +1053,12 @@ router.get('/profile-completion', verifyToken, apiLimiter, async (req, res) => {
 // @access  Private
 router.get('/mentors', verifyToken, apiLimiter, async (req, res) => {
   try {
+    if (String(req.user.userType || '').toUpperCase() === 'EXTERNAL') {
+      return res.status(403).json({
+        success: false,
+        message: 'External users must use mentor recommendations',
+      });
+    }
     const { department, subjectTag } = req.query;
     const includeScores = String(req.query.includeScores || 'true').toLowerCase() !== 'false';
     const interactionWindowDays = Math.max(30, Math.min(Number(req.query.interactionWindowDays) || 180, 365));

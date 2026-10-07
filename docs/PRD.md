@@ -95,6 +95,21 @@ The product combines identity, structured academic context, social interaction, 
 | Notifications | `✅ Live` |
 | Real-time call signaling | `✅ Live` in Socket.IO code |
 
+### External dashboard and visibility (Phase 2)
+
+| Feature | Status |
+|---|---|
+| External dashboard navigation without Feed/Settings | `✅ Live` |
+| External profile guidance badges and community post scope | `✅ Live` |
+| External mentor recommendations from current-year opted-in mentors | `✅ Live` |
+| External mentorship request cap and consent enforcement | `✅ Live` |
+| Community internal/external visibility flags | `✅ Live` |
+| Shared 404 access policy for disallowed communities | `✅ Live` |
+| External community creation/ownership/moderation | `🚫 Not allowed` |
+| External peer recommendations and connections | `⏸️ Deferred` |
+| External calls | `⏸️ Deferred` |
+| External groups | `⏸️ Deferred` |
+
 ### Administration and operations
 
 | Feature | Status |

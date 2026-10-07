@@ -84,3 +84,14 @@ This file is an append-only decision journal. Add new entries rather than rewrit
 - Diagnosed the missing self-profile tag in `home.html#profile`: the header read `availableForExternalGuidance`, but used a strict `userType === 'INSTITUTE_MEMBER'` comparison instead of the page's normalized Institute Member fallback.
 - Centralized the badge gate for own and other-user profile views, preserving the informational boolean for Institute viewers while keeping External viewers filtered. Successful toggle saves now update the local user and header immediately; turning off removes the tag.
 - The seeded mentor fixture uses legacy `User.role: 'senior'`; live DB/API verification was not run because the configured database was not verified as test-only.
+
+## 2026-10-07 - Phase 2 external dashboard and community visibility
+
+- Removed the placeholder Settings tab from `public/home.html` for all users. It contained no controls; logout remains in the sidebar, password/account editing remains in the existing profile/auth flows, and the backend routes were not deleted. Settings references were the sidebar item, view container, view switch, renderer, and click handler.
+- External dashboard navigation hides Feed and Messages (community/group chat access is not yet an approved External surface) and keeps Profile, Communities, Media, Find Mentor, Requests, and Logout.
+- External profile/request presentation uses `External` and `Seeking Admission Guidance` badges. External profiles keep skills, interests, projects, and the Communities post scope while hiding the composer and personal My Posts scope.
+- Added `Community.allowInternal` (default `true`) and `Community.allowExternal` (default `false`). Missing legacy fields are interpreted using those defaults in `utils/communityAccess.js`; no database migration or writes were performed.
+- Community visibility is enforced at request time with 404 responses for disallowed communities. Owners/admins retain management access, memberships are not edited when a flag changes, and External users cannot create or moderate communities.
+- External mentor recommendations and requests are limited to active senior/faculty users with a current-year opt-in (`availableForExternalGuidance` and a future `externalGuidanceLockedUntil`). External requests are capped at three pending requests.
+- Peer recommendations/connections, calls, and External groups remain deferred because their scope and fraud/access risks require a separate decision.
+- The two named existing communities could not be verified against the test database in this session; no names were found in repository fixtures/scripts, so no explicit values were written.

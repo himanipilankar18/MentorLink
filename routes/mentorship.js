@@ -7,6 +7,7 @@ const sendEmail = require('../utils/sendEmail');
 const { createAndEmitNotification } = require('../utils/notifications');
 const { verifyToken } = require('../middleware/auth');
 const { apiLimiter } = require('../middleware/security');
+const { pendingRequestCap } = require('../config/externalMentorship');
 
 const router = express.Router();
 const MIN_REQUEST_REASON_LENGTH = 20;
@@ -177,6 +178,12 @@ async function ensureDirectMentorshipGroup(requesterUser, recipientUser) {
 
 async function acceptMentorshipRequest(req, res) {
   try {
+    if (String(req.user.userType || '').toUpperCase() === 'EXTERNAL') {
+      return res.status(403).json({
+        success: false,
+        message: 'External users cannot accept mentorship requests',
+      });
+    }
     const io = req.app.get('io');
     const mentorship = await Mentorship.findById(req.params.id);
 
@@ -219,10 +226,10 @@ async function acceptMentorshipRequest(req, res) {
     const directChatGroup = await ensureDirectMentorshipGroup(requesterUser, recipientUser);
 
     await mentorship.accept(directChatGroup._id);
-    await mentorship.populate('requester', 'name email department year role profilePicture');
-    await mentorship.populate('recipient', 'name email department year role profilePicture');
-    await mentorship.populate('mentorId', 'name email department year role profilePicture');
-    await mentorship.populate('menteeId', 'name email department year role profilePicture');
+    await mentorship.populate('requester', 'name email department year role userType profilePicture');
+    await mentorship.populate('recipient', 'name email department year role userType profilePicture');
+    await mentorship.populate('mentorId', 'name email department year role userType profilePicture');
+    await mentorship.populate('menteeId', 'name email department year role userType profilePicture');
     await mentorship.populate('chatGroupId', 'name displayName joinCode groupType');
 
     const requesterName = requesterUser.name || 'User';
@@ -434,6 +441,34 @@ router.post('/request', verifyToken, apiLimiter, async (req, res) => {
       });
     }
 
+    const isExternalRequester = String(req.user.userType || '').toUpperCase() === 'EXTERNAL';
+    if (isExternalRequester) {
+      const now = new Date();
+      const validExternalMentor = ['senior', 'faculty'].includes(String(recipient.role || '').toLowerCase())
+        && recipient.availableForExternalGuidance === true
+        && recipient.externalGuidanceLockedUntil
+        && new Date(recipient.externalGuidanceLockedUntil) > now;
+
+      if (!validExternalMentor) {
+        return res.status(404).json({
+          success: false,
+          message: 'Mentor not found',
+        });
+      }
+
+      const pendingExternalRequests = await Mentorship.countDocuments({
+        status: { $in: ['pending', 'Pending'] },
+        $or: [{ requester: requesterId }, { menteeId: requesterId }],
+      });
+
+      if (pendingExternalRequests >= pendingRequestCap) {
+        return res.status(400).json({
+          success: false,
+          message: `External users may have at most ${pendingRequestCap} pending mentorship requests`,
+        });
+      }
+    }
+
     const existingRequest = await Mentorship.findOne({
       $or: [
         { requester: requesterId, recipient: recipientId },
@@ -539,6 +574,9 @@ router.post('/request', verifyToken, apiLimiter, async (req, res) => {
 // @access  Private
 router.get('/requests/incoming', verifyToken, apiLimiter, async (req, res) => {
   try {
+    if (String(req.user.userType || '').toUpperCase() === 'EXTERNAL') {
+      return res.json({ success: true, count: 0, requests: [] });
+    }
     const statusQuery = buildStatusQuery(req.query?.status);
     const query = {
       $or: [

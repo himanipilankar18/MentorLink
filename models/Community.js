@@ -78,6 +78,14 @@ const communitySchema = new mongoose.Schema({
     type: Boolean,
     default: true
   },
+  allowInternal: {
+    type: Boolean,
+    default: true
+  },
+  allowExternal: {
+    type: Boolean,
+    default: false
+  },
   postCount: {
     type: Number,
     default: 0

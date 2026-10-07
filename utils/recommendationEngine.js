@@ -392,6 +392,7 @@ function calculateCompatibilityBreakdown(
   isPrimaryCluster,
   contentSimilarity = 0,
   sharedContentTokens = [],
+  scoreWeights = null,
 ) {
   const menteeNeeds = new Set([
     ...normalizeTextArray(mentee.interests),
@@ -413,13 +414,19 @@ function calculateCompatibilityBreakdown(
   const mentorProfileStrength = profileStrength(mentor);
   const normalizedContentSimilarity = clamp(toNumber(contentSimilarity, 0), 0, 1);
 
+  const weights = scoreWeights || {
+    skills: 0.20,
+    interests: 0.12,
+    availability: 0.08,
+    goals: 0.18,
+  };
   const weightedScore = (
-    skillAlignment * 0.20 +
-    normalizedContentSimilarity * 0.12 +
+    skillAlignment * weights.skills +
+    normalizedContentSimilarity * weights.interests +
     sameDepartment * 0.10 +
     yearProgression * 0.10 +
-    availability * 0.08 +
-    mentorQuality * 0.18 +
+    availability * weights.availability +
+    mentorQuality * weights.goals +
     activitySignal * 0.11 +
     mentorProfileStrength * 0.08 +
     clusterFit * 0.03
@@ -528,6 +535,7 @@ function generateMentorRecommendations({
   mentorshipStats = [],
   excludedMentorIds = new Set(),
   limit = 10,
+  scoreWeights = null,
 }) {
   if (!mentee || !Array.isArray(mentors)) {
     return {
@@ -633,6 +641,7 @@ function generateMentorRecommendations({
       isPrimaryCluster,
       contentSimilarity,
       sharedContentTokens,
+      scoreWeights,
     );
 
     return {

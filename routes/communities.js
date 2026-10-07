@@ -6,6 +6,12 @@ const Community = require('../models/Community');
 const Post = require('../models/Post');
 const { verifyToken } = require('../middleware/auth');
 const { apiLimiter } = require('../middleware/security');
+const {
+  isExternalUser,
+  visibilityQuery,
+  getAccessibleCommunity,
+  denyCommunity,
+} = require('../utils/communityAccess');
 const router = express.Router();
 
 // Multer setup for community icon/banner uploads
@@ -43,7 +49,30 @@ const communityUpload = multer({
 // @access  Private
 router.post('/', verifyToken, apiLimiter, async (req, res) => {
   try {
-    const { name, displayName, description, type = 'public', category = 'General', tags = [] } = req.body;
+    if (isExternalUser(req.user)) {
+      return res.status(403).json({
+        success: false,
+        message: 'External users cannot create communities',
+      });
+    }
+
+    const {
+      name,
+      displayName,
+      description,
+      type = 'public',
+      category = 'General',
+      tags = [],
+      allowInternal = true,
+      allowExternal = false,
+    } = req.body;
+
+    if (allowInternal !== true && allowExternal !== true) {
+      return res.status(400).json({
+        success: false,
+        message: 'A community must be open to institute members or external users',
+      });
+    }
 
     if (!name || !displayName) {
       return res.status(400).json({
@@ -70,6 +99,8 @@ router.post('/', verifyToken, apiLimiter, async (req, res) => {
       type,
       category,
       tags,
+      allowInternal: allowInternal === true,
+      allowExternal: allowExternal === true,
       creatorId: req.user._id,
       moderators: [req.user._id],
       members: [{
@@ -101,7 +132,7 @@ router.get('/', verifyToken, apiLimiter, async (req, res) => {
   try {
     const { category, search, limit = 50, skip = 0 } = req.query;
 
-    let query = { isActive: true };
+    let query = { isActive: true, ...visibilityQuery(req.user) };
 
     if (category && category !== 'All') {
       query.category = category;
@@ -150,7 +181,8 @@ router.get('/my', verifyToken, apiLimiter, async (req, res) => {
   try {
     const communities = await Community.find({
       'members.userId': req.user._id,
-      isActive: true
+      isActive: true,
+      ...visibilityQuery(req.user),
     })
       .sort({ 'members.joinedAt': -1 })
       .populate('creatorId', 'name profilePicture');
@@ -175,7 +207,7 @@ router.get('/my', verifyToken, apiLimiter, async (req, res) => {
 router.get('/:id', verifyToken, apiLimiter, async (req, res) => {
   try {
     // First load the community without population so membership checks work
-    const community = await Community.findById(req.params.id);
+    const community = await getAccessibleCommunity(req.params.id, req.user);
 
     if (!community) {
       return res.status(404).json({
@@ -194,7 +226,7 @@ router.get('/:id', verifyToken, apiLimiter, async (req, res) => {
     await community.populate([
       { path: 'creatorId', select: 'name email profilePicture' },
       { path: 'moderators', select: 'name profilePicture' },
-      { path: 'members.userId', select: 'name profilePicture' },
+      { path: 'members.userId', select: 'name profilePicture userType' },
     ]);
 
     res.json({
@@ -220,7 +252,7 @@ router.get('/:id', verifyToken, apiLimiter, async (req, res) => {
 // @access  Private
 router.post('/:id/join', verifyToken, apiLimiter, async (req, res) => {
   try {
-    const community = await Community.findById(req.params.id);
+    const community = await getAccessibleCommunity(req.params.id, req.user);
 
     if (!community) {
       return res.status(404).json({
@@ -264,7 +296,7 @@ router.post('/:id/join', verifyToken, apiLimiter, async (req, res) => {
 // @access  Private
 router.post('/:id/leave', verifyToken, apiLimiter, async (req, res) => {
   try {
-    const community = await Community.findById(req.params.id);
+    const community = await getAccessibleCommunity(req.params.id, req.user);
 
     if (!community) {
       return res.status(404).json({
@@ -303,7 +335,7 @@ router.get('/:id/posts', verifyToken, apiLimiter, async (req, res) => {
   try {
     const { limit = 20, skip = 0 } = req.query;
 
-    const community = await Community.findById(req.params.id);
+    const community = await getAccessibleCommunity(req.params.id, req.user);
     
     if (!community) {
       return res.status(404).json({
@@ -355,7 +387,7 @@ router.get('/:id/posts', verifyToken, apiLimiter, async (req, res) => {
 // @access  Private (Creator only)
 router.post('/:id/moderators/:userId', verifyToken, apiLimiter, async (req, res) => {
   try {
-    const community = await Community.findById(req.params.id);
+    const community = await getAccessibleCommunity(req.params.id, req.user);
 
     if (!community) {
       return res.status(404).json({
@@ -392,7 +424,7 @@ router.post('/:id/moderators/:userId', verifyToken, apiLimiter, async (req, res)
     await community.populate([
       { path: 'creatorId', select: 'name email profilePicture' },
       { path: 'moderators', select: 'name profilePicture' },
-      { path: 'members.userId', select: 'name profilePicture' },
+      { path: 'members.userId', select: 'name profilePicture userType' },
     ]);
 
     res.json({
@@ -414,7 +446,7 @@ router.post('/:id/moderators/:userId', verifyToken, apiLimiter, async (req, res)
 // @access  Private (Creator only)
 router.delete('/:id/moderators/:userId', verifyToken, apiLimiter, async (req, res) => {
   try {
-    const community = await Community.findById(req.params.id);
+    const community = await getAccessibleCommunity(req.params.id, req.user);
 
     if (!community) {
       return res.status(404).json({
@@ -453,7 +485,7 @@ router.delete('/:id/moderators/:userId', verifyToken, apiLimiter, async (req, re
     await community.populate([
       { path: 'creatorId', select: 'name email profilePicture' },
       { path: 'moderators', select: 'name profilePicture' },
-      { path: 'members.userId', select: 'name profilePicture' },
+      { path: 'members.userId', select: 'name profilePicture userType' },
     ]);
 
     res.json({
@@ -475,7 +507,7 @@ router.delete('/:id/moderators/:userId', verifyToken, apiLimiter, async (req, re
 // @access  Private (Moderator only)
 router.put('/:id', verifyToken, apiLimiter, async (req, res) => {
   try {
-    const community = await Community.findById(req.params.id);
+    const community = await getAccessibleCommunity(req.params.id, req.user);
 
     if (!community) {
       return res.status(404).json({
@@ -484,14 +516,35 @@ router.put('/:id', verifyToken, apiLimiter, async (req, res) => {
       });
     }
 
-    if (!community.isModerator(req.user._id)) {
+    if (isExternalUser(req.user) || !community.isModerator(req.user._id)) {
       return res.status(403).json({
         success: false,
         message: 'Only moderators can update the community'
       });
     }
 
-    const { displayName, description, type, category, icon, banner, rules, tags, settings } = req.body;
+    const {
+      displayName,
+      description,
+      type,
+      category,
+      icon,
+      banner,
+      rules,
+      tags,
+      settings,
+      allowInternal,
+      allowExternal,
+    } = req.body;
+
+    if ((allowInternal !== undefined || allowExternal !== undefined)
+      && String(community.creatorId) !== String(req.user._id)
+      && String(req.user.role || '').toLowerCase() !== 'admin') {
+      return res.status(403).json({
+        success: false,
+        message: 'Only the community owner or an admin can change visibility',
+      });
+    }
 
     if (displayName) community.displayName = displayName;
     if (description) community.description = description;
@@ -502,6 +555,15 @@ router.put('/:id', verifyToken, apiLimiter, async (req, res) => {
     if (rules) community.rules = rules;
     if (tags) community.tags = tags;
     if (settings) community.settings = { ...community.settings, ...settings };
+    if (allowInternal !== undefined) community.allowInternal = Boolean(allowInternal);
+    if (allowExternal !== undefined) community.allowExternal = Boolean(allowExternal);
+
+    if (!community.allowInternal && !community.allowExternal) {
+      return res.status(400).json({
+        success: false,
+        message: 'A community must remain open to institute members or external users',
+      });
+    }
 
     await community.save();
 
@@ -527,7 +589,7 @@ router.put('/:id/assets', verifyToken, apiLimiter, communityUpload.fields([
   { name: 'banner', maxCount: 1 }
 ]), async (req, res) => {
   try {
-    const community = await Community.findById(req.params.id);
+    const community = await getAccessibleCommunity(req.params.id, req.user);
 
     if (!community) {
       return res.status(404).json({
@@ -536,7 +598,7 @@ router.put('/:id/assets', verifyToken, apiLimiter, communityUpload.fields([
       });
     }
 
-    if (!community.isModerator(req.user._id)) {
+    if (isExternalUser(req.user) || !community.isModerator(req.user._id)) {
       return res.status(403).json({
         success: false,
         message: 'Only moderators can update the community'
@@ -579,7 +641,7 @@ router.put('/:id/assets', verifyToken, apiLimiter, communityUpload.fields([
 // @access  Private (Creator only)
 router.delete('/:id', verifyToken, apiLimiter, async (req, res) => {
   try {
-    const community = await Community.findById(req.params.id);
+    const community = await getAccessibleCommunity(req.params.id, req.user);
 
     if (!community) {
       return res.status(404).json({

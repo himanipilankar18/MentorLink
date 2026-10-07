@@ -5,6 +5,7 @@ const Mentorship = require('../models/Mentorship');
 const { verifyToken } = require('../middleware/auth');
 const { apiLimiter } = require('../middleware/security');
 const { generateMentorRecommendations } = require('../utils/recommendationEngine');
+const externalRecommendationWeights = require('../config/externalRecommendationWeights');
 
 const router = express.Router();
 
@@ -28,6 +29,20 @@ function isPotentialMentorForMentee(mentee, candidate) {
   if (!Number.isFinite(menteeYear) || !Number.isFinite(candidateYear)) return false;
 
   return candidateYear > menteeYear;
+}
+
+function isExternalUser(user) {
+  return String(user?.userType || '').toUpperCase() === 'EXTERNAL';
+}
+
+function externalMentorEligibilityQuery(userId) {
+  return {
+    _id: { $ne: userId },
+    isActive: true,
+    role: { $in: ['senior', 'faculty'] },
+    availableForExternalGuidance: true,
+    externalGuidanceLockedUntil: { $gt: new Date() },
+  };
 }
 
 async function fetchMentorshipStats(mentorIds) {
@@ -120,18 +135,22 @@ router.get('/mentors', verifyToken, apiLimiter, async (req, res) => {
       });
     }
 
-    const mentorQuery = {
-      _id: { $ne: userId },
-      isActive: true,
-      mentorshipIntent: { $in: ['offering', 'both'] },
-    };
+    const mentorQuery = isExternalUser(mentee)
+      ? externalMentorEligibilityQuery(userId)
+      : {
+        _id: { $ne: userId },
+        isActive: true,
+        mentorshipIntent: { $in: ['offering', 'both'] },
+      };
 
     // Department is treated as a soft preference signal for scoring, not a hard eligibility requirement.
     const candidateMentors = await User.find(mentorQuery)
       .select('-password')
       .lean();
 
-    const mentors = candidateMentors.filter((candidate) => isPotentialMentorForMentee(mentee, candidate));
+    const mentors = candidateMentors.filter((candidate) => (
+      isExternalUser(mentee) || isPotentialMentorForMentee(mentee, candidate)
+    ));
 
     const mentorIds = mentors.map((mentor) => mentor._id);
     const [interactionStats, mentorshipStats, blockedMentorIds] = await Promise.all([
@@ -147,6 +166,7 @@ router.get('/mentors', verifyToken, apiLimiter, async (req, res) => {
       mentorshipStats,
       excludedMentorIds: blockedMentorIds,
       limit,
+      scoreWeights: isExternalUser(mentee) ? externalRecommendationWeights : null,
     });
 
     const recommendations = result.recommendations.map((recommendation) => {
@@ -157,8 +177,7 @@ router.get('/mentors', verifyToken, apiLimiter, async (req, res) => {
         termsVersion,
         ...safeRecommendation
       } = recommendation;
-      if (String(req.user.userType || 'INSTITUTE_MEMBER').toUpperCase() === 'INSTITUTE_MEMBER') return safeRecommendation;
-      delete safeRecommendation.availableForExternalGuidance;
+      if (!isExternalUser(req.user)) return safeRecommendation;
       return safeRecommendation;
     });
 
@@ -193,11 +212,13 @@ router.get('/mentors/:mentorId/explain', verifyToken, apiLimiter, async (req, re
       });
     }
 
-    const mentor = await User.findOne({
-      _id: mentorId,
-      isActive: true,
-      mentorshipIntent: { $in: ['offering', 'both'] },
-    }).select('-password').lean();
+    const mentor = await User.findOne(isExternalUser(mentee)
+      ? { ...externalMentorEligibilityQuery(userId), _id: mentorId }
+      : {
+        _id: mentorId,
+        isActive: true,
+        mentorshipIntent: { $in: ['offering', 'both'] },
+      }).select('-password').lean();
 
     if (!mentor) {
       return res.status(404).json({
@@ -206,7 +227,7 @@ router.get('/mentors/:mentorId/explain', verifyToken, apiLimiter, async (req, re
       });
     }
 
-    if (!isPotentialMentorForMentee(mentee, mentor)) {
+    if (!isExternalUser(mentee) && !isPotentialMentorForMentee(mentee, mentor)) {
       return res.status(400).json({
         success: false,
         message: 'Selected user is not an eligible mentor for this mentee relationship',
@@ -226,6 +247,7 @@ router.get('/mentors/:mentorId/explain', verifyToken, apiLimiter, async (req, re
       mentorshipStats,
       excludedMentorIds: blockedMentorIds,
       limit: 1,
+      scoreWeights: isExternalUser(mentee) ? externalRecommendationWeights : null,
     });
 
     const explanation = result.recommendations[0];
@@ -243,8 +265,8 @@ router.get('/mentors/:mentorId/explain', verifyToken, apiLimiter, async (req, re
       termsVersion,
       ...safeExplanation
     } = explanation;
-    if (String(req.user.userType || 'INSTITUTE_MEMBER').toUpperCase() !== 'INSTITUTE_MEMBER') {
-      delete safeExplanation.availableForExternalGuidance;
+    if (isExternalUser(req.user)) {
+      // External viewers may see only the public opt-in indicator, never consent metadata.
     }
 
     res.json({

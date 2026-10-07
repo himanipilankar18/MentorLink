@@ -68,6 +68,20 @@ Verified from `package.json` and imports:
 
 The active application served by `server.js` is the static `public/` tree. The Vite/React application currently renders the landing experience and links to the static auth pages; it is not mounted by `server.js`.
 
+### Phase 2 visibility fields and allowlist
+
+`Community.allowInternal` defaults to `true` and `Community.allowExternal` defaults to `false`. Existing documents without either field are interpreted with those defaults by `utils/communityAccess.js`; this phase does not require a migration. The access allowlist is:
+
+| Viewer | Allowed community records |
+|---|---|
+| Institute Member | `allowInternal !== false` |
+| External | `allowExternal === true` |
+| Owner/admin | Any active community for management |
+
+`utils/communityAccess.js` is the shared access decision for community list/search, joined communities, details, join/leave, posts, moderation, edits, assets, deletion, and community-linked post interactions. Disallowed communities return 404 to avoid revealing their existence. Membership records remain unchanged if a flag is later disabled.
+
+External users cannot create, own, or moderate communities. They can only request mentorship from an active senior/faculty mentor whose External Guidance opt-in is valid for the current academic year.
+
 ## Directory Structure
 
 ```text

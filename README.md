@@ -1,314 +1,233 @@
-# MentorLink - Backend API
+# MentorLink
 
-A Data-Driven Interaction and Academic Analytics Platform Backend
+MentorLink is an institute-focused mentoring and academic collaboration platform. It connects junior students with senior students and faculty, supports structured mentorship and discussion, and provides analytics-ready data for academic decision-making.
 
-## ✅ Project Status
+The repository contains both sides of the application:
 
-**Current Version:** Working with MongoDB Atlas connectivity verified (Feb 2026)
-- ✅ Database: MongoDB Atlas connected and operational
-- ✅ Authentication: JWT-based auth with bcrypt password hashing
-- ✅ Email Verification: Ready (SMTP configuration needed for production)
-- ✅ API Endpoints: All core routes functional
-- ✅ Security: Helmet, rate limiting, and input validation active
+- **Backend:** Node.js, Express, MongoDB/Mongoose, JWT authentication, email verification, REST APIs, uploads, notifications, chat, and Socket.IO real-time features.
+- **Frontend:** React and Vite landing experience, together with the authenticated HTML pages served by the backend from `public/`.
 
-## 🎯 Overview
+## What the platform provides
 
-MentorLink is a web-based, institute-exclusive mentoring and academic analytics platform.
-It enables structured interaction between juniors and seniors while capturing every
-mentoring and discussion event as clean, analytics-ready data.
+- Institute-restricted registration and email/OTP verification.
+- Role-based accounts for juniors, seniors, faculty, and administrators.
+- Academic profiles with skills, interests, department, year, CGPA, bio, projects, and mentorship intent.
+- Mentor discovery, mentorship requests, acceptance/rejection, and termination.
+- Structured interaction logging with topics, subject tags, duration, satisfaction, and notes.
+- Subject-based discussions, comments, voting, and resolved-question tracking.
+- Communities, groups, posts, chat, notifications, and online activity.
+- Mentor recommendations and analytics-ready data for future data mining.
+- External Guidance consent for mentors, with terms/version and academic-year controls.
+- Security controls including password hashing, JWT protection, role checks, rate limiting, Helmet headers, validation, and sanitization.
 
-## 🎯 Project Objectives
+## Current progress
 
-- Provide a **verified institute platform** for academic mentoring, with controlled External-user visibility for mentors who opt in to External Guidance.
-- Enable **structured interaction** between juniors and seniors for guidance and collaboration.
-- Capture mentoring and discussion activity as **structured transactional data**.
-- Apply **data mining and analytics** (clustering, recommendations, association rules, trends).
-- Support **faculty/admin dashboards** for data-driven academic decision‑making.
+The core MentorLink application is implemented across the backend and frontend. The following features are currently completed in the repository:
 
-## ⚠️ Critical Backend Focus
+### Completed features
 
-**This backend is designed with analytics and data mining in mind.**
-- Clean, structured data schemas (users, mentorships, interactions, discussions).
-- Proper relationships using MongoDB ObjectId references.
-- Comprehensive interaction logging for every mentorship event.
-- Role-based access control (junior, senior, faculty, admin).
-- Secure transactional data handling and API hardening.
+- **Authentication and account access:** institute-domain registration, OTP/email verification, login, JWT sessions, logout, forgot-password, and reset-password flows.
+- **Role-based access:** junior, senior, faculty, and admin roles with protected routes and permission checks.
+- **Profiles:** profile creation and editing, academic information, skills, interests, bio, projects, CGPA, profile pictures, profile-strength information, and mentorship intent.
+- **Mentorship:** mentor discovery, filtering/search, mentorship requests, accept/reject actions, active mentorships, termination, and duplicate-request prevention.
+- **External Guidance:** mentor opt-in consent, terms-version tracking, academic-year locking, institute-only visibility controls, and admin summary information.
+- **Interactions and analytics data:** structured mentoring interactions, filters, statistics, timestamps, indexes, and data suitable for recommendations and reporting.
+- **Discussion forum:** subject-tagged discussions, comments, voting, resolve/unresolve actions, and subject-wise statistics.
+- **Social collaboration:** posts, communities, groups, group membership, comments/reactions, uploads, and online activity.
+- **Real-time communication:** Socket.IO-based chat, typing/online indicators, and notifications.
+- **Recommendations:** mentor recommendation workflows and multi-factor/ML recommendation support.
+- **Security and reliability:** password hashing, JWT validation, Helmet headers, CORS, rate limiting, input validation/sanitization, centralized error handling, and MongoDB connection checks.
+- **User interfaces:** React/Vite landing page plus backend-served login, registration, verification, profile, dashboard, discussion, community, group, chat, notification, and admin pages.
+- **Project documentation and utilities:** API documentation, architecture/product documents, setup scripts, upload backup/import tools, test-user setup, and synthetic data utilities.
 
-**Frontend UI can be replaced later. Backend data quality is the priority.**
+### Remaining or planned work
 
-## 🚀 Features (Implemented in Backend)
+The core feature set is complete, but the following areas remain for project hardening and future releases:
 
-### A. Core Platform & Security
-- Institute email-based registration with domain validation (`ALLOWED_DOMAINS`).
-- Secure password hashing with **bcrypt**.
-- **JWT** authentication with token expiry and protected routes.
-- Helmet-based security headers, rate limiting, and input validation/sanitization.
+- Automated unit, integration, and end-to-end test coverage.
+- Production deployment configuration and a documented supported environment matrix.
+- Performance testing and optimization under realistic traffic.
+- Expanded analytics dashboards and production data-export/ETL pipelines.
+- Additional product workflows documented as planned, such as guide directories, guide pledges, reviews/remarks, and a dedicated admin-management interface.
 
-### B. Student & Account Features
-- Account management: register, login, and get current user (`/api/auth/me`).
-- Structured academic profile:
-  - Year, department, role (junior/senior/faculty/admin).
-  - Skills, interests, optional CGPA.
-- APIs to fetch mentors and juniors with filters.
-- Mentor-only External Guidance consent with academic-year locking and versioned terms acceptance.
-- Institute-member-only informational visibility of opted-in mentors; External-user payloads omit consent metadata.
+These items are improvements around the completed platform rather than blockers for the core mentoring workflow. See [COMPLETE_FEATURE_INVENTORY.md](./COMPLETE_FEATURE_INVENTORY.md) and [docs/PRD.md](./docs/PRD.md) for the detailed feature-level status.
 
-### C. Mentorship Module
-- Juniors can request mentorship from seniors/faculty.
-- Mentors can accept/reject/terminate requests.
-- Duplicate requests prevented via compound index.
-- Status tracking: **Pending / Accepted / Rejected / Terminated**.
-- Endpoints for "my requests" and "active mentorships" for dashboards.
+## Architecture
 
-### D. Structured Interaction Logging (MOST CRITICAL)
-- Every interaction stored with:
-  - `mentorId`, `menteeId`, `mentorshipId`
-  - `topic`, `subjectTag`, `interactionType`
-  - `timestamp`, `duration`, `satisfactionRating`, `notes`
-- Indexes optimized for analytics queries (by subject, interactionType, mentor/mentee).
-- Designed to feed clustering, recommendation, trend analysis, and association rule mining.
-
-### E. Discussion & Doubt Forum
-- Subject-tagged discussions with title, content, and subjectTag.
-- Nested comments with voting.
-- Upvote/downvote on discussions.
-- Resolved/unresolved tracking with `isResolved` and `resolvedAt`.
-- Statistics endpoint for subject-wise engagement.
-
-### F. Role-Based Access Control
-- JWT verification middleware plus role checks:
-  - Juniors can request mentorships.
-  - Seniors/faculty can accept/reject mentorships.
-  - Faculty/admin endpoints can be restricted via `checkRole`.
-- Designed to align with **Student / Admin / Faculty** roles from the project plan.
-
-### G. Analytics-Ready Data & Hardening
-- All schemas include timestamps (`createdAt`, `updatedAt`) for time-series analysis.
-- Interaction and discussion data structured for future:
-  - ETL to a warehouse (PostgreSQL/MySQL).
-  - Clustering & recommendation models.
-  - Trend analysis and academic reporting dashboards.
-- Input sanitization, rate limiting, and centralized error handling.
-
-## 📋 Prerequisites
-
-- Node.js (v14 or higher)
-- MongoDB (local or Atlas)
-- npm or yarn
-
-**Note**: 
-- For **MongoDB Atlas** (cloud): See `MONGODB_ATLAS_SETUP.md` for complete setup guide
-- For **Local MongoDB**: See `MONGODB_SETUP.md` for troubleshooting
-- **Quick test**: Run `node test-atlas-connection.js` to verify connection
-
-## 🔧 Installation
-
-1. Clone the repository
-```bash
-git clone <repository-url>
-cd MentorLink
+```text
+Browser
+  ├── React/Vite landing page (frontend/)
+  └── Authenticated HTML pages (public/)
+          │
+          ▼
+Node.js + Express + Socket.IO (server.js)
+          │
+          ├── REST API (/api/...)
+          ├── Uploaded files (public/uploads/)
+          └── MongoDB / MongoDB Atlas
 ```
 
-2. Install dependencies
-```bash
-npm install
+The backend serves the static pages in `public/` and exposes the API under `/api`. The React frontend is developed independently with Vite and uses `VITE_API_URL` to know where the backend is running. In local development, the usual backend URL is `http://localhost:5000`.
+
+## Repository structure
+
+```text
+MentorLink/
+├── config/             MongoDB and application configuration
+├── controllers/        Request and business-logic handlers
+├── middleware/         Authentication, validation, security, and errors
+├── models/             Mongoose schemas and data models
+├── routes/             REST API route modules
+├── realtime/           Socket.IO event handling
+├── scripts/            Administrative, setup, email, and data utilities
+├── services/           Shared application services
+├── utils/              Upload and other shared helpers
+├── public/              Authenticated HTML pages and uploaded assets
+├── frontend/            React/Vite frontend application
+├── docs/                Product, design, architecture, and task documentation
+├── server.js            HTTP server and route registration
+└── package.json         Backend scripts and dependencies
 ```
 
-3. Set up environment variables
+## Prerequisites
+
+- Node.js 18 or later
+- npm
+- MongoDB locally or a MongoDB Atlas cluster
+- An SMTP account if email verification or password-reset emails are required
+
+## Environment configuration
+
+Copy the example environment file and update it for your machine:
+
 ```bash
 cp .env.example .env
 ```
 
-4. Configure `.env` file:
+Important backend variables include:
+
 ```env
 PORT=5000
 NODE_ENV=development
 MONGODB_URI=mongodb://localhost:27017/mentorlink
-JWT_SECRET=your_super_secret_jwt_key_change_this_in_production
+JWT_SECRET=replace_with_a_long_random_secret
 JWT_EXPIRE=7d
-ALLOWED_DOMAINS=spit.ac.in,yourinstitute.ac.in
+ALLOWED_DOMAINS=spit.ac.in
 ```
 
-5. **Set up MongoDB Atlas** (if using cloud database)
-   - See `MONGODB_ATLAS_SETUP.md` for complete step-by-step guide
-   - Or see `ATLAS_QUICK_START.md` for quick setup
-   - **Test connection**: `node test-atlas-connection.js`
+Configure the SMTP variables in `.env` when using OTP verification, welcome emails, or password reset. Never commit `.env` or real credentials.
 
-   **OR use Local MongoDB** (if running locally):
-   ```bash
-   # Windows
-   mongod
-   
-   # macOS/Linux
-   sudo systemctl start mongod
-   ```
+## Installation
 
-6. Start the server
+Install backend dependencies from the repository root:
+
 ```bash
-# Development mode (with nodemon)
-npm run dev
+npm install
+```
 
-# Production mode
+Install frontend dependencies:
+
+```bash
+cd frontend
+npm install
+cd ..
+```
+
+## Running the application
+
+Start MongoDB first, then run the backend from the repository root:
+
+```bash
 npm start
 ```
 
-## 📚 API Endpoints
+The API and static application are available at `http://localhost:5000`.
 
-### Authentication
-- `POST /api/auth/register` - Register new user
-- `POST /api/auth/login` - Login user
-- `GET /api/auth/me` - Get current user
+In a second terminal, start the React/Vite frontend:
 
-### Users
-- `GET /api/users/profile/:id` - Get user profile
-- `PUT /api/users/profile` - Update own profile
-- `PATCH /api/users/profile/external-guidance` - Update mentor External Guidance consent
-- `GET /api/users/academic-year-config` - Get the academic-year end date and current guidance terms version
-- `GET /api/users/external-guidance/admin-summary` - Admin-only opted-in mentor verification summary
-- `GET /api/users/mentors` - Get all mentors
-- `GET /api/users/juniors` - Get all juniors (mentors only)
-
-### Mentorship
-- `POST /api/mentorship/request` - Request mentorship (juniors only)
-- `PUT /api/mentorship/:id/accept` - Accept request (mentors only)
-- `PUT /api/mentorship/:id/reject` - Reject request (mentors only)
-- `GET /api/mentorship/my-requests` - Get user's mentorship requests
-- `GET /api/mentorship/active` - Get active mentorships
-- `PUT /api/mentorship/:id/terminate` - Terminate mentorship
-
-### Interactions (MOST CRITICAL)
-- `POST /api/interactions` - Log structured interaction
-- `GET /api/interactions` - Get interactions (with filters)
-- `GET /api/interactions/stats` - Get interaction statistics
-- `GET /api/interactions/:id` - Get single interaction
-- `PUT /api/interactions/:id` - Update interaction
-
-### Discussions
-- `POST /api/discussions` - Create discussion post
-- `GET /api/discussions` - Get discussions (with filters)
-- `GET /api/discussions/:id` - Get discussion with comments
-- `POST /api/discussions/:id/comments` - Add comment
-- `PUT /api/discussions/:id/upvote` - Upvote discussion
-- `PUT /api/discussions/:id/downvote` - Downvote discussion
-- `PUT /api/discussions/:id/resolve` - Mark as resolved
-- `GET /api/discussions/stats/by-subject` - Get statistics by subject
-
-## 🔐 Authentication
-
-Most endpoints require authentication. Include JWT token in headers:
-```
-Authorization: Bearer <your_jwt_token>
-```
-
-## 📊 Data Models
-
-### User Schema
-- name, email, password (hashed)
-- year, department, role
-- skills[], interests[]
-- cgpa (optional)
-- availableForExternalGuidance, externalGuidanceLockedUntil
-- externalGuidanceTermsVersion, externalGuidanceTermsAcceptedAt (optional consent metadata)
-
-### Mentorship Schema
-- mentorId, menteeId
-- status (Pending/Accepted/Rejected/Terminated)
-- requestedAt, acceptedAt, terminatedAt
-
-### Interaction Schema (CRITICAL)
-- mentorId, menteeId, mentorshipId
-- topic, subjectTag, interactionType
-- timestamp, duration, satisfactionRating
-- notes
-
-### Discussion Schema
-- authorId, title, content
-- subjectTag, votes
-- isResolved, resolvedAt
-- Comments with votes
-
-## 🧪 Testing the API
-
-### Option 1: Web Dashboard (Recommended)
-A beautiful frontend testing dashboard is included!
-
-1. **Start the server**:
-   ```bash
-   npm run dev
-   ```
-
-2. **Open in browser**:
-   ```
-   http://localhost:5000
-   ```
-
-3. **Features**:
-   - ✅ Visual API testing interface
-   - ✅ Connection status indicator
-   - ✅ Register/Login forms
-   - ✅ Test all endpoints easily
-   - ✅ View responses in formatted JSON
-   - ✅ Token management (auto-saved)
-
-### Option 2: Postman/API Client
-
-1. Import the API endpoints into Postman
-2. Start with `/api/auth/register` to create a user
-3. Use the returned token for authenticated requests
-4. Test each endpoint systematically
-
-### Option 3: Test MongoDB Connection
-
-Test your database connection before starting:
 ```bash
-node test-connection.js
+npm run dev
 ```
 
-## 🎓 Why Backend-First Approach?
+The root `dev` script starts the Vite frontend through `frontend/`. Vite normally serves it at `http://localhost:5173`. To use another backend URL, create `frontend/.env` with:
 
-This backend is designed to generate clean, structured data for:
-- **ETL Processes** - Easy extraction to data warehouse
-- **Clustering** - User and interaction clustering
-- **Recommendation Engines** - Mentor-mentee matching
-- **Apriori Algorithm** - Association rule mining
-- **Trend Analysis** - Subject engagement trends
+```env
+VITE_API_URL=http://localhost:5000
+```
 
-If backend data is messy, mining results will be wrong.
+For a production frontend build:
 
-## 🔒 Security Features
+```bash
+cd frontend
+npm run build
+npm run preview
+```
 
-- Password hashing with bcrypt
-- JWT token authentication
-- Rate limiting
-- Input validation and sanitization
-- Security headers (Helmet)
-- Role-based access control
-- Email domain validation
+## Backend API overview
 
-## 📝 Notes
+The main API areas are:
 
-- All timestamps are automatically managed by Mongoose
-- ObjectId references ensure data integrity
-- Indexes are optimized for analytics queries
-- Error handling is comprehensive
-- Validation is enforced at schema and route levels
+| Area | Prefix | Purpose |
+| --- | --- | --- |
+| Authentication | `/api/auth` | Registration, OTP verification, login, profile session, and password reset |
+| Users | `/api/users` | Profiles, mentor/junior discovery, search, profile pictures, and external guidance |
+| Mentorship | `/api/mentorship` | Requests, approvals, active mentorships, and termination |
+| Interactions | `/api/interactions` | Structured mentoring activity and statistics |
+| Discussions | `/api/discussions` | Posts, comments, votes, resolution, and subject statistics |
+| Posts | `/api/posts` | Community posts and post interactions |
+| Communities | `/api/communities` | Community membership and content |
+| Groups | `/api/groups` | Group creation, membership, and group activity |
+| Chat | `/api/chat` | Conversations and messages |
+| Notifications | `/api/notifications` | User notifications |
+| Recommendations | `/api/recommendations` | Mentor recommendation data and results |
+| Health | `/api/health` | Server health check |
 
-## 🚧 Future Enhancements
+See [API_DOCUMENTATION.md](./API_DOCUMENTATION.md) for request and response details.
 
-- Analytics dashboard endpoints
-- Data export for ETL
-- Advanced filtering and search
-- Notification system
-- File uploads for project sharing
+## Frontend overview
 
-## 📄 License
+The frontend is split into two related surfaces:
 
-ISC
+1. **React/Vite landing page (`frontend/`)**
+   Provides the current public landing experience, navigation, and links into the application.
+2. **Authenticated application pages (`public/`)**
+   Includes login, registration, OTP verification, profile setup, home/dashboard, profiles, discussions, communities, groups, chat, and admin/API views. These pages are served by the Express server.
 
-## 👥 Contributors
+The frontend stores the authenticated JWT in the browser and sends it to protected API endpoints. Keep the backend running while developing or testing either frontend surface.
 
-[Your Name/Team]
+## Data and analytics
 
----
+MongoDB models use references and timestamps to preserve relationships between users, mentorships, interactions, discussions, posts, groups, and communities. Interaction records are intentionally structured for:
 
-**Remember: Focus on clean data structure. Frontend can wait. Backend architecture is critical.**
+- Mentor and mentee activity reporting.
+- Subject and interaction-type trends.
+- Mentor recommendation and matching workflows.
+- Clustering and other data-mining experiments.
+- Export or ETL into analytical storage.
+
+Supporting data-generation and analysis utilities are available in `scripts/`.
+
+## Useful commands
+
+| Command | Description |
+| --- | --- |
+| `npm start` | Start the backend and static application |
+| `npm run dev` | Start the React/Vite frontend |
+| `npm run atlas:check` | Check MongoDB Atlas reachability |
+| `npm run admin:create-first` | Create the first administrator |
+| `npm run users:setup-test` | Set up test users |
+| `npm run uploads:import` | Import backed-up uploads |
+| `npm run uploads:backup` | Back up uploads |
+| `cd frontend && npm run lint` | Lint the React frontend |
+| `cd frontend && npm run build` | Build the React frontend |
+
+## Documentation
+
+- [API documentation](./API_DOCUMENTATION.md)
+- [Complete feature inventory](./COMPLETE_FEATURE_INVENTORY.md)
+- [Architecture documentation](./docs/architecture.md)
+- [Product requirements](./docs/PRD.md)
+- [Frontend README](./frontend/README.md)
+- MongoDB Atlas connectivity can be checked with `npm run atlas:check`.
+
+## License
