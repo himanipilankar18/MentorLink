@@ -1,6 +1,6 @@
 # MentorLink – Send Real Emails to SPIT Inboxes
 
-Follow these steps to send verification emails to real SPIT (@spit.ac.in) inboxes.
+Follow these steps to send registration OTP emails to real SPIT (@spit.ac.in) inboxes for the active registration flow.
 
 ---
 
@@ -50,8 +50,8 @@ npm run dev
 1. Open `http://localhost:5000`.
 2. Register a new user with another valid SPIT email (e.g. teammate).
 3. Check that inbox for the “Verify your MentorLink email” message.
-4. Click the verification link.
-5. Log in with that user’s credentials.
+4. Enter the six-digit OTP in the registration flow.
+5. Log in with that user’s credentials after verification completes.
 
 ---
 

@@ -1,3 +1,5 @@
+Archived 2026-10-11, not authoritative; see docs/architecture.md
+
 # ML-Based Mentor Recommendations - Frontend Integration
 
 **Date:** April 22, 2026  
@@ -433,8 +435,8 @@ Cluster Bonus            +8%      Bonus if in primary cluster
 ## 📚 Related Documentation
 
 - [Backend Recommendation API](../API_DOCUMENTATION.md)
-- [ML Engine Details](../README.md#analytics-ready-data--hardening)
-- [Security Implementation](../ADMIN_SECURITY_FIX_IMPLEMENTATION.md)
+- [ML Engine Details](../../README.md#data-and-analytics)
+- [Security Implementation](ADMIN_SECURITY_FIX_IMPLEMENTATION.md)
 
 ---
 

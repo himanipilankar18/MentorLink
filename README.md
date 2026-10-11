@@ -50,7 +50,7 @@ The core feature set is complete, but the following areas remain for project har
 - Expanded analytics dashboards and production data-export/ETL pipelines.
 - Additional product workflows documented as planned, such as guide directories, guide pledges, reviews/remarks, and a dedicated admin-management interface.
 
-These items are improvements around the completed platform rather than blockers for the core mentoring workflow. See [COMPLETE_FEATURE_INVENTORY.md](./COMPLETE_FEATURE_INVENTORY.md) and [docs/PRD.md](./docs/PRD.md) for the detailed feature-level status.
+These items are improvements around the completed platform rather than blockers for the core mentoring workflow. See [docs/PRD.md](./docs/PRD.md) and [docs/features.md](./docs/features.md) for the detailed feature-level status.
 
 ## Architecture
 
@@ -182,7 +182,7 @@ The main API areas are:
 | Recommendations | `/api/recommendations` | Mentor recommendation data and results |
 | Health | `/api/health` | Server health check |
 
-See [API_DOCUMENTATION.md](./API_DOCUMENTATION.md) for request and response details.
+See [API_DOCUMENTATION.md](./docs/API_DOCUMENTATION.md) for request and response details.
 
 ## Frontend overview
 
@@ -223,8 +223,8 @@ Supporting data-generation and analysis utilities are available in `scripts/`.
 
 ## Documentation
 
-- [API documentation](./API_DOCUMENTATION.md)
-- [Complete feature inventory](./COMPLETE_FEATURE_INVENTORY.md)
+- [API documentation](./docs/API_DOCUMENTATION.md)
+- [Documentation index](./docs/README.md)
 - [Architecture documentation](./docs/architecture.md)
 - [Product requirements](./docs/PRD.md)
 - [Frontend README](./frontend/README.md)

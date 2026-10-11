@@ -1,3 +1,5 @@
+Archived 2026-10-11, not authoritative; see docs/architecture.md
+
 # MentorLink – Institute Email Verification Options
 
 Goal: **Only real, institute‑issued SPIT email IDs** should be able to register, not just anything that ends with `@spit.ac.in`.
@@ -131,4 +133,3 @@ a realistic, implementable path is:
    - Integrate with **institute SSO** (Google/Microsoft/LDAP) so students log in directly with their official account.
 
 We can now pick which of these to actually build next (e.g. implement OTP‑based verification + optional pattern check) depending on what’s feasible for you right now.
-

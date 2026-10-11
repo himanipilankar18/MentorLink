@@ -1,3 +1,5 @@
+Archived 2026-10-11, not authoritative; see docs/architecture.md
+
 # MentorLink Project Report Information
 
 ## 1. Project Title

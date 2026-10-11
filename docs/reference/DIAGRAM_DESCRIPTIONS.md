@@ -1,3 +1,5 @@
+> Reference; may lag architecture.md
+
 # MentorLink - Detailed Diagram Descriptions
 
 ## Overview
@@ -1290,4 +1292,3 @@ MentorLink uses a modern, scalable technology stack designed for:
 This stack supports current requirements and future scaling to handle institutional growth.
 
 ---
-

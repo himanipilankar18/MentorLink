@@ -1,3 +1,5 @@
+Archived 2026-10-11, not authoritative; see docs/architecture.md
+
 # Admin Privilege Escalation Fix - Implementation Documentation
 
 **Date:** February 28, 2026  
@@ -509,7 +511,7 @@ Before deploying to production, verify:
 
 For questions or issues with this implementation:
 - Review: [SECURITY_AUDIT_REPORT.md](SECURITY_AUDIT_REPORT.md)
-- Check: [API_DOCUMENTATION.md](API_DOCUMENTATION.md)
+- Check: [API_DOCUMENTATION.md](../API_DOCUMENTATION.md)
 
 ---
 

@@ -2,7 +2,7 @@
 
 Purpose: Describe how the major current features work from the user's perspective and through the backend.
 
-Last updated: 2026-09-23
+Last updated: 2026-10-11
 
 ## Authentication
 
@@ -163,6 +163,7 @@ Status: `⚠️ Legacy (needs cleanup)`.
 **Technical flow**
 
 - Mentor recommendations use `GET /api/recommendations/mentors`.
+- The explanation route is `GET /api/recommendations/mentors/:mentorId/explain`; the home-page recommendation UI displays compatibility scores and falls back to default suggestions when the recommendation request fails.
 - The route filters active users by offering/both mentorship intent and applies role/year eligibility.
 - `utils/recommendationEngine.js` builds features from skills, interests, year, CGPA, profile strength, availability, department, and interaction analytics.
 - Peer matching uses `recommender_model/src/peerMatcher.js` through user routes.

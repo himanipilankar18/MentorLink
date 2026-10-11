@@ -1,3 +1,5 @@
+Archived 2026-10-11, not authoritative; see docs/architecture.md
+
 # MentorLink Security Audit Report
 
 **Date:** February 28, 2026  

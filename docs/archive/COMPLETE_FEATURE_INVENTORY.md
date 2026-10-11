@@ -1,3 +1,5 @@
+Archived 2026-10-11, not authoritative; see docs/architecture.md
+
 # MentorLink - Complete Feature Inventory (April 2026)
 
 **Status:** Fully Implemented & Operational  

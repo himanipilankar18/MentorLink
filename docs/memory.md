@@ -2,7 +2,7 @@
 
 Purpose: Preserve dated decisions, completed work, and unresolved questions for contributors and coding agents.
 
-Last updated: 2026-09-23
+Last updated: 2026-10-11
 
 This file is an append-only decision journal. Add new entries rather than rewriting historical context.
 
@@ -55,6 +55,7 @@ This file is an append-only decision journal. Add new entries rather than rewrit
 - Should the legacy Profile Setup page remain as an optional profile editor, be replaced by `profile.html`, or be retired?
 - Should standalone `verify-otp.html` and `/api/auth/resend-otp` be repaired to match the active in-memory flow or removed?
 - Should External users participate in recommendations, and which missing academic fields should be optional defaults?
+- Should institute email verification add an official whitelist or SSO integration? Both options were considered and deferred.
 - Which admin capabilities are required beyond protected admin creation and the current dashboard page?
 - TODO: Confirm production deployment, email provider, MongoDB topology, and supported environment matrix from maintainers.
 
@@ -94,4 +95,10 @@ This file is an append-only decision journal. Add new entries rather than rewrit
 - Community visibility is enforced at request time with 404 responses for disallowed communities. Owners/admins retain management access, memberships are not edited when a flag changes, and External users cannot create or moderate communities.
 - External mentor recommendations and requests are limited to active senior/faculty users with a current-year opt-in (`availableForExternalGuidance` and a future `externalGuidanceLockedUntil`). External requests are capped at three pending requests.
 - Peer recommendations/connections, calls, and External groups remain deferred because their scope and fraud/access risks require a separate decision.
+
+## 2026-10-11 — Markdown consolidation
+
+- Moved the API and email setup references into `docs/`, moved diagram references into `docs/reference/`, and archived historical reports and recommendation notes under `docs/archive/`.
+- Merged only verified recommendation endpoint, explanation-route, score-display, and fallback details into `features.md`; archived the four overlapping ML notes because they were historical implementation snapshots.
+- Archived the project report, feature inventory, security audit, admin-fix report, implementation-complete report, and email-verification options because they are historical or superseded; no files were deleted.
 - The two named existing communities could not be verified against the test database in this session; no names were found in repository fixtures/scripts, so no explicit values were written.

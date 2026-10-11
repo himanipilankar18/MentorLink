@@ -1,3 +1,5 @@
+> Reference; may lag architecture.md
+
 # MentorLink - Diagram Generation Formats
 
 This file contains diagram descriptions in multiple formats for easy integration with image generation tools (Lucidchart, Draw.io, Visio, Mermaid, PlantUML, etc.).
@@ -903,7 +905,7 @@ GET /analytics/trends
 3. Export as PNG/SVG/PDF
 
 ### For Custom Tools or AI Image Generators:
-1. Use the detailed text descriptions from DIAGRAM_DESCRIPTIONS.md
+1. Use the detailed text descriptions from [DIAGRAM_DESCRIPTIONS.md](DIAGRAM_DESCRIPTIONS.md)
 2. Provide a diagram description to your image generation tool
 3. Specify style preferences (flat, 3D, professional, cartoon, etc.)
 4. Request specific colors or branding
@@ -965,4 +967,3 @@ Generated_Diagrams/
 ```
 
 ---
-

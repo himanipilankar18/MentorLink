@@ -1,3 +1,5 @@
+Archived 2026-10-11, not authoritative; see docs/architecture.md
+
 # 🚀 ML-Based Mentor Recommendations - COMPLETE ✅
 
 **Status:** Implementation Complete & Ready for Testing  
