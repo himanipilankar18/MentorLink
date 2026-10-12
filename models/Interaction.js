@@ -61,6 +61,16 @@ const interactionSchema = new mongoose.Schema({
     max: [5, 'Rating cannot exceed 5'],
     default: null
   },
+  confirmationStatus: {
+    type: String,
+    enum: ['pending', 'confirmed'],
+    default: 'pending',
+    index: true
+  },
+  confirmedAt: {
+    type: Date,
+    default: null
+  },
   notes: {
     type: String,
     trim: true,
@@ -83,6 +93,7 @@ interactionSchema.index({ menteeId: 1, timestamp: -1 });
 interactionSchema.index({ subjectTag: 1, timestamp: -1 });
 interactionSchema.index({ interactionType: 1, timestamp: -1 });
 interactionSchema.index({ mentorshipId: 1, timestamp: -1 });
+interactionSchema.index({ mentorId: 1, confirmationStatus: 1, timestamp: -1 });
 
 // Index for clustering and trend analysis
 interactionSchema.index({ subjectTag: 1, interactionType: 1, timestamp: -1 });

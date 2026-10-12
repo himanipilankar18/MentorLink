@@ -4,6 +4,7 @@ const Mentorship = require('../models/Mentorship');
 const { verifyToken } = require('../middleware/auth');
 const { validateInteraction, handleValidationErrors } = require('../middleware/validation');
 const { apiLimiter } = require('../middleware/security');
+const { awardForConfirmedInteraction } = require('../utils/contributionService');
 
 const router = express.Router();
 
@@ -160,6 +161,36 @@ router.get('/', verifyToken, apiLimiter, async (req, res) => {
       message: 'Failed to fetch interactions',
       error: error.message
     });
+  }
+});
+
+// @route   POST /api/interactions/:id/confirm
+// @desc    Confirm a logged session and award auditable mentor contribution points
+// @access  Private (mentee only)
+router.post('/:id/confirm', verifyToken, apiLimiter, async (req, res) => {
+  try {
+    const interaction = await Interaction.findById(req.params.id);
+    if (!interaction) return res.status(404).json({ success: false, message: 'Interaction not found' });
+    if (String(interaction.menteeId) !== String(req.user._id)) {
+      return res.status(403).json({ success: false, message: 'Only the mentee can confirm an interaction' });
+    }
+    if (interaction.confirmationStatus === 'confirmed') {
+      return res.json({ success: true, message: 'Interaction was already confirmed', interaction });
+    }
+
+    interaction.confirmationStatus = 'confirmed';
+    interaction.confirmedAt = new Date();
+    await interaction.save();
+    const contribution = await awardForConfirmedInteraction(interaction._id);
+
+    res.json({
+      success: true,
+      message: 'Interaction confirmed and contribution points updated',
+      interaction,
+      contribution,
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Failed to confirm interaction', error: error.message });
   }
 });
 

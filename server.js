@@ -54,6 +54,7 @@ app.use('/api/groups', require('./routes/groups'));
 app.use('/api/chat', require('./routes/chat'));
 app.use('/api/notifications', require('./routes/notifications'));
 app.use('/api/recommendations', require('./routes/recommendations'));
+app.use('/api/achievements', require('./routes/achievements'));
 
 // Ensure upload directories exist on boot, even when UPLOADS_DIR points outside repo.
 ensureUploadSubdirs();
