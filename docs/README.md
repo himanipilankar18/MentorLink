@@ -13,6 +13,7 @@ MentorConnect is an active-development mentorship and academic interaction platf
 | [rules.md](rules.md) | Engineering and agent guardrails |
 | [design.md](design.md) | Existing visual language and proposed design-system guidance |
 | [features.md](features.md) | End-to-end user and technical walkthroughs |
+| [recommendation-engine.md](recommendation-engine.md) | Living mentor and peer recommendation engine record |
 | [tasks.md](tasks.md) | Living phased work tracker and current focus |
 | [memory.md](memory.md) | Dated decisions, completed work, and unresolved questions |
 | [API_DOCUMENTATION.md](API_DOCUMENTATION.md) | REST API endpoint reference |

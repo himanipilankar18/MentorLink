@@ -102,3 +102,9 @@ This file is an append-only decision journal. Add new entries rather than rewrit
 - Merged only verified recommendation endpoint, explanation-route, score-display, and fallback details into `features.md`; archived the four overlapping ML notes because they were historical implementation snapshots.
 - Archived the project report, feature inventory, security audit, admin-fix report, implementation-complete report, and email-verification options because they are historical or superseded; no files were deleted.
 - The two named existing communities could not be verified against the test database in this session; no names were found in repository fixtures/scripts, so no explicit values were written.
+
+## 2026-10-13 — Recommendation engine living document
+
+- Created `docs/recommendation-engine.md` as the v0 baseline record at commit `cdf5e96004a4ff77d56b7f745aa6c57d81975b82`.
+- Recorded the current mentor engine, separate peer matcher, safe-check results, known divergences, and the failed strong technical content-similarity fixture assertion without claiming live-user or database testing.
+- Recorded the requested future decisions: seeded K-Means only as an ablation baseline, hand-set weights justified by ablation, offline evaluation with explicit synthetic-data labeling, applied explainable-system paper framing, and owner approval before production removal.

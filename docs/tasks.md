@@ -47,6 +47,14 @@ See [architecture.md](architecture.md) for the current flow and [rules.md](rules
 
 - [x] Maintain mentor recommendation endpoint and scoring engine.
 - [x] Maintain peer matcher implementation.
+- [x] Document recommendation engine v0 baseline.
+- [ ] R0: Fixes and frozen baseline.
+- [ ] R1: Transparent additive scorer.
+- [ ] R2: Evidence, explanations, and confidence.
+- [ ] R3: Normalization and TF-IDF corpus fix.
+- [ ] R4: Evaluation harness and ablations.
+- [ ] R5: Exposure-aware re-ranking.
+- [ ] R6: Unify with peer matcher and add mentor rating score when available.
 - [ ] Define recommendation behavior for External users without academic year or department.
 - [ ] Clarify whether `role` or `userType` is authoritative for future mentor eligibility.
 - [ ] Add documented evaluation coverage for recommendation ranking and missing fields.

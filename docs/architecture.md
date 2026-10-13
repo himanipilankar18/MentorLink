@@ -158,6 +158,8 @@ Do not merge or remove these paths without an explicit decision; see [rules.md](
 
 ## Key Feature Flows
 
+Recommendation engine details, baseline evidence, and planned evolution are maintained in [recommendation-engine.md](recommendation-engine.md).
+
 ### External guidance consent
 
 `User.availableForExternalGuidance` defaults to `false` and is only changed through `PATCH /api/users/profile/external-guidance`, which uses the authenticated user's ID and accepts only legacy `User.role` values `senior` and `faculty`. The optional `externalGuidanceTermsVersion` and `externalGuidanceTermsAcceptedAt` fields have no defaults and require no migration. Turning on requires the current `MENTOR_GUIDANCE_TERMS_VERSION` from `config/externalGuidanceTerms.js`; the server stores that version and the acceptance timestamp with the change. Turning off does not require terms.
