@@ -61,6 +61,20 @@ const interactionSchema = new mongoose.Schema({
     max: [5, 'Rating cannot exceed 5'],
     default: null
   },
+  outcomeStatus: {
+    type: String,
+    enum: ['unresolved', 'resolved'],
+    default: 'unresolved',
+    index: true
+  },
+  menteeWouldRecommend: {
+    type: Boolean,
+    default: null
+  },
+  followUpCompleted: {
+    type: Boolean,
+    default: false
+  },
   confirmationStatus: {
     type: String,
     enum: ['pending', 'confirmed'],

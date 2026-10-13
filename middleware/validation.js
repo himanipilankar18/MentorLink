@@ -138,7 +138,19 @@ exports.validateInteraction = [
   
   body('satisfactionRating')
     .optional()
-    .isInt({ min: 1, max: 5 }).withMessage('Satisfaction rating must be between 1 and 5')
+    .isInt({ min: 1, max: 5 }).withMessage('Satisfaction rating must be between 1 and 5'),
+
+  body('outcomeStatus')
+    .optional()
+    .isIn(['unresolved', 'resolved']).withMessage('Outcome status must be unresolved or resolved'),
+
+  body('menteeWouldRecommend')
+    .optional()
+    .isBoolean().withMessage('Recommendation response must be boolean'),
+
+  body('followUpCompleted')
+    .optional()
+    .isBoolean().withMessage('Follow-up status must be boolean')
 ];
 
 // Discussion validation rules

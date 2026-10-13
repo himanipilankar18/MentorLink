@@ -14,6 +14,7 @@
     "users:setup-test": "node scripts/setup-test-users.js",
     "email:test": "node scripts/test-email.js",
     "registration:test": "node scripts/test-registration.js",
+    "certificate:simulate": "node scripts/simulate-certificate.js",
     "atlas:check": "node scripts/check-atlas-reachability.js",
     "uploads:cleanup-orphans": "node scripts/cleanup-orphan-content.js",
     "test": "echo \"Error: no test specified\" && exit 1"

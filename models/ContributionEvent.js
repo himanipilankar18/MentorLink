@@ -24,7 +24,13 @@ const contributionEventSchema = new mongoose.Schema({
   },
   eventType: {
     type: String,
-    enum: ['SESSION_CONFIRMED', 'HIGH_SATISFACTION', 'LONG_SESSION'],
+    enum: [
+      'VERIFIED_ACTIVITY',
+      'QUALITY_FEEDBACK',
+      'RESOLVED_OUTCOME',
+      'FOLLOW_UP_COMPLETED',
+      'UNIQUE_MENTEE',
+    ],
     required: true,
   },
   points: {
