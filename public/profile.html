@@ -608,6 +608,7 @@
                 <div class="profile-name-section">
                     <div class="profile-name" id="profileName">Loading...</div>
                     <div class="intent-badge" id="profileIntentBadge">Seeking Mentorship</div>
+                        <div class="external-guidance-badge" id="externalUserBadge" style="display: none;background:rgba(167,139,250,0.16);border-color:rgba(167,139,250,0.4);color:#c4b5fd;">External User</div>
                     <div class="external-guidance-badge" id="externalGuidanceBadge" style="display: none;">Open to External Guidance</div>
                     <div class="profile-role" id="profileRole">Loading...</div>
                     <div class="profile-availability" id="profileAvailability">Availability: Flexible</div>
@@ -723,7 +724,7 @@
         <!-- Projects / Achievements -->
         <div class="profile-card">
             <div class="section-header">
-                <div class="section-title">Projects & Achievements</div>
+                <div class="section-title" id="projectsSectionTitle">Projects & Achievements</div>
                 <div>
                     <button class="edit-btn" id="projectsEditBtn" onclick="toggleEdit('projects')">Edit</button>
                     <button class="edit-btn save" id="projectsSaveBtn" style="display: none;" onclick="saveSection('projects')">Save</button>
@@ -835,8 +836,10 @@
                 intentBadge.className = `intent-badge ${intent}`;
             }
             const guidanceBadge = document.getElementById('externalGuidanceBadge');
+            const externalUserBadge = document.getElementById('externalUserBadge');
             const isMentor = userData.role === 'senior' || userData.role === 'faculty';
             const isInstituteViewer = String(userData.userType || 'INSTITUTE_MEMBER').toUpperCase() === 'INSTITUTE_MEMBER';
+            if (externalUserBadge) externalUserBadge.style.display = isInstituteViewer ? 'none' : 'inline-flex';
             if (guidanceBadge) guidanceBadge.style.display = isMentor && isInstituteViewer && userData.availableForExternalGuidance === true ? 'inline-flex' : 'none';
             document.getElementById('profileRole').textContent = `${userData.role.charAt(0).toUpperCase() + userData.role.slice(1)} • ${userData.email}`;
             document.getElementById('profileAvailability').textContent = `Availability: ${formatAvailabilityLabel(userData.availability)}`;
@@ -861,7 +864,12 @@
             
             // Projects section
             renderProjects();
-            loadMentorAchievements();
+            const isExternalUser = String(userData.userType || '').toUpperCase() === 'EXTERNAL';
+            const projectsSectionTitle = document.getElementById('projectsSectionTitle');
+            if (projectsSectionTitle) projectsSectionTitle.textContent = isExternalUser ? 'Projects' : 'Projects & Achievements';
+            const achievementsCard = document.getElementById('mentorAchievementsCard');
+            if (achievementsCard) achievementsCard.style.display = isExternalUser ? 'none' : '';
+            if (!isExternalUser) loadMentorAchievements();
 
             renderExternalGuidanceSettings();
         }

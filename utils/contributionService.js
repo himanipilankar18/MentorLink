@@ -5,6 +5,10 @@ const Certificate = require('../models/Certificate');
 const User = require('../models/User');
 const sendEmail = require('./sendEmail');
 
+function buildCertificateEmailMarkup({ mentorName, achievementTitle, certificateId, points, sessions, mentees, rating }) {
+  return `<!doctype html><html lang="en"><head><meta charset="utf-8"><style>body{margin:0;padding:32px;background:#eef1f4;color:#172a3a;font-family:Arial,sans-serif}.certificate{max-width:760px;margin:auto;padding:58px;text-align:center;background:#fffdf8;border:2px solid #b77a32;box-shadow:0 12px 30px rgba(23,42,58,.16)}.certificate-inner{border:1px solid rgba(183,122,50,.55);padding:42px}.brand{letter-spacing:.28em;color:#b77a32;font-weight:700;font-size:13px}.kicker{margin:34px 0 10px;color:#647484;text-transform:uppercase;letter-spacing:.18em;font-size:11px}.title{font:400 42px Georgia,serif;margin:10px 0 28px}.recipient{font:400 32px Georgia,serif;color:#b77a32;margin:20px}.achievement{font:22px Georgia,serif}.evidence{margin:30px 0;padding:16px;border-top:1px solid #b77a32;border-bottom:1px solid #b77a32;line-height:1.8}.id{color:#647484;font-size:11px}</style></head><body><main class="certificate"><div class="certificate-inner"><div class="brand">MENTORLINK</div><div class="kicker">Certificate of mentoring achievement</div><h1 class="title">Certificate of Recognition</h1><p>This certificate is proudly presented to</p><div class="recipient">${mentorName}</div><p class="achievement">for earning the <strong>${achievementTitle}</strong> distinction</p><div class="evidence">${points} verified points · ${sessions} confirmed sessions · ${mentees} mentees helped · ${rating ? `${Number(rating).toFixed(1)}/5 average rating` : 'rating pending'}</div><p class="id">Certificate ID: ${certificateId}</p></div></main></body></html>`;
+}
+
 const ACHIEVEMENTS = [
   { level: 1, threshold: 50, title: 'Helpful Contributor', minInteractions: 3, minMentees: 2, minResolved: 1, minRating: 4 },
   { level: 2, threshold: 150, title: 'Peer Mentor', minInteractions: 8, minMentees: 3, minResolved: 3, minRating: 4 },
@@ -138,7 +142,15 @@ async function awardForConfirmedInteraction(interactionId) {
     });
 
     if (mentor?.email) {
-      const certificateMarkup = `<!doctype html><html><body style="font-family:Georgia,serif;text-align:center;padding:48px;color:#17324d"><h1>MentorLink Certificate of Achievement</h1><p>This certificate is presented to</p><h2>${mentor.name || 'Mentor'}</h2><h2>${achievement.title}</h2><p>${stats.points} verified contribution points<br>${stats.confirmedInteractions} confirmed mentoring sessions<br>${stats.uniqueMentees} mentees helped</p><p>Certificate ID: ${certificate.certificateId}</p></body></html>`;
+      const certificateMarkup = buildCertificateEmailMarkup({
+        mentorName: mentor.name || 'Mentor',
+        achievementTitle: achievement.title,
+        certificateId: certificate.certificateId,
+        points: stats.points,
+        sessions: stats.confirmedInteractions,
+        mentees: stats.uniqueMentees,
+        rating: stats.averageRating,
+      });
       await sendEmail({
         to: mentor.email,
         subject: `MentorLink achievement earned: ${achievement.title}`,

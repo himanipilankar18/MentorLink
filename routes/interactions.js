@@ -64,6 +64,13 @@ router.post('/',
       const isMentor = String(mentorshipMentorId) === String(actorId);
       const isMentee = String(mentorshipMenteeId) === String(actorId);
 
+      if (isMentor && String(req.user.userType || '').toUpperCase() === 'EXTERNAL') {
+        return res.status(403).json({
+          success: false,
+          message: 'External users can seek mentorship but cannot log mentoring activity as a mentor',
+        });
+      }
+
       if (!isMentor && !isMentee) {
         return res.status(403).json({
           success: false,

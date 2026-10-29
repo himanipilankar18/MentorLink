@@ -99,7 +99,7 @@ The product combines identity, structured academic context, social interaction, 
 
 | Feature | Status |
 |---|---|
-| External dashboard navigation without Feed/Settings | `✅ Live` |
+| External dashboard navigation with Feed/Media/Communities and without Messages/Achievements | `✅ Live` |
 | External profile guidance badges and community post scope | `✅ Live` |
 | External mentor recommendations from current-year opted-in mentors | `✅ Live` |
 | External mentorship request cap and consent enforcement | `✅ Live` |
@@ -109,6 +109,8 @@ The product combines identity, structured academic context, social interaction, 
 | External peer recommendations and connections | `⏸️ Deferred` |
 | External calls | `⏸️ Deferred` |
 | External groups | `⏸️ Deferred` |
+
+External users are seeking-only participants. Their interface keeps Feed, Media, mentor discovery, outgoing requests, and community browsing/membership. Messages, standalone groups, private mentorship chat, Achievements, mentor contribution records, personal profile posting, incoming request management, community creation, and moderation are unavailable. External profiles are labeled `External User`; the backend also rejects mentor-mode changes, achievement access, mentor interaction logging, group access, and chat access.
 
 ### Administration and operations
 

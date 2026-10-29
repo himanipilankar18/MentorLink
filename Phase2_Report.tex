@@ -1,0 +1,228 @@
+%----------------------------------------------------------------
+% MentorLink Phase II Report (LaTeX)
+% Phase II - Implementation, Integration, Testing and Refinement
+%----------------------------------------------------------------
+\documentclass[12pt,singleside,a4paper]{article}
+\usepackage{epsfig}
+\usepackage{cite}
+\usepackage{geometry}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{amsmath}
+\usepackage{multirow}
+\usepackage{array}
+\usepackage{float}
+\usepackage{caption}
+\usepackage{longtable}
+\usepackage{booktabs}
+\usepackage{titlesec}
+\usepackage{setspace}
+\usepackage{tocloft}
+\geometry{left=20mm,right=20mm,top=20mm,bottom=25mm}
+\pagestyle{plain}
+\setlength{\parskip}{0.8ex}
+\setlength{\parindent}{0pt}
+\onehalfspacing
+\titleformat{\section}{\large\bfseries}{\thesection.}{0.5em}{}
+\titleformat{\subsection}{\normalsize\bfseries}{\thesubsection.}{0.5em}{}
+\begin{document}
+\pagenumbering{arabic}
+
+% Title Page
+\begin{center}
+  {\LARGE \textbf{MentorLink\\ A Data-Driven Interaction and Academic Analytics Platform}}\\[1cm]
+  {\large Phase II Report -- ESE Format}\\[1cm]
+  \textbf{Himani Arvind Pilankar \quad Tithi Kiran Talele \quad Chetan Vijay Wankhede}\\[0.5cm]
+  Department of Information Technology\\
+  Sardar Patel Institute of Technology\\[0.5cm]
+  Academic Year: 2025--2026\\[1cm]
+  Under the Guidance of\\[0.25cm]
+  \textbf{Prof. Soni Bhambar}\\[2cm]
+\end{center}
+\newpage
+
+% Approval & Declaration
+\section*{Approval Certificate}
+This is to certify that the Project entitled ``MentorLink -- A Data-Driven Interaction and Academic Analytics Platform'' by Himani Arvind Pilankar, Tithi Kiran Talele and Chetan Vijay Wankhede is approved for the partial fulfillment of Major Project - II for the Final Year Project towards obtaining the Degree of Bachelor of Technology in Information Technology from University of Mumbai.
+\\[1em]
+Project Guide \hfill External Examiner\\
+(signature) \hfill (signature)\\[1em]
+Name: Prof. Soni Bhambar \hfill Name: \\
+Date: \hfill Date: \\
+\vspace{1cm}
+\section*{Declaration}
+I wish to state that the work embodied in this work titled ``MentorLink'' forms my own contribution to the work carried out under the guidance of Prof. Soni Bhambar at the Sardar Patel Institute of Technology. I declare that this written submission represents my ideas in my own words and where others' ideas or words have been included, I have adequately cited and referenced the original sources. I also declare adherence to academic honesty and integrity and have not misrepresented any idea/data/fact/source.
+\\[2em]
+\begin{tabular}{ccc}
+Himani Arvind Pilankar & Tithi Kiran Talele & Chetan Vijay Wankhede\\
+2024301021 & 2024301034 & 2024301035
+\end{tabular}
+\newpage
+
+% Abstract
+\section*{Abstract}
+\addcontentsline{toc}{section}{Abstract}
+MentorLink is an institute‑exclusive, web‑based mentorship and academic networking platform that formalizes peer mentoring and makes mentoring interactions analytics‑ready. It provides verified authentication, structured student profiles, role‑based access control, mentorship lifecycle management, mentor discovery and recommendation, and community‑driven discussion features. All mentorship interactions are logged as structured transactional data to enable ETL, clustering, association‑rule mining, and trend analysis. Implemented with a MERN stack (React, Node/Express, MongoDB), Phase II focuses on implementation, integration, testing, and refinement of core modules to deliver a scalable backend that supports future recommendation and academic‑analytics extensions.
+\newpage
+
+% List placeholders
+\section*{List of Figures}
+To be populated with final diagrams and screenshots.
+\section*{List of Tables}
+To be populated with final tables.
+\newpage
+
+\tableofcontents
+\newpage
+
+% Introduction
+\section{Introduction}
+\subsection{Overview}
+MentorLink is an institute-focused mentorship and academic analytics platform designed to formalize peer mentoring, improve discoverability and accountability, and create analytics-ready datasets from everyday mentoring interactions. The platform targets undergraduate and postgraduate cohorts within an academic institute and aims to simultaneously support students, faculty coordinators, and student‑run mentoring initiatives.
+
+\subsection{Background}
+Mentoring is a widely acknowledged enabler of student success: it helps improve academic performance, professional preparedness, and soft‑skill development. Traditionally, mentoring in college environments is informal — realized through personal networks, chat groups, or ad‑hoc meetings — which limits program visibility and continuous improvement. MentorLink addresses these shortcomings by providing verified access, structured workflows, and persistent interaction logging to make mentoring both scalable and measurable.
+
+\subsubsection{Context and Motivation}
+Higher education institutes increasingly seek data-driven insights to improve student outcomes. MentorLink provides a minimal-friction experience for students to request and record mentoring, while generating longitudinal signals (topic tags, durations, satisfaction ratings, follow-up actions) that can be used to measure program effectiveness, discover mentor capacity, and bootstrap recommendation systems.
+
+\subsection{Problem Statement}
+Despite the benefits of mentoring, the following problems are common in many institutes:
+\begin{itemize}
+  \item Mentoring is often unverified and fragmented across private channels, creating privacy and trust concerns.
+  \item Matching mentees with appropriate mentors is manual and ad hoc, resulting in missed opportunities.
+  \item There is little to no systematic recording of interactions for analysis, evaluation, and policy improvement.
+  \item Administrators lack dashboards and metrics to monitor mentorship health and participation.
+\end{itemize}
+MentorLink's core problem statement: design and implement a secure, privacy-aware platform that enables discoverable, verifiable mentoring interactions and produces analytics-ready data to inform interventions and recommendations.
+
+\subsection{Objectives}
+The project pursues the following objectives in Phase II:
+\begin{enumerate}
+  \item Deliver a secure authentication system restricted to institute-affiliated users and a role model for students, mentors and admins.
+  \item Implement rich, structured user profiles capturing skills, projects, academic interests, and availability to improve discovery.
+  \item Build end‑to‑end mentorship workflows: discovery, request, scheduling, interaction logging, feedback, and closure.
+  \item Provide an interaction logging schema and aggregation endpoints that are `ETL`-friendly for downstream analytics.
+  \item Prototype a lightweight mentor–mentee matching pipeline (heuristic + collaborative signals) and expose it via API.
+  \item Produce documentation, sample datasets, and demonstration dashboards to validate Phase II deliverables.
+\end{enumerate}
+
+\subsection{Scope}
+\subsubsection{In Scope}
+This phase focuses on delivering a functionally complete prototype rather than a fully productionized system. Specifically:
+\begin{itemize}
+  \item Backend services (REST APIs, data models, authentication, logging) implemented in Node.js and MongoDB.
+  \item Frontend components demonstrating critical flows: profile management, mentor discovery, mentorship lifecycle, and a basic admin dashboard for metrics.
+  \item A recommendation prototype and analytics endpoints with example notebooks showing how to consume exported interaction data.
+  \item Unit and integration tests for critical API flows and manual verification scripts.
+\end{itemize}
+
+\subsubsection{Out of Scope}
+\begin{itemize}
+  \item Full production deployment (complete CI/CD, autoscaling, SLA guarantees) and enterprise integrations (SSO, LMS connectors) are postponed to subsequent phases.
+  \item Large-scale supervised ML models requiring substantial labeled data are outside Phase II; the emphasis here is on creating datasets and lightweight prototypes.
+\end{itemize}
+
+\subsection{Use Cases}
+Representative primary use cases the system addresses:
+\begin{itemize}
+  \item \textbf{Student-to-Student Mentoring:} A junior student discovers mentors by skill and availability, sends a request, logs the interaction, and provides feedback.
+  \item \textbf{Project Mentorship:} A project team requests domain expertise from senior students or alumni and schedules a series of mentoring sessions recorded as interaction events.
+  \item \textbf{Faculty Coordination:} Faculty coordinators monitor mentoring participation, identify capacity gaps, and export aggregated signals for program evaluation.
+  \item \textbf{Community Discussions:} Students run topic-based communities where advice and small-group mentoring are recorded and surfaced for analytics.
+\end{itemize}
+
+\subsection{Stakeholders}
+Primary stakeholders include students (mentees and peer mentors), faculty advisors, department administrators, and student clubs. Secondary stakeholders include placement cells and institutional research teams who may consume aggregate analytics.
+
+\subsection{Definitions and Assumptions}
+\begin{itemize}
+  \item \textbf{Mentor:} A verified student or staff member offering guidance on academic or project topics.
+  \item \textbf{Mentee:} A student seeking guidance or mentoring sessions.
+  \item \textbf{Interaction Record:} A structured event capturing mentorId, menteeId, topic tags, duration, timestamp, modality, and feedback.
+  \item Assumptions: users will sign up with institute emails; earliest deployments are pilot cohorts with moderate traffic; privacy policies and consent frameworks will be applied to stored interaction data.
+\end{itemize}
+
+\subsection{Constraints}
+Key constraints that influenced design decisions:
+\begin{itemize}
+  \item \textbf{Privacy:} Student data must be protected and shared only via aggregated or consented channels.
+  \item \textbf{Data Sparsity:} Early datasets are expected to be small and noisy, so recommendation algorithms must be robust to sparse signals.
+  \item \textbf{Time and Resources:} Phase II prioritizes completing functional modules and demonstrable analytics over exhaustive polishing or scaling.
+\end{itemize}
+
+\subsection{Technologies Used}
+The implementation selected pragmatic, widely supported technologies to accelerate development and experimentation:
+\begin{itemize}
+  \item Frontend: React (Vite) with Tailwind CSS for rapid UI composition.
+  \item Backend: Node.js with Express; business logic separated into controllers and services.
+  \item Database: MongoDB (Mongoose schemas) to store hierarchical and semi-structured interaction records.
+  \item Authentication: JSON Web Tokens (JWT) with institute-domain verification and password hashing via bcrypt.
+  \item Analytics/Prototype ML: Python (pandas, scikit-learn) used for offline experiments and notebooks.
+  \item Testing/Tools: Postman for API verification, `test-atlas-connection.js` for connectivity checks, and lightweight unit tests for core modules.
+\end{itemize}
+
+\newpage
+
+% Literature Survey (placeholder)
+\section{Literature Survey}
+The literature survey will be expanded to include at least 12 recent works. Key themes: Educational Data Mining, peer mentoring effectiveness, recommendation systems, and mentor–mentee matching techniques. (See Phase I report for initial summaries.)
+
+\newpage
+
+% Analysis
+\section{Analysis}
+\subsection{System Architecture}
+Describe the backend-first modular architecture: API layer (Express), business logic (controllers/services), data layer (Mongoose schemas), and optional ETL pipeline for analytics.
+
+\subsection{Data Model Overview}
+Summarize main collections: `users`, `mentorships`, `interactions`, `discussions`, `notifications` and their key fields.
+
+\newpage
+
+% Design and Methodology
+\section{Design and Methodology}
+\subsection{Major Modules}
+Authentication, User Profiles, Mentorship Management, Recommendation Engine (prototype), Community Module, Messaging, Moderation, Database & Logging.
+
+\subsection{Interaction Logging Model}
+Each interaction record includes: mentorId, menteeId, mentorshipId, topic, subjectTag, interactionType, timestamp, duration, satisfactionRating, notes.
+
+\newpage
+
+% Implementation Details
+\section{Implementation Details}
+\subsection{Completed in Phase II}
+\begin{itemize}
+  \item JWT-based authentication with institute-domain checks.
+  \item Mongoose schemas for core models and indexes for analytics queries.
+  \item Mentorship request workflows and status transitions.
+  \item Interaction logging API and basic aggregation endpoints.
+  \item Basic frontend dashboard for testing endpoints.
+\end{itemize}
+
+\subsection{Testing}
+Unit tests and manual API validations using Postman were performed for core flows. DB connectivity tested via `test-atlas-connection.js`.
+
+\newpage
+
+% Results and Discussion
+\section{Results and Discussion}
+Summarize integration results, sample API responses, and a short discussion of performance characteristics and observed limitations during Phase II.
+
+\newpage
+
+% Conclusion and Further Work
+\section{Conclusion and Further Work}
+Phase II established a functional, analytics-ready backend with core mentorship features. Next steps: refine recommendation engine (hybrid models), student clustering, ETL exports, analytics dashboard, and production hardening (CI/CD, monitoring, secrets management).
+
+\newpage
+\section*{References}
+\begin{thebibliography}{9}
+\bibitem{papad} Papadogiannis et al., "Educational Data Mining: Trends and Applications", 2024.
+\bibitem{gehreke} Gehreke et al., "Effectiveness of Peer Mentoring", 2024.
+\end{thebibliography}
+
+\end{document}

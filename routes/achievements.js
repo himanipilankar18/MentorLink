@@ -27,6 +27,9 @@ function certificateMarkup(certificate) {
 
 router.get('/me', verifyToken, apiLimiter, async (req, res) => {
   try {
+    if (String(req.user.userType || '').toUpperCase() === 'EXTERNAL') {
+      return res.status(403).json({ success: false, message: 'Achievements are available to Institute Members only' });
+    }
     const [stats, achievements, certificates] = await Promise.all([
       getContributionStats(req.user._id),
       Achievement.find({ mentorId: req.user._id }).sort({ level: -1 }).lean(),
@@ -41,6 +44,9 @@ router.get('/me', verifyToken, apiLimiter, async (req, res) => {
 
 router.get('/certificates/:certificateId/download', verifyToken, apiLimiter, async (req, res) => {
   try {
+    if (String(req.user.userType || '').toUpperCase() === 'EXTERNAL') {
+      return res.status(403).json({ success: false, message: 'Certificates are available to Institute Members only' });
+    }
     const certificate = await Certificate.findOne({ certificateId: req.params.certificateId }).populate('mentorId', 'name');
     if (!certificate || certificate.revokedAt) return res.status(404).json({ success: false, message: 'Certificate not found' });
     if (String(certificate.mentorId._id) !== String(req.user._id) && String(req.user.role).toLowerCase() !== 'admin') {
