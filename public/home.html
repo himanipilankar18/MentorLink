@@ -2319,6 +2319,7 @@
                                 <h2 id="profile-name">User</h2>
                                 <div class="profile-badges-row">
                                     <div id="profile-intent-badge" class="profile-pill">Seeking Mentorship</div>
+                                    <div id="profile-external-badge" class="profile-pill" style="display:none;background:rgba(167,139,250,0.16);border-color:rgba(167,139,250,0.4);color:#c4b5fd;">External User</div>
                                     <div id="profile-guidance-badge" class="profile-pill" style="display:none;background:rgba(16,185,129,0.18);border-color:rgba(16,185,129,0.45);color:#6ee7b7;">Open to External Guidance</div>
                                 </div>
                                 <p id="profile-handle" class="profile-stats-line">@user</p>
@@ -2690,6 +2691,7 @@
                         <div id="user-profile-meta" class="profile-stats-line"></div>
                         <div class="profile-badges-row">
                             <div id="user-profile-intent" class="profile-pill">Seeking Mentorship</div>
+                            <div id="user-profile-external-badge" class="profile-pill" style="display:none;background:rgba(167,139,250,0.16);border-color:rgba(167,139,250,0.4);color:#c4b5fd;">External User</div>
                         </div>
                     </div>
                 </div>
@@ -8282,6 +8284,8 @@
             metaEl.textContent = metaParts.filter(Boolean).join(' • ');
 
             applyIntentBadge(intentEl, user.mentorshipIntent || 'seeking');
+            const externalBadge = document.getElementById('user-profile-external-badge');
+            if (externalBadge) externalBadge.style.display = String(user.userType || '').toUpperCase() === 'EXTERNAL' ? 'inline-flex' : 'none';
 
             if (skillsEl) {
                 const skillsText = Array.isArray(user.skills) && user.skills.length
@@ -8885,8 +8889,11 @@
                     if (element && !element.closest('li')) element.style.display = visible ? '' : 'none';
                 };
 
-                setVisible('feed-btn', !isExternal);
+                setVisible('feed-btn', true);
                 setVisible('messages-btn', !isExternal);
+                setVisible('achievements-btn', !isExternal);
+                const externalBadge = document.getElementById('profile-external-badge');
+                if (externalBadge) externalBadge.style.display = isExternal ? 'inline-flex' : 'none';
                 const profileComposer = document.getElementById('profile-share-box');
                 if (profileComposer) profileComposer.style.display = isExternal ? 'none' : '';
                 const personalProfileTab = document.querySelector('[data-profile-scope="personal"]');
@@ -8900,6 +8907,9 @@
                 if (incomingRequests) incomingRequests.style.display = isExternal ? 'none' : '';
                 const createCommunityButton = document.getElementById('create-community-btn');
                 if (createCommunityButton) createCommunityButton.style.display = isExternal ? 'none' : '';
+                if (isExternal) {
+                    document.querySelectorAll('#edit-profile-mentorship-intent option[value="offering"], #edit-profile-mentorship-intent option[value="both"]').forEach((option) => option.remove());
+                }
 
                 const intentBadge = document.getElementById('profile-intent-badge');
                 const guidanceBadge = document.getElementById('profile-guidance-badge');

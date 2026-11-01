@@ -700,6 +700,13 @@ async function updateProfileHandler(req, res) {
       githubUrl,
       projectLink,
     };
+
+    if (String(req.user.userType || '').toUpperCase() === 'EXTERNAL') {
+      if (mentorshipIntent !== undefined && mentorshipIntent !== 'seeking') {
+        return res.status(403).json({ success: false, message: 'External users can only seek mentorship' });
+      }
+      allowedUpdates.mentorshipIntent = 'seeking';
+    }
     
     // Remove undefined fields
     Object.keys(allowedUpdates).forEach(key => 

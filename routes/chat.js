@@ -8,6 +8,16 @@ const { apiLimiter } = require('../middleware/security');
 
 const router = express.Router();
 
+router.use(verifyToken, (req, res, next) => {
+  if (String(req.user.userType || '').toUpperCase() === 'EXTERNAL') {
+    return res.status(403).json({
+      success: false,
+      message: 'External users cannot access group or mentorship chat',
+    });
+  }
+  return next();
+});
+
 function getGroupName(group) {
   return typeof group?.name === 'string' ? group.name : '';
 }

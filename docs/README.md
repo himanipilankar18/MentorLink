@@ -8,6 +8,7 @@ MentorConnect is an active-development mentorship and academic interaction platf
 
 | Document | Use it for |
 |---|---|
+| [MENTORLINK_FINAL_DOCUMENTATION.md](MENTORLINK_FINAL_DOCUMENTATION.md) | Consolidated source of truth for the complete current implementation |
 | [PRD.md](PRD.md) | Product problem, audience, scope, and feature status |
 | [architecture.md](architecture.md) | Runtime structure, flows, integrations, and legacy boundaries |
 | [rules.md](rules.md) | Engineering and agent guardrails |

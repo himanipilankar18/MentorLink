@@ -109,3 +109,23 @@ Prerequisite for External matching/dashboard phase — do not start that phase u
 - [ ] Verify SPIT and Machine Learning community names and visibility against the test database.
 - [ ] Run seeded endpoint and browser regression checks for External navigation, communities, recommendations, and requests.
 - [ ] Decide and implement the deferred External peer, call, and group scope.
+
+## External seeking-only interface (2026-10-13)
+
+- [x] Hide External Achievements and Mentor Achievements profile section.
+- [x] Keep Feed, Media, mentor discovery, outgoing requests, and community browsing/membership available.
+- [x] Hide Messages and standalone/group mentorship chat.
+- [x] Restrict External users to seeking mentorship intent.
+- [x] Add External profile labels and hide mentor contribution controls.
+- [x] Enforce External restrictions for achievements, mentor interaction logging, groups, and chat at the API layer.
+
+## Certificate and mentoring recognition module (2026-10-13)
+
+- [x] Add mentee-confirmed interaction evidence and auditable contribution events.
+- [x] Add hybrid impact scoring for activity, feedback, resolved outcomes, follow-ups, and unique mentees.
+- [x] Add achievement thresholds with session, mentee, outcome, and rating gates.
+- [x] Issue one certificate per earned achievement level and send the formal certificate through SMTP.
+- [x] Show earned and locked levels in the achievements view.
+- [x] Show earned certificates in the Institute Member profile with view/download actions.
+- [x] Add formal certificate rendering and public verification.
+- [x] Add synthetic certificate simulation and cross-check the Chetan test account end to end.
