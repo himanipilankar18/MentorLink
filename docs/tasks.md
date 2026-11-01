@@ -59,6 +59,17 @@ See [architecture.md](architecture.md) for the current flow and [rules.md](rules
 - [ ] Clarify whether `role` or `userType` is authoritative for future mentor eligibility.
 - [ ] Add documented evaluation coverage for recommendation ranking and missing fields.
 
+### Frozen research baseline V1 (2026-11-01)
+
+- [x] Tag the pre-V1 repository state as `rec-engine-pre-v1`.
+- [x] Extract the `cdf5e96` recommendation logic into a pure, seeded, clock-injected V1 module without changing production code.
+- [x] Add the read-only, pseudonymous D1 exporter.
+- [x] Add the descriptive five-seed runner and same-seed reproducibility measurement.
+- [x] Record V1 formulas, provenance, defect verification, dataset design, and roadmap in [recommendation-engine.md](recommendation-engine.md).
+- [x] Record the V1 decision in [memory.md](memory.md).
+- [ ] Run seeded endpoint/browser regression checks for production recommendation behavior.
+- [ ] Approve any future V2 changes before modifying production ranking code.
+
 ## Phase 4: Collaboration and Community
 
 - [x] Posts and comments.

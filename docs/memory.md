@@ -59,6 +59,15 @@ This file is an append-only decision journal. Add new entries rather than rewrit
 - Which admin capabilities are required beyond protected admin creation and the current dashboard page?
 - TODO: Confirm production deployment, email provider, MongoDB topology, and supported environment matrix from maintainers.
 
+## 2026-11-01 — Frozen recommendation V1
+
+- Tagged the pre-V1 repository state as `rec-engine-pre-v1`.
+- Added a pure, seeded, clock-injected V1 copy of the `cdf5e96` mentor logic under `recommender/`; production recommendation code was not changed.
+- Added a read-only D1 exporter and descriptive five-seed runner. The export used pseudonymous IDs and emitted no personal text to the console; generated data and measurements are gitignored.
+- Same-seed output was identical; average Kendall tau across the five seeds was 0.7137184666.
+- Verified the supplied D01–D24 defect register against the frozen code and recorded measured values in `recommendation-engine.md`.
+- V2.1 dynamic peer-to-peer roles remain planned; production authorization remains on `User.role` until an explicit migration decision.
+
 ## 2026-10-05 - External guidance terms and Phase A
 
 - Added optional `externalGuidanceTermsVersion` and `externalGuidanceTermsAcceptedAt` fields without defaults or migration.
@@ -108,3 +117,10 @@ This file is an append-only decision journal. Add new entries rather than rewrit
 - Created `docs/recommendation-engine.md` as the v0 baseline record at commit `cdf5e96004a4ff77d56b7f745aa6c57d81975b82`.
 - Recorded the current mentor engine, separate peer matcher, safe-check results, known divergences, and the failed strong technical content-similarity fixture assertion without claiming live-user or database testing.
 - Recorded the requested future decisions: seeded K-Means only as an ablation baseline, hand-set weights justified by ablation, offline evaluation with explicit synthetic-data labeling, applied explainable-system paper framing, and owner approval before production removal.
+
+## 2026-11-01 — Recommendation data inventory V1
+
+- Added a tables-only `Data inventory (V1)` section to `docs/recommendation-engine.md` covering every `User` field, collection surface, engine dependency, aggregate-only database profile, taxonomy frequencies, proposed-field gaps, and open risks.
+- Ran a read-only aggregate inspection against the configured database. The query emitted counts and non-personal taxonomy frequencies only; it did not print names, emails, bios, or other personal text and performed no writes.
+- Observed 448 users, 447 missing `userType` values, one External user, 11 confirmed interactions out of 1,438, and 3 mentors with confirmed interactions. This makes External and quality-signal conclusions provisional.
+- Observed taxonomy fragmentation (`machine learning`/case variants, `ai ml`/`ai/ml`, `react`/`reactjs`/`react basics`) and separate `COMPS`/`CSE` department values. No schema or application code was changed.

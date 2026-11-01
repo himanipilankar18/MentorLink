@@ -29,3 +29,7 @@ Thumbs.db
 # Build files
 dist/
 build/
+
+# Local recommendation research data and measurements
+research/data/
+research/out/

@@ -295,6 +295,122 @@ All items in this section are `📋 Planned`; none changes the current implement
 | Stability | TBD |
 | Explanation faithfulness | TBD |
 
+## Data inventory (V1)
+
+### Field inventory
+
+| Field | Type | Collected where | Read by engine? | How used |
+|---|---|---|---|---|
+| `name` | String | Registration; Edit Profile | Peer matcher; route payloads | Display only; peer result output |
+| `firstName`, `lastName`, `nickname`, `displayName` | String | Legacy Profile Setup only | No | Not used by either recommender |
+| `email` | String | Registration | No | Authentication/identity only |
+| `userType` | Enum | Registration | Route only | External eligibility branch; not a score feature |
+| `instituteRole` | Enum | Registration | No | Identity context only |
+| `graduationYear` | Number | Registration | No | Not used by either recommender |
+| `admissionInfo.entranceExam` | String | Registration (External) | No | Private admission data; not used |
+| `admissionInfo.examName` | String | Registration (External) | No | Private admission data; not used |
+| `admissionInfo.score` | String | Registration (External) | No | Private admission data; not used |
+| `admissionInfo.percentile` | String | Registration (External) | No | Private admission data; not used |
+| `admissionInfo.rank` | String | Registration (External) | No | Private admission data; not used |
+| `admissionInfo.interestedProgram` | String | Registration (External) | No | Private admission data; not used |
+| `admissionInfo.interestedBranch` | String | Registration (External) | No | Private admission data; not used |
+| `admissionInfo.admissionStatus` | String | Registration (External) | No | Private admission data; not used |
+| `admissionInfo.guidanceTopics` | String array | Registration (External) | No | Private admission data; not used |
+| `whatsapp`, `telegram`, `website` | String | Edit Profile/schema only | No | Contact/profile metadata; not used |
+| `githubUrl`, `projectLink` | String | Enrichment; Edit Profile | No direct read | Links are stored; project content is not fetched by either engine |
+| `password` | String, hidden | Registration; legacy profile completion | No | Authentication only |
+| `year` | Number | Registration; Edit Profile | Mentor engine; peer matcher; route | Academic progression/year compatibility and mentor eligibility |
+| `department` | Enum String | Registration (`branch`); Edit Profile | Mentor engine; peer matcher | Exact department match/context; also route filtering/eligibility |
+| `role` | Enum String | Registration-derived; admin bootstrap | Route only | Mentor candidate and requester eligibility; not a score term |
+| `skills` | String array | Enrichment; legacy completion; Edit Profile | Mentor engine; peer matcher | Vocabulary, Jaccard alignment, TF-IDF text, peer profile/complementarity |
+| `interests` | String array | Enrichment; legacy completion; Edit Profile | Mentor engine; peer matcher | Vocabulary, Jaccard alignment, TF-IDF text, peer profile/complementarity |
+| `bio` | String | Enrichment; legacy completion; Edit Profile | Mentor engine only | TF-IDF profile text and profile-strength feature |
+| `mentorshipIntent` | Enum String | Enrichment; legacy completion; Edit Profile | Route only | Internal candidate filter; External route currently uses consent instead |
+| `availability` | Enum String | Enrichment; legacy completion; Edit Profile | Mentor engine; peer matcher | Encoded availability and compatibility |
+| `availableForExternalGuidance` | Boolean | Consent settings | Route only | External mentor eligibility; not a score term |
+| `externalGuidanceLockedUntil`, `externalGuidanceTermsVersion`, `externalGuidanceTermsAcceptedAt` | Date/String/Date | Consent settings | Route only | Consent lock, terms, and redaction; not scored |
+| `projects[].title`, `projects[].description`, `projects[].technologies` | Nested String fields | Legacy completion; Edit Profile | Mentor engine only | TF-IDF profile text |
+| `cgpa` | Number | Legacy completion; Edit Profile | Mentor engine only | Profile-strength feature; no direct compatibility term |
+| `profilePicture` | String | Enrichment; legacy completion; Edit Profile | Mentor engine only | Profile-strength feature |
+| `followers`, `following` | ObjectId arrays | Follow endpoints | No | Social graph; not used by either recommender |
+| `profileComplete`, `isVerified`, `isActive` | Boolean | Auth/registration | Route only | Account and active-candidate gating |
+| `emailVerificationToken`, `emailVerificationExpires`, `emailVerificationOTP`, `otpExpires` | String/Date, hidden | Auth flows | No | Verification only |
+| `resetPasswordToken`, `resetPasswordExpires` | String/Date, hidden | Password reset | No | Password reset only |
+| `isOnline`, `lastActiveAt` | Boolean/Date | Realtime/auth activity | No | Presence only |
+| `createdAt`, `updatedAt` | Dates | Mongoose timestamps | No | Audit/timestamps only |
+
+### Aggregate data profile
+
+| Measure | Counts/frequencies |
+|---|---|
+| Database scope | 448 User documents; aggregate-only query on 2026-11-01; no names, emails, bios, or other personal text emitted |
+| Role | `junior` 263; `senior` 184; `faculty` 1; `admin` 0 |
+| `userType` | missing 447; `EXTERNAL` 1; `INSTITUTE_MEMBER` 0 |
+| Year | 1: 141; 2: 121; 3: 130; 4: 54; missing: 2 |
+| Mentorship intent | `both` 170; `offering` 139; `seeking` 138; missing: 1 |
+| Availability | `flexible` 171; `weekdays` 138; `weekends` 138; missing: 1 |
+| Department raw | `COMPS` 304; `CSE` 138; `IT` 4; `EXTC` 1; missing: 1 |
+| Department normalized | Same as raw after trim/uppercase; no case/spacing variants observed |
+| Non-empty fill rates | Skills 447/448; interests 447/448; bio 447/448; projects 443/448; CGPA 19/448; availability 447/448; mentorship intent 447/448; profile picture 437/448 |
+| Skills per user | 0: 1; 1: 2; 2: 29; 3: 192; 4: 202; 5: 14; 7: 3; 8: 2; 10: 3 |
+| Interests per user | 0: 1; 1: 11; 2: 134; 3: 296; 4: 3; 5: 2; 6: 1 |
+| Projects per user | 0: 5; 1: 350; 2: 92; 3: 1 |
+| Bio length buckets | 0: 1; 1-50: 6; 51-100: 439; 101-150: 1; 151-200: 1; over 200: 0 |
+| Mentor pool | Seniors 184; faculty 1; `offering` 139; `both` 170; senior + offering/both 130; faculty + offering/both 1 |
+| Interactions | Total 1,438; confirmation missing 1,427; confirmed 11; distinct mentors with confirmed interaction 3 |
+| Mentorships | Total 10; accepted 10; terminated 0; accepted or terminated 10 |
+| Recognition | Achievements 3, all level 1; ContributionEvents 43 |
+
+### Skills and interests frequency inventory
+
+| Taxonomy | Distinct values | Top values by frequency |
+|---|---:|---|
+| Skills | 60 | `machine learning` 175; `react` 164; `sql` 164; `python` 158; `java` 155; `node.js` 153; `javascript` 150; `c` 143; `mongodb` 64; `app / web development` 63; `c++` 62; `deep learning` 37; `devops` 36; `pcb design` 8; `css` 2; `firebase` 2; `git` 2; `Java` 1; `Python` 1; `airflow` 1; `algorithms` 1; `android` 1; `api design` 1; `api integration` 1; `automation` 1; `computer vision` 1; `dart` 1; `data preprocessing` 1; `data structures` 1; `data visualization` 1; `data warehousing` 1; `database systems` 1; `dsa` 1; `etl` 1; `express` 1; `flask` 1; `flutter` 1; `html` 1; `iot` 1; `kotlin` 1; `mathematics` 1; `mlops` 1; `nlp` 1; `numpy` 1; `opencv` 1; `operating systems` 1; `pandas` 1; `postgresql` 1; `power bi` 1; `pytorch` 1; `react basics` 1; `reactjs` 1; `redis` 1; `rest api` 1; `system design` 1; `tailwind` 1; `tensorflow` 1; `testing` 1; `typescript` 1; `ui design` 1 |
+| Interests | 51 | `open source` 159; `ai ml` 150; `web development` 140; `mobile apps` 134; `data analytics` 133; `ai/ml` 101; `app development` 83; `data science` 70; `ui/ux design` 53; `cybersecurity` 50; `competitive programming` 47; `devops` 24; `Machine Learning` 4; `Web Development` 4; `blockchain` 4; `Algorithms` 2; `hackathons` 2; `mentorship` 2; `AI/ML` 1; `Cloud Computing` 1; `CyberSecurity` 1; `Database Systems` 1; `DevOps` 1; `Frontend Development` 1; `Python` 1; `Research` 1; `System Design` 1; `ai` 1; `ai research` 1; `analytics` 1; `backend engineering` 1; `business intelligence` 1; `cloud infrastructure` 1; `community building` 1; `community events` 1; `computer vision` 1; `data engineering` 1; `design systems` 1; `developer tools` 1; `embedded systems` 1; `frontend architecture` 1; `mentoring` 1; `model deployment` 1; `peer learning` 1; `product design` 1; `product thinking` 1; `project based learning` 1; `research papers` 1; `startup building` 1; `startup culture` 1; `ui ux` 1 |
+
+### Engine dependency check
+
+| Scoring/eligibility component | User fields and other inputs | Observed data effect |
+|---|---|---|
+| Candidate eligibility | `role`, `isActive`, `mentorshipIntent`, `userType`, External consent, `year`, active mentorships | 130 senior and 1 faculty have offering/both; the single External record and two missing-year users make External/generalized behavior underpowered |
+| Skill alignment (Jaccard) | `skills`, `interests` | 447/448 users have both arrays non-empty; high coverage, but aliases and case variants fragment overlap |
+| TF-IDF/content similarity | `skills`, `interests`, `bio`, project title/description/technologies | Bio is non-empty for 447/448 and projects for 443/448; content coverage is strong, but free-text/array taxonomy variants reduce exact-token recall |
+| Department match | `department` | Only one missing department; `COMPS` and `CSE` are separate categories (304 vs 138), so institutional equivalence is not represented |
+| Academic progression | `year` | 446/448 have year; two missing values receive zero/default progression behavior |
+| Availability | `availability` | 447/448 are populated; `flexible` is common and the engine treats non-equal values as 0.6 rather than flexible-compatible |
+| Mentor quality/activity | Interaction aggregates and mentorship aggregates | 1,427/1,438 interactions lack confirmation status; current route aggregates them anyway; only 3 mentors have confirmed interactions |
+| Profile strength | `profilePicture`, `skills`, `bio`, `projects`, `cgpa` | Picture 437/448, skills 447/448, bio 447/448, projects 443/448, but CGPA only 19/448; profile strength is therefore dominated by non-CGPA fields |
+| Peer profile similarity/complementarity | `skills`, `interests` | High array coverage, but no confirmed-interaction filter in peer input is guaranteed by the matcher itself |
+| Peer reliability | `Interaction.mentorId`, `menteeId`, `satisfactionRating` | Only 11 confirmed interactions exist, while matcher counts every supplied interaction; reliability evidence is sparse and potentially unconfirmed |
+| Peer context | `year`, `department` | Year coverage is high; department is populated for 447/448, but COMPS/CSE normalization remains unresolved |
+
+### Proposed-field gap analysis
+
+| Proposed field | Existing equivalent | Existing source | Candidate scoring component |
+|---|---|---|---|
+| `helpWanted` | No structured equivalent; partial overlap with `mentorshipIntent` and interests | User fields; profile text | New need-to-capability complementarity; could enrich Jaccard/TF-IDF |
+| `careerTrack` | No structured field; partial overlap with department, role, interests, bio/projects | User fields and profile text | New career/domain compatibility |
+| `learningGoal` | No structured field; partial overlap with bio, interests, project text | User profile text | Goal-to-capability/content similarity |
+| `topicsCanHelp` | No structured field; partial overlap with skills/interests/projects | User profile text | Directional complementarity and mentor eligibility |
+| `experience` | No structured field; partial overlap with year, projects, interactions, achievements | User, Interaction, Achievement, ContributionEvent | Mentor quality/evidence and capability depth |
+| `languages` | No structured field; partial overlap with skills/project technologies | Skills/projects only | Communication/language compatibility |
+| `preferredContact` | No structured field; partial overlap with availability | Availability only | Contact-mode compatibility |
+| `timeBands` | No structured field; coarse `availability` only | User availability | Replace coarse schedule compatibility |
+| `maxMentees` | No equivalent | No current source | Capacity/eligibility and exposure-aware reranking |
+| `externalGoals` | No structured field; partial overlap with External `admissionInfo` and `guidanceTopics` | Private admission fields; not read by engines | External goal-to-mentor-topic matching |
+| `examsAppeared` | Partial equivalent: `admissionInfo.entranceExam`, `examName` | Private External registration data | External admissions guidance matching; must remain privacy-gated |
+
+### Risks and questions from V1 data
+
+| Risk/question | Evidence |
+|---|---|
+| Are `COMPS` and `CSE` semantically equivalent for matching? | 304 `COMPS` vs 138 `CSE`; no normalized variant was observed |
+| Should historical interactions without `confirmationStatus` be excluded? | 1,427 of 1,438 have missing confirmation status |
+| Are legacy ContributionEvent types still supported? | Database contains `HIGH_SATISFACTION`, `LONG_SESSION`, and `SESSION_CONFIRMED`, but current schema enum lists different event types |
+| Is the current database representative of External users? | Only 1 `EXTERNAL` user and 447 missing `userType` values |
+| Can mentor quality be evaluated from current evidence? | Only 3 mentors have any confirmed interaction and no mentorship is terminated |
+| Should taxonomy aliases be canonicalized? | Examples include `machine learning`/`Machine Learning`, `ai ml`/`ai/ml`/`AI/ML`, `react`/`reactjs`/`react basics`, and `java`/`Java` |
+
 ## 10. Evolution log
 
 ### v0 baseline documented
@@ -304,6 +420,15 @@ All items in this section are `📋 Planned`; none changes the current implement
 - **What exists:** Rule-filtered mentor endpoint with TF-IDF, Jaccard compatibility, weighted terms, K-Means fit/bonus, frontend cards/fallback, and a separate peer matcher. [source: implementation sources in sections 1–3; status: VERIFIED-CODE]
 - **Known flaws:** See [Known flaws of v0](#4-known-flaws-of-v0-baseline). [source: this document; status: VERIFIED-CODE]
 - **Evidence:** Syntax checks passed; the fixture script exited 1 on the strong technical content-similarity assertion. [source: safe commands and output in section 5; status: VERIFIED-RUN]
+
+### Data inventory (V1)
+
+- **Date:** 2026-11-01
+- **What changed:** Added a schema-to-engine field inventory, aggregate-only database profile, frequency inventory, dependency assessment, and proposed-field gap analysis.
+- **Why:** Establish the actual coverage, sparsity, taxonomy fragmentation, and interaction evidence available before changing recommendation inputs.
+- **Files touched:** `docs/recommendation-engine.md`; no application code or database records changed.
+- **Effect on rankings:** No ranking behavior changed; before/after ranking evidence is not applicable.
+- **Evidence:** Aggregate `countDocuments`/`aggregate` inspection completed against the configured database; output contained counts and taxonomy frequencies only.
 
 ### Future entry template
 
@@ -332,3 +457,142 @@ Version | Date | Phase | What changed | Why | Files touched | Effect on rankings
 | Hit@k | Whether at least one relevant result appears in the first k results, aggregated over cases. [source: task brief; status: INFERRED] |
 | Ablation | An evaluation that removes or changes one component to measure its effect. [source: task brief; status: INFERRED] |
 | Faithfulness | Whether an explanation reflects the actual scorer; the planned deletion test removes cited evidence and measures score change. [source: task brief; status: INFERRED] |
+
+## 12. V1 specification
+
+`recommender/versions/v1/index.js` is a frozen, pure copy of the internal-path baseline at `cdf5e96`. It does not import production code or access MongoDB.
+
+```mermaid
+flowchart TD
+  A[seeker + candidates + aggregate rows] --> B[eligibility]
+  B --> C[profile text and skill vocabulary]
+  C --> D[TF-IDF cosine and Jaccard]
+  C --> E[feature vectors]
+  E --> F[K-Means++]
+  D --> G[weighted score]
+  F --> G
+  G --> H[+0.05 primary-cluster bonus and clamp]
+  H --> I[rounded descending ranking]
+```
+
+| Rule/component | V1 behavior | Status |
+|---|---|---|
+| Internal eligibility | Active, not self, `offering`/`both`, and faculty/admin or candidate year greater than seeker year; pending/accepted mentorships excluded | VERIFIED-CODE |
+| External eligibility | Active senior/faculty, `availableForExternalGuidance === true`, and lock date after injected `now`; pending/accepted mentorships excluded | VERIFIED-CODE |
+| Profile text | Lowercase skills, interests, bio, and project title/description/technologies; URL removal and punctuation tokenizer from baseline | VERIFIED-CODE |
+| TF-IDF | `idf = log((1 + documentCount) / (1 + documentFrequency)) + 1`; term frequency is count/document length; cosine clamped to 0–1 | VERIFIED-CODE |
+| Skill alignment | Jaccard of seeker interests+skills against candidate skills+interests | VERIFIED-CODE |
+| Academic progression | `clamp((candidate.year - seeker.year + 2) / 6, 0, 1)` | VERIFIED-CODE |
+| Availability | Exact lowercase equality gives 1; mismatch gives 0.6 | VERIFIED-CODE |
+| Mentor quality | `clamp((avgSatisfaction/5)*0.6 + completionRate*0.4, 0, 1)` | VERIFIED-CODE |
+| Activity | `clamp((totalInteractions/60)*0.5 + recencyScore*0.5, 0, 1)` | VERIFIED-CODE |
+| Profile strength | 20 points each for picture, three skills, bio, project, and CGPA; divide by 100 | VERIFIED-CODE |
+| Cluster fit | `clamp(1 - normalizedDistance, 0, 1)`; normalized distance divides Euclidean distance by `sqrt(vector length)` | VERIFIED-CODE |
+| Internal weights | skills .20, interests .12, availability .08, goals .18; fixed department .10, progression .10, activity .11, profile .08, cluster .03 | VERIFIED-CODE |
+| External weights | skills .35, interests .25, availability .15, goals .25; fixed terms remain unchanged | VERIFIED-CODE |
+| Bonus and output | Primary cluster adds .05, total clamps to 0–1, `score` is rounded percentage, ranking sorts by rounded score | VERIFIED-CODE |
+| Cluster count | Fewer than 3 candidates: 1; otherwise `clamp(round(sqrt(n/2)), 2, min(6,n))` | VERIFIED-CODE |
+| K-Means++ | Injected RNG selects first centroid, weighted squared-distance centroids, 35-iteration limit, random replacement for empty clusters | VERIFIED-CODE |
+
+Output shape is `{ ranking: [{ id, score, scoreRaw, components, evidence, meta }], model: { version, weights, clusterInfo } }`. The only experimental controls relative to the historical implementation are dependency-free injected `rng`, injected `now`, removal of database access, and pseudonymous IDs supplied by the research dataset.
+
+## 13. Provenance of V1
+
+| Item | Evidence |
+|---|---|
+| Baseline tag | `rec-engine-pre-v1` points to HEAD `a3c4f87d7239be02ec24350fa10eab1fa974e910` |
+| Source extraction | `git show cdf5e96:utils/recommendationEngine.js` and `git show cdf5e96:routes/recommendations.js` |
+| Later recommendation changes | `git log cdf5e96..HEAD` shows no changes to `utils/recommendationEngine.js`, `routes/recommendations.js`, `config/externalRecommendationWeights.js`, or `recommender_model/src/peerMatcher.js`; `docs/recommendation-engine.md` was added in `e25b33a` |
+| Production isolation | V1 is a new module; production engine, route, UI, models, and schema were not modified |
+| Controls | RNG is `mulberry32(seed)`; clock is caller-provided `now`; no `Math.random`, `Date.now`, DB calls, or production imports |
+
+## 14. Defect register
+
+| ID | Defect | V1 verification | Measured in V1 |
+|---|---|---|---|
+| D01 | K-Means++ uses random initialization | VERIFIED-CODE | Seed changes produced average Kendall tau 0.7137 |
+| D02 | Sorts on rounded score; ties retain pool order | VERIFIED-CODE | Tie rate 87.28–87.72% of seeker top-10 lists |
+| D03 | Weights exceed 1 and score is clamped | VERIFIED-CODE | Maximum observed score 78; no score reached 100 |
+| D04 | Unconfirmed interactions are counted | VERIFIED-CODE | Export preserves confirmation status but V1 does not filter it |
+| D05 | Empty values can match; year defaults to zero | VERIFIED-CODE | Missing-field behavior preserved; no imputation measurement |
+| D06 | Trailing punctuation can remain; no stopword list | VERIFIED-CODE | Tokenizer copied unchanged |
+| D07 | Department parameter/dead Python branch | INFERRED | Department route parameter is outside pure V1; dead Python branch not in JS baseline |
+| D08 | Role/year-ahead eligibility | VERIFIED-CODE | 3,994 top-10 rows generated from 448 seekers |
+| D09 | Needs and capabilities are merged | VERIFIED-CODE | Same merged sets feed Jaccard |
+| D10 | Exact department match | VERIFIED-CODE | Cross-department top-10 share 9.89–11.22% |
+| D11 | Hidden cluster bonus and typicality-like cluster fit | VERIFIED-CODE | Cluster metadata and 0.05 bonus emitted |
+| D12 | Jaccard penalizes broad helpers | VERIFIED-CODE | Formula preserved |
+| D13 | Skills are counted in both Jaccard and text similarity | VERIFIED-CODE | Same source fields feed both |
+| D14 | Profile strength is scored | VERIFIED-CODE | Component emitted for every ranking |
+| D15 | Cold start has no shrinkage | VERIFIED-CODE | Zero analytics defaults preserved |
+| D16 | No mentee capacity term | VERIFIED-CODE | No capacity field or component |
+| D17 | Availability mismatch is a fixed 0.6 | VERIFIED-CODE | Formula preserved |
+| D18 | IDF depends on candidate pool | VERIFIED-CODE | TF-IDF corpus is seeker plus current pool |
+| D19 | No calibrated evidence/confidence/exact contributions | VERIFIED-CODE | Evidence is explanatory text and tokens only |
+| D20 | Fragmented vocabulary | VERIFIED-CODE | No alias normalization |
+| D21 | K-Means depends on mentee candidate pool | VERIFIED-CODE | Features include seeker department and pool-derived vocabulary |
+| D22 | No structured needs/offers/language/capacity data | VERIFIED-CODE | No such inputs in V1 |
+| D23 | Rich-get-richer activity/profile effects | VERIFIED-CODE | Activity and profile terms remain additive |
+| D24 | Hand-set weights are not validated | VERIFIED-CODE | No learned calibration or evaluation objective |
+
+## 15. Version roadmap
+
+| Version | Planned change | Defects addressed | Evidence target |
+|---|---|---|---|
+| V1 | Frozen historical baseline and descriptive runner | None; preserve D01–D24 | Reproducibility, descriptive distributions, stability |
+| V2.0 | Transparent additive scorer | D02–D07, D09–D18 | Component-level ranking evidence |
+| V2.1 | Dynamic peer-to-peer roles and structured needs/offers | D08, D16, D22, D23 | Consent-aware reciprocal matching |
+| V2.2 | Vocabulary normalization and corpus controls | D06, D18, D20 | Holdout similarity and alias ablations |
+| V2.3 | Capacity, availability, and missingness handling | D05, D15–D17 | Missingness-stratified metrics |
+| V2.4 | Exposure-aware re-ranking and calibration | D03, D19, D24 | Fairness, calibration, and exposure reports |
+| V3 | Unified mentor/peer engine with validated offline evaluation | D10–D14, D21 | NDCG, MRR, Hit@k, ablations |
+| V4 | Offline learned ranker research track | Remaining hand-set/interaction defects | Latent-label simulation only; production approval required |
+
+Dynamic peer-to-peer roles are planned for V2.1. Production authorization remains on `User.role` until a deliberate migration decision.
+
+## 16. Datasets and evaluation design
+
+| Dataset | Purpose | Rules |
+|---|---|---|
+| D1 | Descriptive snapshot of current engine-readable records | No live-document writes; pseudonymous IDs; counts and frequencies only in reports |
+| D2 | Latent-variable simulation | Ground truth comes only from hidden latents; separate generation and evaluation seeds |
+| D3 | Enriched synthetic profiles | Tests proposed structured fields without changing live documents |
+| R | 16 real respondents | Owner-confirmed consent; the real form PDF contains names/emails and must never be committed or quoted |
+
+All synthetic evaluations use 0%, 20%, and 40% missingness. `COMPS` and `CSE` are different branches and are not merged. No fabricated values may be written to live user documents.
+
+### Dataset card D1
+
+| Measure | Value |
+|---|---:|
+| Users | 448 |
+| Interactions | 1,438 |
+| Mentorships | 10 |
+| Seekers evaluated | 448 |
+| Ranking rows across top-10 runs | 3,994 |
+| D1 provenance flag | unknown |
+| Score range | 16–78 |
+| Mean score range by seed | 47.76–48.27 |
+| Top-10 tie rate range | 87.28%–87.72% |
+| Cross-department top-10 range | 9.89%–11.22% |
+| Explanation fields present | 100% |
+
+V4 is an offline research track. Labels come from simulated latents; Python/xgboost would be a new dependency and requires owner approval.
+
+## 17. V1 measurement log
+
+| Measurement | Result |
+|---|---|
+| Seeds | 11, 23, 37, 41, 59 |
+| Same-seed hash comparison | Identical (`true`) |
+| Average Kendall tau across seed pairs | 0.7137184666 |
+| Generated files | `research/data/d1_snapshot.json`; `research/out/v1-{11,23,37,41,59}.json` (gitignored) |
+| Validation | `node --check` passed for all four new JavaScript files; pure smoke check passed |
+
+### Evolution log entry — 2026-11-01 — V1 frozen baseline
+
+- **What changed:** Added isolated frozen V1, seeded PRNG, read-only D1 exporter, five-seed runner, and V1 specification/defect/roadmap documentation.
+- **Why:** Establish a reproducible research baseline without changing production ranking behavior.
+- **Files touched:** New `recommender/` and `research/` files, `.gitignore`, and this documentation; no production source or database records changed.
+- **Effect on rankings:** Production rankings unchanged; D1 V1 descriptive measurements are recorded above.
+- **Evidence:** Baseline tag, historical extraction, syntax checks, D1 export, same-seed comparison, and five-seed runner completed.
