@@ -26,6 +26,9 @@ router.post('/',
         interactionType,
         duration,
         satisfactionRating,
+        outcomeStatus,
+        menteeWouldRecommend,
+        followUpCompleted,
         notes,
       } = req.body;
       const actorId = req.user._id;
@@ -86,6 +89,9 @@ router.post('/',
         interactionType,
         duration: duration || null,
         satisfactionRating: satisfactionRating || null,
+        outcomeStatus: outcomeStatus || 'unresolved',
+        menteeWouldRecommend: menteeWouldRecommend ?? null,
+        followUpCompleted: followUpCompleted === true,
         notes: notes || '',
         timestamp: new Date()
       });
@@ -325,7 +331,7 @@ router.get('/:id', verifyToken, apiLimiter, async (req, res) => {
 // @access  Private
 router.put('/:id', verifyToken, apiLimiter, async (req, res) => {
   try {
-    const { duration, satisfactionRating, notes } = req.body;
+    const { duration, satisfactionRating, outcomeStatus, menteeWouldRecommend, followUpCompleted, notes } = req.body;
     const interaction = await Interaction.findById(req.params.id);
 
     if (!interaction) {
@@ -347,6 +353,9 @@ router.put('/:id', verifyToken, apiLimiter, async (req, res) => {
     // Update allowed fields only
     if (duration !== undefined) interaction.duration = duration;
     if (satisfactionRating !== undefined) interaction.satisfactionRating = satisfactionRating;
+    if (outcomeStatus !== undefined) interaction.outcomeStatus = outcomeStatus;
+    if (menteeWouldRecommend !== undefined) interaction.menteeWouldRecommend = menteeWouldRecommend;
+    if (followUpCompleted !== undefined) interaction.followUpCompleted = followUpCompleted;
     if (notes !== undefined) interaction.notes = notes;
 
     await interaction.save();

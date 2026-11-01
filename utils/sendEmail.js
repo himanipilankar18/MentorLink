@@ -4,7 +4,7 @@ const nodemailer = require('nodemailer');
  * Send an email using environment-based SMTP config.
  * Falls back to console.log of the link in dev if SMTP is not configured.
  */
-async function sendEmail({ to, subject, html }) {
+async function sendEmail({ to, subject, html, attachments = [] }) {
   // If SMTP is not configured, just log for local testing
   if (!process.env.SMTP_HOST || !process.env.SMTP_PORT || !process.env.SMTP_USER || !process.env.SMTP_PASS) {
     console.log('\n[sendEmail] SMTP not configured. Email would be:');
@@ -30,6 +30,7 @@ async function sendEmail({ to, subject, html }) {
     to,
     subject,
     html,
+    attachments,
   });
 }
 

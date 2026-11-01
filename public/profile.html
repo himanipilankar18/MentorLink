@@ -736,6 +736,17 @@
                 </div>
             </div>
         </div>
+
+        <!-- Mentor achievements -->
+        <div class="profile-card" id="mentorAchievementsCard">
+            <div class="section-header">
+                <div class="section-title">Mentor Achievements</div>
+                <a class="edit-btn" href="achievements.html">Open full record</a>
+            </div>
+            <div class="section-content" id="mentorAchievementsContent">
+                <div class="empty-state"><div class="empty-state-icon">◆</div><div>Loading contribution record...</div></div>
+            </div>
+        </div>
     </div>
 
     <div class="guidance-modal" id="externalGuidanceModal" role="dialog" aria-modal="true" aria-labelledby="guidanceModalTitle">
@@ -850,8 +861,25 @@
             
             // Projects section
             renderProjects();
+            loadMentorAchievements();
 
             renderExternalGuidanceSettings();
+        }
+
+        async function loadMentorAchievements() {
+            const container = document.getElementById('mentorAchievementsContent');
+            if (!container) return;
+            try {
+                const response = await fetch('/api/achievements/me', { headers: { Authorization: `Bearer ${token}` } });
+                if (!response.ok) throw new Error('Unable to load achievements');
+                const data = await response.json();
+                const stats = data.stats || {};
+                const certificates = data.certificates || [];
+                const next = data.nextAchievement;
+                container.innerHTML = `<div class="info-grid"><div class="info-item"><div class="info-label">Contribution points</div><div class="info-value">${stats.points || 0}</div></div><div class="info-item"><div class="info-label">Mentees helped</div><div class="info-value">${stats.uniqueMentees || 0}</div></div><div class="info-item"><div class="info-label">Confirmed sessions</div><div class="info-value">${stats.confirmedInteractions || 0}</div></div><div class="info-item"><div class="info-label">Average rating</div><div class="info-value">${stats.averageRating ? Number(stats.averageRating).toFixed(1) + ' / 5' : 'Not rated yet'}</div></div></div><div style="margin-top:16px;color:var(--text-secondary);">${next ? `${next.threshold - (stats.points || 0)} points to ${next.title}` : 'All achievement levels reached'}</div>${certificates.length ? `<div style="margin-top:18px;display:grid;gap:10px;">${certificates.map((certificate) => `<div class="project-item"><div class="project-title">${certificate.title}</div><div class="project-description">${certificate.pointsAtIssuance} points · ${certificate.uniqueMentees} mentees helped · ${certificate.certificateId}</div><a class="edit-btn" href="/api/achievements/certificates/${encodeURIComponent(certificate.certificateId)}/view" target="_blank" rel="noopener">View certificate</a></div>`).join('')}</div>` : '<div class="empty-state" style="margin-top:18px;"><div>No certificates issued yet. Confirmed mentoring sessions will build your record.</div></div>'}`;
+            } catch (error) {
+                container.innerHTML = '<div class="empty-state"><div>Achievement record is available after signing in.</div></div>';
+            }
         }
 
         function renderBasicInfo() {

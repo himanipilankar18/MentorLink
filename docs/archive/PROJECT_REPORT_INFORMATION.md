@@ -339,6 +339,37 @@ It evaluates:
 - Year and department context
 - Reciprocal activity penalty to reduce artificial mutual-boosting
 
+### 8.11 Hybrid Mentoring Impact Scoring
+
+**Used for:** Measuring verified mentoring contribution for achievements and certificates.
+
+MentorLink does not issue recognition from request volume alone. A mentee must confirm an interaction before it contributes to the mentor's auditable ledger. Each confirmed interaction is evaluated across four dimensions:
+
+- **Verified activity:** confirmation and a capped duration contribution.
+- **Feedback quality:** mentee satisfaction rating and recommendation response.
+- **Outcome evidence:** whether the mentee marks the problem, project, or guidance goal as resolved.
+- **Follow-through and reach:** completed follow-up activity and whether this is a new mentee helped.
+
+The implementation stores separate contribution events for these signals, making every point traceable to an interaction. The current event weights are:
+
+| Evidence | Contribution |
+|---|---:|
+| Confirmed activity | 6--10 points, capped by duration |
+| Rating quality | 0--10 points based on a 1--5 rating |
+| Resolved outcome | 10 points |
+| Completed follow-up | 5 points |
+| First confirmed interaction with a unique mentee | 5 points |
+
+An achievement requires both a point threshold and quality gates: minimum confirmed sessions, minimum unique mentees, minimum resolved outcomes, and an average rating of at least 4/5. This prevents repeated low-value sessions from producing a certificate solely through volume.
+
+The contribution score can be viewed conceptually as:
+
+```text
+Impact = verified activity + feedback quality + outcome evidence + follow-through/reach
+```
+
+The resulting achievement is stored with the mentor's points, confirmed sessions, unique mentees, and average rating. A certificate is then issued once per achievement level and sent through the configured SMTP server.
+
 ### 8.11 MongoDB Aggregation
 
 **Used for:** Analytics and recommendation statistics.
