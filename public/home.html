@@ -174,6 +174,110 @@
             display: block;
         }
 
+        .tech-circles-toolbar {
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-between;
+            gap: 20px;
+            flex-wrap: wrap;
+            margin-bottom: 24px;
+        }
+
+        .tech-circles-search-wrap {
+            position: relative;
+            width: min(420px, 100%);
+        }
+
+        .tech-circles-search {
+            width: 100%;
+            min-height: 44px;
+            padding: 0 42px 0 16px;
+            border: 1px solid rgba(148, 163, 184, 0.42);
+            border-radius: 12px;
+            background: rgba(15, 23, 42, 0.76);
+            color: var(--text-primary);
+            outline: none;
+            transition: border-color .18s ease, box-shadow .18s ease;
+        }
+
+        .tech-circles-search:focus {
+            border-color: var(--accent-purple);
+            box-shadow: 0 0 0 3px rgba(167, 139, 250, .16);
+        }
+
+        .tech-circles-search-reset {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            border: 0;
+            background: transparent;
+            color: var(--text-secondary);
+            cursor: pointer;
+            display: none;
+            font-size: 1.1rem;
+        }
+
+        .tech-circles-search-reset.visible { display: block; }
+
+        .tech-circles-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 18px;
+        }
+
+        .tech-domain-card {
+            display: flex;
+            flex-direction: column;
+            min-height: 245px;
+            padding: 22px;
+            border: 1px solid rgba(148, 163, 184, .24);
+            border-radius: var(--radius-lg);
+            background: linear-gradient(145deg, rgba(30, 41, 59, .82), rgba(15, 23, 42, .88));
+            box-shadow: 0 12px 30px rgba(0, 0, 0, .22);
+            transition: transform .18s ease, border-color .18s ease, box-shadow .18s ease;
+        }
+
+        .tech-domain-card:hover {
+            transform: translateY(-3px);
+            border-color: rgba(167, 139, 250, .62);
+            box-shadow: 0 16px 34px rgba(167, 139, 250, .12);
+        }
+
+        .tech-domain-card h3 { margin: 0; color: var(--text-primary); font-size: 1.08rem; }
+        .tech-domain-card p { margin: 9px 0 16px; color: var(--text-secondary); line-height: 1.55; }
+        .tech-domain-count { color: var(--accent-purple); font-size: .82rem; font-weight: 700; }
+        .tech-skill-tags { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 20px; }
+        .tech-skill-tag { padding: 5px 9px; border: 1px solid rgba(167, 139, 250, .28); border-radius: 999px; color: #ddd6fe; background: rgba(124, 58, 237, .12); font-size: .75rem; }
+        .tech-domain-card .tech-circle-explore { margin-top: auto; width: 100%; }
+
+        .tech-circle-detail {
+            border: 1px solid rgba(148, 163, 184, .24);
+            border-radius: var(--radius-lg);
+            background: rgba(15, 23, 42, .72);
+            padding: 22px;
+        }
+
+        .tech-circle-detail-header { display: flex; justify-content: space-between; gap: 18px; align-items: flex-start; flex-wrap: wrap; }
+        .tech-circle-detail-header h3 { margin: 0; color: var(--text-primary); font-size: 1.35rem; }
+        .tech-circle-member-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; margin-top: 20px; }
+        .tech-member-card { padding: 16px; border: 1px solid rgba(148, 163, 184, .2); border-radius: 12px; background: rgba(2, 6, 23, .62); }
+        .tech-member-avatar { width: 48px; height: 48px; border-radius: 50%; object-fit: cover; background: rgba(167, 139, 250, .22); }
+        .tech-member-head { display: flex; gap: 11px; align-items: center; margin-bottom: 13px; }
+        .tech-member-name { color: var(--text-primary); font-weight: 700; }
+        .tech-member-meta { margin-top: 3px; color: var(--text-secondary); font-size: .76rem; }
+        .tech-member-evidence { margin: 11px 0; color: #c4b5fd; font-size: .76rem; line-height: 1.45; }
+        .tech-member-actions { display: flex; gap: 8px; margin-top: 14px; }
+        .tech-member-actions button { flex: 1; min-height: 34px; }
+        .tech-circle-state { padding: 34px 20px; border: 1px dashed rgba(148, 163, 184, .28); border-radius: var(--radius-lg); color: var(--text-secondary); text-align: center; }
+
+        @media (max-width: 640px) {
+            .tech-circles-toolbar { align-items: stretch; }
+            .tech-circles-search-wrap { width: 100%; }
+            .tech-circle-detail { padding: 16px; }
+            .tech-circle-member-grid { grid-template-columns: 1fr; }
+        }
+
         .notification-dropdown-header {
             display: flex;
             align-items: center;
@@ -2471,15 +2575,18 @@
 
             <!-- Tech Circles View -->
             <div id="tech-circles-view" style="display:none;">
-                <div style="display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:18px;">
+                <div class="tech-circles-toolbar">
                     <div>
                         <h2 style="font-size:1.8rem;margin:0;color:var(--text-primary);">Tech Circles</h2>
                         <p style="color:var(--text-secondary);margin:8px 0 0;">Discover people who share your technical interests.</p>
                     </div>
-                    <input id="tech-circles-search" type="search" placeholder="Search skills or circles..." style="min-width:240px;">
+                    <label class="tech-circles-search-wrap" aria-label="Search technical domains, skills or people">
+                        <input id="tech-circles-search" class="tech-circles-search" type="search" placeholder="Search technical domains, skills or people..." autocomplete="off">
+                        <button id="tech-circles-search-reset" class="tech-circles-search-reset" type="button" aria-label="Clear search">×</button>
+                    </label>
                 </div>
                 <div id="tech-circles-container">
-                    <div class="loading" style="text-align:center;padding:32px;color:var(--text-secondary);">Loading Tech Circles...</div>
+                    <div class="tech-circle-state">Loading technical domains...</div>
                 </div>
             </div>
 
@@ -5377,6 +5484,7 @@
         let techCirclesSnapshot = null;
         let activeTechCircle = null;
         let techCircleMemberLimit = 10;
+        let techCirclesRequest = null;
 
         function escapeTechCircleText(value) {
             return String(value || '').replace(/[&<>"']/g, (character) => ({
@@ -5384,61 +5492,82 @@
             }[character]));
         }
 
+        function techCircleState(message) {
+            return `<div class="tech-circle-state">${escapeTechCircleText(message)}</div>`;
+        }
+
+        function renderTechCircleSkills(terms) {
+            return (Array.isArray(terms) ? terms : []).slice(0, 8).map((term) => (
+                `<span class="tech-skill-tag">${escapeTechCircleText(term)}</span>`
+            )).join('');
+        }
+
+        function normalizeTechCirclesResponse(data) {
+            if (!data || data.success !== true || !data.snapshot || !Array.isArray(data.snapshot.clusters)) {
+                throw new Error('invalid-response');
+            }
+            return {
+                ...data.snapshot,
+                clusters: data.snapshot.clusters.filter((circle) => (
+                    circle && circle.displayable !== false
+                    && Array.isArray(circle.rankedMembers)
+                    && circle.rankedMembers.length > 0
+                )),
+            };
+        }
+
+        function techCircleSearchText(circle) {
+            return [
+                circle.name, circle.description, ...(circle.representativeTerms || []),
+                ...(circle.members || []).flatMap((member) => [member.name, ...(member.skills || [])]),
+            ].filter(Boolean).join(' ').toLowerCase();
+        }
+
         function renderTechCircles() {
             const container = document.getElementById('tech-circles-container');
             if (!container || !techCirclesSnapshot) return;
             const query = String(document.getElementById('tech-circles-search')?.value || '').toLowerCase().trim();
-            const circles = techCirclesSnapshot.clusters.filter((circle) => {
-                const text = [
-                    circle.name,
-                    circle.description,
-                    ...(circle.representativeTerms || []),
-                    ...(circle.members || []).flatMap((member) => member.skills || []),
-                ].join(' ').toLowerCase();
-                return !query || text.includes(query);
-            });
+            document.getElementById('tech-circles-search-reset')?.classList.toggle('visible', Boolean(query));
+            const circles = techCirclesSnapshot.clusters.filter((circle) => !query || techCircleSearchText(circle).includes(query));
             if (!circles.length) {
-                const message = query
-                    ? 'No technical domains match that search. Try another skill or domain.'
-                    : 'No technical domains have been generated yet. Run the local Tech Circles refresh command.';
-                container.innerHTML = `<div class="post-card"><div class="post-content" style="color:var(--text-secondary);">${message}</div></div>`;
+                container.innerHTML = techCircleState(query
+                    ? 'No domains match your search. Try another skill or domain.'
+                    : 'More technical skills are needed to discover relevant domains.');
                 return;
             }
             if (activeTechCircle) {
                 renderTechCircleDetail(activeTechCircle);
                 return;
             }
-            container.innerHTML = circles.map((circle) => `
-                <section class="post-card" style="margin-bottom:18px;">
-                    <div style="display:flex;justify-content:space-between;gap:12px;align-items:flex-start;flex-wrap:wrap;">
+            container.innerHTML = `<div class="tech-circles-grid">${circles.map((circle) => `
+                <section class="tech-domain-card">
+                    <div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start;">
                         <div>
-                            <h3 style="margin:0;color:var(--text-primary);">${escapeTechCircleText(circle.name)}</h3>
-                            <p style="margin:7px 0;color:var(--text-secondary);">${escapeTechCircleText(circle.description)}</p>
+                            <h3>${escapeTechCircleText(circle.name)}</h3>
                         </div>
-                        <strong style="color:var(--accent-color);">${circle.size} relevant members</strong>
+                        <span class="tech-domain-count">${Number(circle.size || 0)} members</span>
                     </div>
-                    <div style="display:flex;gap:8px;flex-wrap:wrap;margin:12px 0;">
-                        ${(circle.representativeTerms || []).map((term) => `<span class="badge">${escapeTechCircleText(term)}</span>`).join('')}
-                    </div>
-                    <button type="button" class="btn-send tech-circle-explore" data-circle-id="${escapeTechCircleText(circle.id)}" style="margin-top:14px;padding:7px 14px;font-size:.82rem;">Explore domain</button>
+                    <p>${escapeTechCircleText(circle.description || 'Technical people and projects in this domain.')}</p>
+                    <div class="tech-skill-tags">${renderTechCircleSkills(circle.representativeTerms)}</div>
+                    <button type="button" class="btn-send tech-circle-explore" data-circle-id="${escapeTechCircleText(circle.id)}">Explore</button>
                 </section>
-            `).join('');
+            `).join('')}</div>`;
         }
 
         async function renderTechCircleDetail(circle) {
             const container = document.getElementById('tech-circles-container');
             if (!container) return;
-            container.innerHTML = '<div class="loading" style="text-align:center;padding:32px;color:var(--text-secondary);">Loading ranked people...</div>';
+            container.innerHTML = techCircleState('Loading ranked people...');
             try {
                 const response = await fetch(`${API_BASE}/tech-circles/${encodeURIComponent(circle.id)}/members?limit=${techCircleMemberLimit}`, {
                     headers: { Authorization: 'Bearer ' + token },
                 });
-                const data = await response.json();
-                if (!response.ok || !data.success) throw new Error(data.message || 'Unable to load this domain');
+                const data = await response.json().catch(() => null);
+                if (!response.ok || !data || data.success !== true || !data.circle) throw new Error('detail-request-failed');
                 const loadedCircle = data.circle;
                 container.innerHTML = `
                     <button type="button" class="btn-ghost tech-circle-back" style="margin-bottom:14px;">Back to domains</button>
-                    <section class="post-card">
+                    <section class="tech-circle-detail">
                         <div style="display:flex;justify-content:space-between;gap:12px;align-items:flex-start;flex-wrap:wrap;">
                             <div>
                                 <h3 style="margin:0;color:var(--text-primary);">${escapeTechCircleText(loadedCircle.name)}</h3>
@@ -5455,43 +5584,73 @@
                         </div>
                         <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px;">
                             ${(loadedCircle.members || []).map((member, index) => `
-                                <div class="post-card" style="text-align:left;border:1px solid var(--border-color);padding:12px;">
-                                    <div style="color:var(--accent-color);font-size:.78rem;margin-bottom:5px;">#${index + 1} · ${Number(member.relevanceScore || 0).toFixed(1)}% relevance</div>
-                                    <button type="button" style="display:block;width:100%;text-align:left;background:none;border:0;padding:0;cursor:pointer;" onclick="openUserProfilePage('${escapeTechCircleText(member._id)}')">
-                                        <strong style="color:var(--text-primary);">${escapeTechCircleText(member.name)}</strong>
-                                        <div style="color:var(--text-secondary);font-size:.85rem;margin-top:5px;">${escapeTechCircleText((member.skills || []).slice(0, 4).join(' · ') || 'Technical interests developing')}</div>
-                                        <div style="color:var(--text-secondary);font-size:.8rem;margin-top:5px;">Evidence: ${escapeTechCircleText((member.relevanceEvidence || []).join(' · ') || 'profile match')}</div>
+                                <article class="tech-member-card">
+                                    <div class="tech-member-head">
+                                        <img class="tech-member-avatar" src="${escapeTechCircleText(member.profilePicture || '')}" alt="" onerror="this.style.display='none'">
+                                        <div>
+                                            <div class="tech-member-name">${escapeTechCircleText(member.name || 'MentorConnect member')}</div>
+                                            <div class="tech-member-meta">${escapeTechCircleText([member.year && `Year ${member.year}`, member.department].filter(Boolean).join(' · '))}</div>
+                                        </div>
+                                    </div>
+                                    <div class="tech-domain-count">#${index + 1} · ${Number(member.relevanceScore || 0).toFixed(1)}% relevance</div>
+                                    <button type="button" class="tech-circle-profile" data-user-id="${escapeTechCircleText(member._id)}" style="display:block;width:100%;text-align:left;background:none;border:0;padding:0;cursor:pointer;">
+                                        <div class="tech-skill-tags" style="margin-top:10px;">${renderTechCircleSkills(member.skills)}</div>
+                                        <div class="tech-member-evidence">Matched: ${escapeTechCircleText((member.relevanceEvidence || []).join(' · ') || 'Technical profile evidence')}</div>
+                                        ${(member.projects || []).slice(0, 2).map((project) => `<div class="tech-member-meta">${escapeTechCircleText(project.title || project.name || 'Technical project')}</div>`).join('')}
                                     </button>
-                                    <button type="button" class="btn-send tech-circle-follow" data-user-id="${escapeTechCircleText(member._id)}" data-following="${member.isFollowing ? 'true' : 'false'}" style="margin-top:10px;padding:6px 12px;font-size:.8rem;">${member.isFollowing ? 'Following' : 'Follow'}</button>
-                                </div>
+                                    <div class="tech-member-actions">
+                                        <button type="button" class="btn-ghost tech-circle-profile" data-user-id="${escapeTechCircleText(member._id)}">View profile</button>
+                                        <button type="button" class="btn-send tech-circle-follow" data-user-id="${escapeTechCircleText(member._id)}" data-following="${member.isFollowing ? 'true' : 'false'}">${member.isFollowing ? 'Following' : 'Follow'}</button>
+                                    </div>
+                                </article>
                             `).join('') || '<div style="color:var(--text-secondary);">No eligible people found for this domain.</div>'}
                         </div>
                     </section>
                 `;
             } catch (error) {
-                container.innerHTML = `<div class="post-card"><div class="post-content" style="color:var(--text-secondary);">${escapeTechCircleText(error.message)}</div></div>`;
+                container.innerHTML = techCircleState("We couldn't load people for this domain. Please try again.");
             }
         }
 
         async function loadTechCircles() {
             const container = document.getElementById('tech-circles-container');
             if (!container) return;
+            if (techCirclesRequest) return techCirclesRequest;
+            container.innerHTML = techCircleState('Loading technical domains...');
+            techCirclesRequest = (async () => {
             try {
                 const response = await fetch(API_BASE + '/tech-circles', {
                     headers: { Authorization: 'Bearer ' + token },
                 });
-                const data = await response.json();
-                if (!response.ok || !data.success) {
-                    throw new Error(data.message || 'Tech Circles have not been generated yet. Run the local refresh command.');
-                }
-                techCirclesSnapshot = data.snapshot;
+                const data = await response.json().catch(() => null);
+                if (response.status === 401 || response.status === 403) throw new Error('auth');
+                if (response.status === 404) throw new Error('not-generated');
+                if (!response.ok) throw new Error('request-failed');
+                techCirclesSnapshot = normalizeTechCirclesResponse(data);
+                if (!techCirclesSnapshot.clusters.length) throw new Error('insufficient-data');
                 renderTechCircles();
             } catch (error) {
-                container.innerHTML = `<div class="post-card"><div class="post-content" style="color:var(--text-secondary);">${escapeTechCircleText(error.message)}</div></div>`;
+                const messages = {
+                    auth: 'Please sign in again to view technical domains.',
+                    'not-generated': 'Technical domains are not available yet. Please try again later.',
+                    'insufficient-data': 'More technical skills are needed to discover relevant domains.',
+                    'request-failed': "We couldn't load technical domains. Please try again.",
+                    'invalid-response': "We couldn't load technical domains. Please try again.",
+                };
+                container.innerHTML = techCircleState(messages[error.message] || "We couldn't load technical domains. Please try again.");
+            } finally {
+                techCirclesRequest = null;
             }
+            })();
+            return techCirclesRequest;
         }
 
         document.getElementById('tech-circles-search')?.addEventListener('input', renderTechCircles);
+        document.getElementById('tech-circles-search-reset')?.addEventListener('click', () => {
+            const search = document.getElementById('tech-circles-search');
+            if (search) { search.value = ''; search.focus(); }
+            renderTechCircles();
+        });
         document.getElementById('tech-circles-container')?.addEventListener('click', async (event) => {
             const exploreButton = event.target.closest('.tech-circle-explore');
             if (exploreButton) {
@@ -5501,6 +5660,8 @@
             }
             if (event.target.closest('.tech-circle-back')) {
                 activeTechCircle = null;
+                const search = document.getElementById('tech-circles-search');
+                if (search) search.value = '';
                 renderTechCircles();
                 return;
             }
@@ -5508,6 +5669,11 @@
             if (limitButton) {
                 techCircleMemberLimit = Number(limitButton.dataset.limit);
                 if (activeTechCircle) renderTechCircleDetail(activeTechCircle);
+                return;
+            }
+            const profileButton = event.target.closest('.tech-circle-profile');
+            if (profileButton) {
+                openUserProfilePage(profileButton.dataset.userId);
                 return;
             }
             const button = event.target.closest('.tech-circle-follow');
@@ -5540,7 +5706,8 @@
             const rightSidebar = document.querySelector('.right-sidebar');
             if (rightSidebar) rightSidebar.style.display = 'block';
             resetNavActive('tech-circles');
-            loadTechCircles();
+            if (techCirclesSnapshot) renderTechCircles();
+            else loadTechCircles();
             saveNavState('tech-circles');
         }
 
