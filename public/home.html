@@ -2201,9 +2201,9 @@
                     <span class="icon">◎</span>
                     <span>Find Mentor</span>
                 </a></li>
-                <li><a href="#" class="nav-item" id="media-btn" data-nav="media">
+                <li><a href="#" class="nav-item" id="tech-circles-btn" data-nav="tech-circles">
                     <span class="icon">◈</span>
-                    <span>Media</span>
+                    <span>Tech Circles</span>
                 </a></li>
                 <li><a href="achievements.html" class="nav-item" id="achievements-btn">
                     <span class="icon">◆</span>
@@ -2469,13 +2469,18 @@
                 </div>
             </div>
 
-            <!-- Media View -->
-            <div id="media-view" style="display:none;">
-                <h2 style="font-size:1.6rem;margin-bottom:16px;color:var(--text-primary);">Media</h2>
-                <div class="post-card">
-                    <div class="post-content" style="color:var(--text-secondary);">
-                        Saved images, documents, and other media will appear here.
+            <!-- Tech Circles View -->
+            <div id="tech-circles-view" style="display:none;">
+                <div style="display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:18px;">
+                    <div>
+                        <h2 style="font-size:1.8rem;margin:0;color:var(--text-primary);">Tech Circles</h2>
+                        <p style="color:var(--text-secondary);margin:8px 0 0;">Discover technical communities from real profile interests and projects.</p>
                     </div>
+                    <input id="tech-circles-search" type="search" placeholder="Search skills or circles..." style="min-width:240px;">
+                </div>
+                <div id="tech-circles-metrics" style="color:var(--text-secondary);margin-bottom:18px;"></div>
+                <div id="tech-circles-container">
+                    <div class="loading" style="text-align:center;padding:32px;color:var(--text-secondary);">Loading Tech Circles...</div>
                 </div>
             </div>
 
@@ -3739,7 +3744,7 @@
                 'profile-view',
                 'messages-view',
                 'friends-view',
-                'media-view',
+                'tech-circles-view',
                 'find-mentor-view'
             ];
             ids.forEach(id => {
@@ -3795,8 +3800,8 @@
                 case 'friends':
                     showFriendsView();
                     break;
-                case 'media':
-                    showMediaView();
+                case 'tech-circles':
+                    showTechCirclesView();
                     break;
                 case 'find-mentor':
                     showFindMentorView();
@@ -5370,13 +5375,85 @@
             saveNavState('friends');
         }
 
-        function showMediaView() {
+        let techCirclesSnapshot = null;
+
+        function escapeTechCircleText(value) {
+            return String(value || '').replace(/[&<>"']/g, (character) => ({
+                '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
+            }[character]));
+        }
+
+        function renderTechCircles() {
+            const container = document.getElementById('tech-circles-container');
+            const metrics = document.getElementById('tech-circles-metrics');
+            if (!container || !techCirclesSnapshot) return;
+            const query = String(document.getElementById('tech-circles-search')?.value || '').toLowerCase().trim();
+            const circles = techCirclesSnapshot.clusters.filter((circle) => {
+                const text = [
+                    circle.name,
+                    circle.description,
+                    ...(circle.representativeTerms || []),
+                    ...(circle.members || []).flatMap((member) => member.skills || []),
+                ].join(' ').toLowerCase();
+                return !query || text.includes(query);
+            });
+            metrics.textContent = `${techCirclesSnapshot.profileCount} profiles analysed · ${circles.length} discovered circles · ${techCirclesSnapshot.algorithm}`;
+            if (!circles.length) {
+                container.innerHTML = '<div class="post-card"><div class="post-content" style="color:var(--text-secondary);">No circles match that search.</div></div>';
+                return;
+            }
+            container.innerHTML = circles.map((circle) => `
+                <section class="post-card" style="margin-bottom:18px;">
+                    <div style="display:flex;justify-content:space-between;gap:12px;align-items:flex-start;flex-wrap:wrap;">
+                        <div>
+                            <h3 style="margin:0;color:var(--text-primary);">${escapeTechCircleText(circle.name)}</h3>
+                            <p style="margin:7px 0;color:var(--text-secondary);">${escapeTechCircleText(circle.description)}</p>
+                        </div>
+                        <strong style="color:var(--accent-color);">${circle.size} members</strong>
+                    </div>
+                    <div style="display:flex;gap:8px;flex-wrap:wrap;margin:12px 0;">
+                        ${(circle.representativeTerms || []).map((term) => `<span class="badge">${escapeTechCircleText(term)}</span>`).join('')}
+                    </div>
+                    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;">
+                        ${(circle.members || []).map((member) => `
+                            <button type="button" class="post-card" style="text-align:left;border:1px solid var(--border-color);cursor:pointer;padding:12px;" onclick="openUserProfilePage('${escapeTechCircleText(member._id)}')">
+                                <strong style="color:var(--text-primary);">${escapeTechCircleText(member.name)}</strong>
+                                <div style="color:var(--text-secondary);font-size:.85rem;margin-top:5px;">${escapeTechCircleText((member.skills || []).slice(0, 4).join(' · ') || 'Technical interests developing')}</div>
+                            </button>
+                        `).join('')}
+                    </div>
+                </section>
+            `).join('');
+        }
+
+        async function loadTechCircles() {
+            const container = document.getElementById('tech-circles-container');
+            if (!container) return;
+            try {
+                const response = await fetch(API_BASE + '/tech-circles', {
+                    headers: { Authorization: 'Bearer ' + token },
+                });
+                const data = await response.json();
+                if (!response.ok || !data.success) {
+                    throw new Error(data.message || 'Tech Circles are not available yet');
+                }
+                techCirclesSnapshot = data.snapshot;
+                renderTechCircles();
+            } catch (error) {
+                container.innerHTML = `<div class="post-card"><div class="post-content" style="color:var(--text-secondary);">${escapeTechCircleText(error.message)}</div></div>`;
+            }
+        }
+
+        document.getElementById('tech-circles-search')?.addEventListener('input', renderTechCircles);
+
+        function showTechCirclesView() {
             hideAllViews();
-            document.getElementById('media-view').style.display = 'block';
+            document.getElementById('tech-circles-view').style.display = 'block';
             const rightSidebar = document.querySelector('.right-sidebar');
             if (rightSidebar) rightSidebar.style.display = 'block';
-            resetNavActive('media');
-            saveNavState('media');
+            resetNavActive('tech-circles');
+            loadTechCircles();
+            saveNavState('tech-circles');
         }
 
         function showFindMentorView() {
@@ -9165,9 +9242,9 @@
             navigateTo('friends');
         });
 
-        document.getElementById('media-btn')?.addEventListener('click', (e) => {
+        document.getElementById('tech-circles-btn')?.addEventListener('click', (e) => {
             e.preventDefault();
-            navigateTo('media');
+            navigateTo('tech-circles');
         });
 
         document.getElementById('find-mentor-btn')?.addEventListener('click', (e) => {

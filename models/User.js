@@ -221,6 +221,16 @@ const userSchema = new mongoose.Schema({
     }],
     default: []
   },
+  demoAccomplishments: {
+    type: [{
+      title: { type: String, required: true, trim: true, maxlength: 120 },
+      description: { type: String, required: true, trim: true, maxlength: 300 },
+      category: { type: String, required: true, trim: true, maxlength: 60 },
+      achievedAt: { type: Date, required: true },
+      demoOnly: { type: Boolean, default: true }
+    }],
+    default: []
+  },
   projectLink: {
     type: String,
     trim: true,

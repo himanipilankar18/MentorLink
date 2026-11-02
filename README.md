@@ -96,6 +96,9 @@ MentorLink/
 - MongoDB locally or a MongoDB Atlas cluster
 - An SMTP account if email verification or password-reset emails are required
 
+For the optional Python recommendation service, see the complete
+[Python recommendation engine setup and running guide](./recommender_python/README.md).
+
 ## Environment configuration
 
 Copy the example environment file and update it for your machine:

@@ -17,6 +17,12 @@ function normalizeTextArray(values) {
   return Array.from(new Set(normalized));
 }
 
+// Common words add no profile signal and are excluded from text similarity.
+const PROFILE_STOPWORDS = new Set([
+  'a', 'an', 'are', 'as', 'at', 'be', 'by', 'from', 'is', 'it', 'of',
+  'or', 'that', 'the', 'this', 'to',
+]);
+
 function tokenizeProfileText(text) {
   if (text === null || text === undefined) return [];
 
@@ -33,7 +39,12 @@ function tokenizeProfileText(text) {
   return normalized
     .split(/\s+/)
     .map((token) => token.trim())
-    .filter((token) => token && token.length > 1 && !/^[-.#+/]+$/.test(token));
+    .filter((token) => (
+      token
+      && token.length > 1
+      && !/^[-.#+/]+$/.test(token)
+      && !PROFILE_STOPWORDS.has(token)
+    ));
 }
 
 function buildProfileText(user) {
@@ -185,7 +196,14 @@ function encodeAvailability(value) {
 }
 
 function encodeDepartmentMatch(menteeDepartment, mentorDepartment) {
-  return String(menteeDepartment || '').toUpperCase() === String(mentorDepartment || '').toUpperCase() ? 1 : 0;
+  const menteeValue = menteeDepartment === null || menteeDepartment === undefined
+    ? ''
+    : String(menteeDepartment).trim();
+  const mentorValue = mentorDepartment === null || mentorDepartment === undefined
+    ? ''
+    : String(mentorDepartment).trim();
+  if (!menteeValue || !mentorValue) return 0;
+  return menteeValue.toUpperCase() === mentorValue.toUpperCase() ? 1 : 0;
 }
 
 function buildCoreFeatureVector(sourceUser, referenceMentee, vocabulary) {
@@ -257,11 +275,27 @@ function meanVector(vectors, dimensions) {
   return centroid;
 }
 
-function weightedRandomIndex(weights) {
-  const total = weights.reduce((acc, value) => acc + value, 0);
-  if (total <= 0) return Math.floor(Math.random() * weights.length);
+function createSeededRandom(seedValue) {
+  let state = 0;
+  const seedText = String(seedValue || '');
+  for (let index = 0; index < seedText.length; index += 1) {
+    state = Math.imul(state ^ seedText.charCodeAt(index), 16777619);
+  }
+  state >>>= 0;
 
-  let threshold = Math.random() * total;
+  return () => {
+    state = (state + 0x6D2B79F5) | 0;
+    let value = Math.imul(state ^ (state >>> 15), 1 | state);
+    value ^= value + Math.imul(value ^ (value >>> 7), 61 | value);
+    return ((value ^ (value >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+function weightedRandomIndex(weights, random) {
+  const total = weights.reduce((acc, value) => acc + value, 0);
+  if (total <= 0) return Math.floor(random() * weights.length);
+
+  let threshold = random() * total;
   for (let i = 0; i < weights.length; i += 1) {
     threshold -= weights[i];
     if (threshold <= 0) return i;
@@ -270,9 +304,9 @@ function weightedRandomIndex(weights) {
   return weights.length - 1;
 }
 
-function initializeCentroidsKMeansPlusPlus(points, k) {
+function initializeCentroidsKMeansPlusPlus(points, k, random) {
   const centroids = [];
-  const firstIndex = Math.floor(Math.random() * points.length);
+  const firstIndex = Math.floor(random() * points.length);
   centroids.push([...points[firstIndex]]);
 
   while (centroids.length < k) {
@@ -285,14 +319,14 @@ function initializeCentroidsKMeansPlusPlus(points, k) {
       return minDistance * minDistance;
     });
 
-    const nextIndex = weightedRandomIndex(distances);
+    const nextIndex = weightedRandomIndex(distances, random);
     centroids.push([...points[nextIndex]]);
   }
 
   return centroids;
 }
 
-function runKMeans(points, desiredK, maxIterations = 35) {
+function runKMeans(points, desiredK, random, maxIterations = 35) {
   const n = points.length;
   if (n === 0) {
     return {
@@ -316,7 +350,7 @@ function runKMeans(points, desiredK, maxIterations = 35) {
 
   const k = clamp(Math.floor(desiredK), 2, n);
   const dimensions = points[0].length;
-  let centroids = initializeCentroidsKMeansPlusPlus(points, k);
+  let centroids = initializeCentroidsKMeansPlusPlus(points, k, random);
   let assignments = new Array(n).fill(-1);
   let changed = true;
   let iterations = 0;
@@ -352,7 +386,7 @@ function runKMeans(points, desiredK, maxIterations = 35) {
 
     centroids = centroids.map((previousCentroid, centroidIndex) => {
       if (!groups[centroidIndex].length) {
-        return [...points[Math.floor(Math.random() * n)]];
+        return [...points[Math.floor(random() * n)]];
       }
 
       return meanVector(groups[centroidIndex], dimensions);
@@ -405,35 +439,63 @@ function calculateCompatibilityBreakdown(
   ]);
 
   const skillAlignment = jaccardSimilarity(menteeNeeds, mentorCapabilities);
-  const sameDepartment = String(mentee.department || '').toUpperCase() === String(mentor.department || '').toUpperCase() ? 1 : 0;
-  const yearProgression = clamp((toNumber(mentor.year, 0) - toNumber(mentee.year, 0) + 2) / 6, 0, 1);
-  const availability = String(mentor.availability || '').toLowerCase() === String(mentee.availability || '').toLowerCase() ? 1 : 0.6;
+  const hasDepartment = mentee.department !== null && mentee.department !== undefined
+    && String(mentee.department).trim() && mentor.department !== null && mentor.department !== undefined
+    && String(mentor.department).trim();
+  const sameDepartment = hasDepartment
+    && String(mentee.department).toUpperCase() === String(mentor.department).toUpperCase() ? 1 : 0;
+  const hasYears = mentee.year !== null && mentee.year !== undefined && mentee.year !== ''
+    && mentor.year !== null && mentor.year !== undefined && mentor.year !== '';
+  const yearProgression = hasYears
+    ? clamp((toNumber(mentor.year, 0) - toNumber(mentee.year, 0) + 2) / 6, 0, 1)
+    : 0;
+  const hasAvailability = mentee.availability !== null && mentee.availability !== undefined
+    && String(mentee.availability).trim() && mentor.availability !== null && mentor.availability !== undefined
+    && String(mentor.availability).trim();
+  const availability = hasAvailability
+    ? (String(mentor.availability).toLowerCase() === String(mentee.availability).toLowerCase() ? 1 : 0.6)
+    : 0;
   const mentorQuality = clamp((toNumber(analytics.avgSatisfaction, 0) / 5) * 0.6 + toNumber(analytics.completionRate, 0) * 0.4, 0, 1);
   const activitySignal = clamp((toNumber(analytics.totalInteractions, 0) / 60) * 0.5 + toNumber(analytics.recencyScore, 0) * 0.5, 0, 1);
   const clusterFit = clamp(1 - clusterDistance, 0, 1);
   const mentorProfileStrength = profileStrength(mentor);
   const normalizedContentSimilarity = clamp(toNumber(contentSimilarity, 0), 0, 1);
 
-  const weights = scoreWeights || {
+  const configuredWeights = scoreWeights || {
     skills: 0.20,
     interests: 0.12,
     availability: 0.08,
     goals: 0.18,
   };
+  const rawWeights = {
+    skills: toNumber(configuredWeights.skills, 0),
+    interests: toNumber(configuredWeights.interests, 0),
+    department: 0.10,
+    progression: 0.10,
+    availability: toNumber(configuredWeights.availability, 0),
+    quality: toNumber(configuredWeights.goals, 0),
+    activity: 0.11,
+    profile: 0.08,
+    cluster: 0.03,
+    primaryCluster: 0.05,
+  };
+  const weightTotal = Object.values(rawWeights).reduce((sum, weight) => sum + weight, 0) || 1;
+  const weights = Object.fromEntries(Object.entries(rawWeights).map(([key, value]) => [key, value / weightTotal]));
   const weightedScore = (
     skillAlignment * weights.skills +
     normalizedContentSimilarity * weights.interests +
-    sameDepartment * 0.10 +
-    yearProgression * 0.10 +
+    sameDepartment * weights.department +
+    yearProgression * weights.progression +
     availability * weights.availability +
-    mentorQuality * weights.goals +
-    activitySignal * 0.11 +
-    mentorProfileStrength * 0.08 +
-    clusterFit * 0.03
+    mentorQuality * weights.quality +
+    activitySignal * weights.activity +
+    mentorProfileStrength * weights.profile +
+    clusterFit * weights.cluster
   );
 
-  const clusterBonus = isPrimaryCluster ? 0.05 : 0;
-  const finalScore = clamp(weightedScore + clusterBonus, 0, 1);
+  const clusterBonus = isPrimaryCluster ? weights.primaryCluster : 0;
+  const unclampedScore = weightedScore + clusterBonus;
+  const finalScore = clamp(unclampedScore, 0, 1);
 
   let contentExplanation = 'Limited textual profile overlap.';
   if (normalizedContentSimilarity >= 0.7) {
@@ -444,6 +506,7 @@ function calculateCompatibilityBreakdown(
 
   return {
     finalScore,
+    clampTriggers: unclampedScore < 0 || unclampedScore > 1 ? 1 : 0,
     score: Math.round(finalScore * 100),
     components: {
       skillAlignment: Math.round(skillAlignment * 100),
@@ -552,7 +615,9 @@ function generateMentorRecommendations({
     };
   }
 
-  const eligibleMentors = mentors.filter((mentor) => !excludedMentorIds.has(String(mentor._id)));
+  const eligibleMentors = mentors
+    .filter((mentor) => !excludedMentorIds.has(String(mentor._id)))
+    .sort((left, right) => String(left._id).localeCompare(String(right._id)));
   if (!eligibleMentors.length) {
     return {
       recommendations: [],
@@ -600,7 +665,7 @@ function generateMentorRecommendations({
   const mentorSimilarityVectors = tfidf.vectors.slice(1);
 
   const k = chooseClusterCount(eligibleMentors.length);
-  const clusteringResult = runKMeans(mentorVectors, k);
+  const clusteringResult = runKMeans(mentorVectors, k, createSeededRandom(mentee._id));
 
   const menteeCoreVector = buildCoreFeatureVector(mentee, mentee, vocabulary);
   const centroidCoreVectors = clusteringResult.centroids.map((centroid) => centroid.slice(0, menteeCoreVector.length));
@@ -655,6 +720,8 @@ function generateMentorRecommendations({
         subjectBreadth: analytics.subjectBreadth || 0,
       },
       matchScore: scoreDetails.score,
+      rawScore: scoreDetails.finalScore,
+      clampTriggers: scoreDetails.clampTriggers,
       scoreComponents: scoreDetails.components,
       sharedContentTokens: scoreDetails.sharedContentTokens,
       contentExplanation: scoreDetails.explanation,
@@ -666,10 +733,15 @@ function generateMentorRecommendations({
     };
   });
 
-  recommendations.sort((a, b) => b.matchScore - a.matchScore);
+  recommendations.sort((a, b) => (
+    b.rawScore - a.rawScore
+    || String(a.mentor._id).localeCompare(String(b.mentor._id))
+  ));
 
   return {
-    recommendations: recommendations.slice(0, clamp(toNumber(limit, 10), 1, 50)),
+    recommendations: recommendations
+      .slice(0, clamp(toNumber(limit, 10), 1, 50))
+      .map(({ rawScore, ...recommendation }) => recommendation),
     clustering: {
       model: 'kmeans',
       clusterCount: clusteringResult.k,

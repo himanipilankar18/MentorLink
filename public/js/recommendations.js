@@ -10,7 +10,7 @@
 console.log('[MentorLink ML] recommendations.js loaded');
 
 const RecommendationEngine = {
-  async fetchMentorRecommendations(limit = 5) {
+  async fetchMentorRecommendations(limit = 10) {
     try {
       const token = localStorage.getItem('mentorlink_token');
       if (!token) {
@@ -498,7 +498,7 @@ async function initializeRecommendations(containerId = 'find-mentor-recommendati
     </div>
   `;
 
-  const result = await RecommendationEngine.fetchMentorRecommendations(5);
+  const result = await RecommendationEngine.fetchMentorRecommendations(10);
   if (!result || !result.recommendations || result.recommendations.length === 0) {
     renderDefaultSuggestions(container);
     return;
@@ -750,4 +750,3 @@ window.RecommendationEngine = RecommendationEngine;
 window.RecommendationEngine.initializeRecommendations = initializeRecommendations;
 window.RecommendationEngine.resetRecommendations = resetRecommendations;
 window.initializeMentorRecommendations = initializeRecommendations;
-

@@ -744,6 +744,7 @@
                 <div class="section-title">Mentor Achievements</div>
                 <a class="edit-btn" href="achievements.html">Open full record</a>
             </div>
+
             <div class="section-content" id="mentorAchievementsContent">
                 <div class="empty-state"><div class="empty-state-icon">◆</div><div>Loading contribution record...</div></div>
             </div>
@@ -768,6 +769,12 @@
     <script>
         let userData = {};
         let editingData = {};
+
+        function escapeHtml(value) {
+            return String(value ?? '').replace(/[&<>"']/g, (character) => ({
+                '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+            }[character]));
+        }
 
         function formatIntentLabel(intent) {
             if (intent === 'offering') return 'Offering Mentorship';
@@ -873,6 +880,7 @@
 
             renderExternalGuidanceSettings();
         }
+
 
         async function loadMentorAchievements() {
             const container = document.getElementById('mentorAchievementsContent');
