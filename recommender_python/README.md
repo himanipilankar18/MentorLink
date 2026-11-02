@@ -184,6 +184,7 @@ Replace placeholders without committing `.env`.
 | `RECOMMENDATION_SERVICE_URL` | No | Base URL of the Python service, for example `http://127.0.0.1:8000`. If absent, Express uses JavaScript. |
 | `RECOMMENDATION_ENGINE_VERSION` | No | Version sent to Python. Default: `v1`. |
 | `RECOMMENDATION_SERVICE_TIMEOUT_MS` | No | Express-to-Python request timeout in milliseconds. Default: `15000`; increase it if V4 cold-start model loading exceeds this value. |
+| `DEMO_RECOMMENDATIONS` | No | Must remain `false` for production. When `true`, explicitly marked fictional mentoring evidence is included for demos only. |
 | `RECOMMENDATION_MODEL_PATH` | Required for V4 | Absolute or working-directory-relative path to a saved `.json`, `.ubj`, `.model`, or `.bin` XGBoost ranker. |
 | `RECOMMENDATION_MODEL_MAX_BYTES` | No | Maximum model size accepted by the loader. Default: 512 MiB. |
 

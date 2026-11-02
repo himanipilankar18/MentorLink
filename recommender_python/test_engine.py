@@ -169,6 +169,18 @@ class RecommendationEngineTests(unittest.TestCase):
         )["recommendations"][0]
         self.assertEqual(project_match["scoreComponents"]["skillAlignment"], 100)
 
+        broad_expertise = recommend(
+            seeker={**self.seeker, "skills": ["python"], "interests": []},
+            candidates=[profile("mentor", skills=["python", "rust", "go"], projects=[{
+                "title": "Python service",
+                "description": "Backend service",
+                "technologies": ["python"],
+            }])],
+            version="v3",
+        )["recommendations"][0]
+        self.assertEqual(broad_expertise["scoreComponents"]["skillAlignment"], 100)
+        self.assertEqual(broad_expertise["scoreComponents"]["projectRelevance"], 100)
+
         no_history = recommend(
             seeker=self.seeker,
             candidates=[profile("mentor")],

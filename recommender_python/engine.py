@@ -20,6 +20,7 @@ EXTERNAL_WEIGHTS = {"skills": 0.35, "interests": 0.25, "availability": 0.15, "go
 STOPWORDS = {
     "a", "an", "are", "as", "at", "be", "by", "from", "in", "is", "it",
     "of", "on", "or", "that", "the", "this", "to",
+    "engineering", "programming", "software", "technology", "technologies",
 }
 MENTORING_INTERACTION_TYPES = {
     "chat", "video call", "in-person", "email", "forum discussion",
@@ -109,7 +110,7 @@ def tokenize_profile_text(value: Any, *, v2: bool = False) -> list[str]:
     ]
 
 
-def _profile_text(user: dict[str, Any], *, v2: bool = False) -> str:
+def _profile_text(user: dict[str, Any], *, v2: bool = False, include_projects: bool = True) -> str:
     values: list[str] = []
 
     def add(value: Any) -> None:
@@ -128,12 +129,31 @@ def _profile_text(user: dict[str, Any], *, v2: bool = False) -> str:
     add(user.get("skills"))
     add(user.get("interests"))
     add(user.get("bio"))
-    for project in user.get("projects") or []:
-        if isinstance(project, dict):
-            add(project.get("title"))
-            add(project.get("description"))
-            add(project.get("technologies"))
+    if include_projects:
+        for project in user.get("projects") or []:
+            if isinstance(project, dict):
+                add(project.get("title"))
+                add(project.get("description"))
+                add(project.get("technologies"))
     return " ".join(dict.fromkeys(values))
+
+
+def _project_relevance(seeker: dict[str, Any], candidate: dict[str, Any]) -> float:
+    """Measure directional overlap between seeker needs and mentor projects."""
+    project_terms: set[str] = set()
+    for project in candidate.get("projects") or []:
+        if not isinstance(project, dict):
+            continue
+        project_terms.update(_array(project.get("technologies")))
+        for key in ("title", "description", "technologies"):
+            project_terms.update(tokenize_profile_text(project.get(key), v2=True))
+
+    seeker_terms = _learning_needs(seeker)
+    if not seeker_terms:
+        seeker_terms = set(_array(seeker.get("skills"))) | set(_array(seeker.get("interests")))
+    if not seeker_terms or not project_terms:
+        return 0.0
+    return len(seeker_terms & project_terms) / len(seeker_terms)
 
 
 def _tfidf(documents: list[str]) -> tuple[list[str], list[list[float]]]:
@@ -313,6 +333,7 @@ def _analytics(candidates: list[dict[str, Any]], interactions: list[dict[str, An
         result[candidate_id] = {
             "totalInteractions": _number(precomputed.get("totalInteractions")) if precomputed else len(related),
             "avgSatisfaction": _number(precomputed.get("avgSatisfaction")) if precomputed else (sum(ratings) / len(ratings) if ratings else 0),
+            "ratingCount": _number(precomputed.get("ratingCount")) if precomputed else len(ratings),
             "subjectBreadth": _number(precomputed.get("subjectBreadth")) if precomputed else len({row.get("subjectTag") for row in related if row.get("subjectTag")}),
             "uniqueMentees": _number(precomputed.get("uniqueMentees")) if precomputed else len({str(row.get("menteeId")) for row in related if row.get("menteeId")}),
             "resolvedInteractions": _number(precomputed.get("resolvedInteractions")) if precomputed else sum(
@@ -345,6 +366,8 @@ def _analytics(candidates: list[dict[str, Any]], interactions: list[dict[str, An
             "achievementInteractions": _number(achievement.get("achievementInteractions")),
             "achievementMentees": _number(achievement.get("achievementMentees")),
             "achievementRating": _number(achievement.get("achievementRating")),
+            "achievementTitles": achievement.get("achievementTitles") or [],
+            "achievementCount": _number(achievement.get("achievementCount")),
         }
         result[candidate_id]["achievementProgressStars"] = _achievement_progress_stars(result[candidate_id])
     return result
@@ -453,20 +476,23 @@ def _weights(profile: str) -> dict[str, float]:
     return dict(EXTERNAL_WEIGHTS if profile == "external" else INTERNAL_WEIGHTS)
 
 
-def _score(seeker: dict[str, Any], candidate: dict[str, Any], stats: dict[str, Any], fit: float, primary: bool, content: float, version: str, profile: str) -> tuple[float, dict[str, int], dict[str, float]]:
+def _score(seeker: dict[str, Any], candidate: dict[str, Any], stats: dict[str, Any], fit: float, primary: bool, content: float, project: float, version: str, profile: str) -> tuple[float, dict[str, int | float], dict[str, float]]:
     existing_skills = set(_array(seeker.get("skills")))
     candidate_capabilities = _mentor_expertise(candidate)
-    existing_union = existing_skills | candidate_capabilities
-    existing_skill_alignment = (
-        len(existing_skills & candidate_capabilities) / len(existing_union)
-        if existing_union else 0
-    )
     learning_needs = _learning_needs(seeker)
     learning_alignment = (
         len(learning_needs & candidate_capabilities) / len(learning_needs)
         if learning_needs else 0
     )
-    skill = max(existing_skill_alignment, learning_alignment)
+    seeker_needs = (
+        learning_needs
+        if learning_needs
+        else existing_skills | set(_array(seeker.get("interests")))
+    )
+    skill = (
+        len(seeker_needs & candidate_capabilities) / len(seeker_needs)
+        if seeker_needs else 0
+    )
     needs = set(_array(seeker.get("interests"))) | existing_skills
     capabilities = set(_array(candidate.get("skills"))) | set(_array(candidate.get("interests")))
     has_department = bool(str(seeker.get("department") or "").strip() and str(candidate.get("department") or "").strip())
@@ -475,9 +501,18 @@ def _score(seeker: dict[str, Any], candidate: dict[str, Any], stats: dict[str, A
     progression = _clamp((_number(candidate.get("year")) - _number(seeker.get("year")) + 2) / 6, 0, 1) if has_year else 0
     has_availability = bool(str(seeker.get("availability") or "").strip() and str(candidate.get("availability") or "").strip())
     availability = (1 if str(candidate.get("availability")).lower() == str(seeker.get("availability")).lower() else 0.6) if has_availability else 0
-    quality = _clamp((_number(stats.get("avgSatisfaction")) / 5) * 0.6 + _number(stats.get("completionRate")) * 0.4, 0, 1)
+    rating_count = _number(stats.get("ratingCount"))
+    if rating_count > 0:
+        rating_confidence = rating_count / (rating_count + 5)
+        smoothed_rating = ((3.5 * 5) + (_number(stats.get("avgSatisfaction")) * rating_count)) / (5 + rating_count)
+        rating_quality = (smoothed_rating / 5) * 0.6 * rating_confidence
+    else:
+        rating_confidence = 0
+        rating_quality = (_number(stats.get("avgSatisfaction")) / 5) * 0.6
+    quality = _clamp(rating_quality + _number(stats.get("completionRate")) * 0.4, 0, 1)
     activity = _clamp((_number(stats.get("totalInteractions")) / 60) * 0.5 + _number(stats.get("recencyScore")) * 0.5, 0, 1)
     achievement_progress = _clamp(_number(stats.get("achievementProgressStars")) / 5, 0, 1)
+    achievement_confidence = 1.0 if _number(stats.get("achievementLevel")) > 0 else 0.0
     mentoring_evidence = _clamp(
         achievement_progress * 0.25
         + (_number(stats.get("achievementInteractions")) / 100) * 0.25
@@ -492,7 +527,7 @@ def _score(seeker: dict[str, Any], candidate: dict[str, Any], stats: dict[str, A
         seeker_topics = _learning_needs(seeker)
         mentor_topics = _mentor_expertise(candidate)
         enriched = len(seeker_topics & mentor_topics) / len(seeker_topics | mentor_topics) if seeker_topics | mentor_topics else 0
-    values = {"skills": skill, "interests": content, "department": department, "progression": progression, "availability": availability, "quality": quality, "activity": activity, "profile": _strength(candidate), "cluster": fit, "enriched": enriched}
+    values = {"skills": skill, "interests": content, "project": project, "department": department, "progression": progression, "availability": availability, "quality": quality, "activity": activity, "profile": _strength(candidate), "cluster": fit, "enriched": enriched}
     weights = _weights(profile)
     if version == "v2.0":
         total = sum(weights.values()) + 0.10 + 0.10 + 0.11 + 0.08 + 0.03 + 0.05
@@ -509,6 +544,7 @@ def _score(seeker: dict[str, Any], candidate: dict[str, Any], stats: dict[str, A
             "primary": .05,
             "enriched": .05,
             "mentoring": .08,
+            "project": .10,
         }
         total = sum(coefficient_values.values())
         coefficients = {key: value / total for key, value in coefficient_values.items()}
@@ -532,13 +568,16 @@ def _score(seeker: dict[str, Any], candidate: dict[str, Any], stats: dict[str, A
         "departmentMatch": round(department * 100), "academicProgression": round(progression * 100),
         "availabilityMatch": round(availability * 100), "mentorQuality": round(quality * 100),
         "activitySignal": round(activity * 100), "profileStrength": round(_strength(candidate) * 100),
+        "projectRelevance": round(project * 100),
         "clusterFit": round(fit * 100), "clusterBonus": round((.05 if primary else 0) * 100),
         "mentoringEvidence": round(mentoring_evidence * 100),
+        "achievementConfidence": round(achievement_confidence * 100),
         "achievementProgressStars": round(achievement_progress * 5, 2),
     }
     if version == "v3":
         contributions = {
             "contentSimilarity": content * coefficients["interests"],
+            "projectRelevance": project * coefficients["project"],
             "departmentMatch": department * coefficients["department"],
             "academicProgression": progression * coefficients["progression"],
             "availabilityMatch": availability * coefficients["availability"],
@@ -567,6 +606,7 @@ def _score(seeker: dict[str, Any], candidate: dict[str, Any], stats: dict[str, A
             "primaryClusterBonus": 0.05 if primary else 0,
             "enrichedProfile": enriched * 0.05,
             "mentoringEvidence": mentoring_evidence * 0.08,
+            "projectRelevance": project * 0.10,
             "exposurePenalty": -exposure_penalty,
         }
     return raw, components, contributions
@@ -600,7 +640,7 @@ def recommend(*, seeker: dict[str, Any], candidates: list[dict[str, Any]], inter
     analytics = _analytics(pool, interactions, achievements, mentorships, now, confirmed_only)
     vocabulary = sorted(set(_array(seeker.get("skills")) + _array(seeker.get("interests")) + [term for candidate in pool for term in _array(candidate.get("skills")) + _array(candidate.get("interests"))]))
     vectors = [_features(candidate, seeker, vocabulary, analytics[str(candidate.get("id") or candidate.get("_id"))]) for candidate in pool]
-    documents = [_profile_text(seeker, v2=version != "v1")] + [_profile_text(candidate, v2=version != "v1") for candidate in pool]
+    documents = [_profile_text(seeker, v2=version != "v1", include_projects=False)] + [_profile_text(candidate, v2=version != "v1", include_projects=False) for candidate in pool]
     text_vocabulary, text_vectors = _tfidf(documents)
     if version == "v2.4":
         clustering = _topic_clusters(vectors, documents, options)
@@ -618,7 +658,8 @@ def recommend(*, seeker: dict[str, Any], candidates: list[dict[str, Any]], inter
         centroid = clustering["centroids"][cluster] if clustering["centroids"] else []
         distance = _clamp(_distance(vectors[index], centroid) / math.sqrt(len(vectors[index]) or 1), 0, 1) if centroid else 0
         content = _cosine(text_vectors[0], text_vectors[index + 1])
-        raw, components, contributions = _score(seeker, candidate, analytics[str(candidate.get("id") or candidate.get("_id"))], _clamp(1 - distance, 0, 1), cluster == primary, content, version, profile)
+        project = _project_relevance(seeker, candidate)
+        raw, components, contributions = _score(seeker, candidate, analytics[str(candidate.get("id") or candidate.get("_id"))], _clamp(1 - distance, 0, 1), cluster == primary, content, project, version, profile)
         ranking.append({
             "id": str(candidate.get("id") or candidate.get("_id")), "mentor": candidate,
             "score": round(raw * 100), "scoreRaw": raw, "components": components,
@@ -656,6 +697,8 @@ def recommend(*, seeker: dict[str, Any], candidates: list[dict[str, Any]], inter
                 "achievementProgressStars": analytics[str(candidate.get("id") or candidate.get("_id"))].get("achievementProgressStars", 0),
                 "achievementInteractions": analytics[str(candidate.get("id") or candidate.get("_id"))].get("achievementInteractions", 0),
                 "achievementMentees": analytics[str(candidate.get("id") or candidate.get("_id"))].get("achievementMentees", 0),
+                "achievementTitles": analytics[str(candidate.get("id") or candidate.get("_id"))].get("achievementTitles", []),
+                "achievementCount": analytics[str(candidate.get("id") or candidate.get("_id"))].get("achievementCount", 0),
             },
         })
     ranking.sort(key=lambda item: (-item["scoreRaw"], item["id"]))

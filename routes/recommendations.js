@@ -125,6 +125,15 @@ async function fetchInteractionStats(mentorIds) {
         _id: '$mentorId',
         totalInteractions: { $sum: 1 },
         avgSatisfaction: { $avg: '$satisfactionRating' },
+        ratingCount: {
+          $sum: {
+            $cond: [
+              { $and: [{ $gte: ['$satisfactionRating', 1] }, { $lte: ['$satisfactionRating', 5] }] },
+              1,
+              0,
+            ],
+          },
+        },
         subjectBreadth: { $addToSet: '$subjectTag' },
         uniqueMentees: { $addToSet: '$menteeId' },
         resolvedInteractions: {
@@ -151,6 +160,7 @@ async function fetchInteractionStats(mentorIds) {
       $project: {
         totalInteractions: 1,
         avgSatisfaction: { $ifNull: ['$avgSatisfaction', 0] },
+        ratingCount: 1,
         subjectBreadth: { $size: '$subjectBreadth' },
         uniqueMentees: { $size: '$uniqueMentees' },
         resolvedInteractions: 1,
@@ -231,6 +241,8 @@ async function fetchAchievementStats(mentorIds) {
         achievementInteractions: { $max: '$confirmedInteractions' },
         achievementMentees: { $max: '$uniqueMentees' },
         achievementRating: { $max: '$averageRating' },
+        achievementTitles: { $addToSet: '$title' },
+        achievementCount: { $sum: 1 },
       },
     },
   ]);

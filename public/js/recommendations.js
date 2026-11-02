@@ -66,6 +66,8 @@ const RecommendationEngine = {
       <div class="ml-tooltip-body">
         <div class="ml-tooltip-metric"><span>🎯 Skill Match</span><span>${clampPercentage(c.skillAlignment)}%</span></div>
         <div class="ml-tooltip-metric"><span>🧠 Profile Match</span><span>${clampPercentage(c.contentSimilarity)}%</span></div>
+        <div class="ml-tooltip-metric"><span>🛠️ Project Relevance</span><span>${clampPercentage(c.projectRelevance)}%</span></div>
+        <div class="ml-tooltip-metric"><span>✅ Verified Evidence</span><span>${clampPercentage(c.mentoringEvidence)}%</span></div>
         <div class="ml-tooltip-metric"><span>⭐ Mentor Quality</span><span>${clampPercentage(c.mentorQuality)}%</span></div>
         <div class="ml-tooltip-metric"><span>📊 Activity Level</span><span>${clampPercentage(c.activitySignal)}%</span></div>
         <div class="ml-tooltip-metric"><span>👤 Profile</span><span>${clampPercentage(c.profileStrength)}%</span></div>
@@ -617,6 +619,8 @@ function renderMLRecommendations(container, recommendations) {
           <div class="ml-section-heading ml-section-heading-secondary">Skills & metrics</div>
           <div class="ml-metrics-grid">
             ${buildMetricRow('🎯', 'Skill Match', breakdown.skillAlignment)}
+            ${buildMetricRow('🛠️', 'Project Relevance', breakdown.projectRelevance)}
+            ${buildMetricRow('✅', 'Verified Evidence', breakdown.mentoringEvidence)}
             ${buildMetricRow('📊', 'Activity Level', breakdown.activitySignal)}
             ${buildMetricRow('👤', 'Profile', breakdown.profileStrength)}
             ${buildMetricRow('🏢', 'Same Department', breakdown.departmentMatch)}
