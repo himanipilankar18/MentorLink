@@ -2474,11 +2474,10 @@
                 <div style="display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:18px;">
                     <div>
                         <h2 style="font-size:1.8rem;margin:0;color:var(--text-primary);">Tech Circles</h2>
-                        <p style="color:var(--text-secondary);margin:8px 0 0;">Discover technical communities from real profile interests and projects.</p>
+                        <p style="color:var(--text-secondary);margin:8px 0 0;">Discover people who share your technical interests.</p>
                     </div>
                     <input id="tech-circles-search" type="search" placeholder="Search skills or circles..." style="min-width:240px;">
                 </div>
-                <div id="tech-circles-metrics" style="color:var(--text-secondary);margin-bottom:18px;"></div>
                 <div id="tech-circles-container">
                     <div class="loading" style="text-align:center;padding:32px;color:var(--text-secondary);">Loading Tech Circles...</div>
                 </div>
@@ -5376,6 +5375,8 @@
         }
 
         let techCirclesSnapshot = null;
+        let activeTechCircle = null;
+        let techCircleMemberLimit = 10;
 
         function escapeTechCircleText(value) {
             return String(value || '').replace(/[&<>"']/g, (character) => ({
@@ -5385,7 +5386,6 @@
 
         function renderTechCircles() {
             const container = document.getElementById('tech-circles-container');
-            const metrics = document.getElementById('tech-circles-metrics');
             if (!container || !techCirclesSnapshot) return;
             const query = String(document.getElementById('tech-circles-search')?.value || '').toLowerCase().trim();
             const circles = techCirclesSnapshot.clusters.filter((circle) => {
@@ -5397,9 +5397,15 @@
                 ].join(' ').toLowerCase();
                 return !query || text.includes(query);
             });
-            metrics.textContent = `${techCirclesSnapshot.profileCount} profiles analysed · ${circles.length} discovered circles · ${techCirclesSnapshot.algorithm}`;
             if (!circles.length) {
-                container.innerHTML = '<div class="post-card"><div class="post-content" style="color:var(--text-secondary);">No circles match that search.</div></div>';
+                const message = query
+                    ? 'No technical domains match that search. Try another skill or domain.'
+                    : 'No technical domains have been generated yet. Run the local Tech Circles refresh command.';
+                container.innerHTML = `<div class="post-card"><div class="post-content" style="color:var(--text-secondary);">${message}</div></div>`;
+                return;
+            }
+            if (activeTechCircle) {
+                renderTechCircleDetail(activeTechCircle);
                 return;
             }
             container.innerHTML = circles.map((circle) => `
@@ -5409,21 +5415,62 @@
                             <h3 style="margin:0;color:var(--text-primary);">${escapeTechCircleText(circle.name)}</h3>
                             <p style="margin:7px 0;color:var(--text-secondary);">${escapeTechCircleText(circle.description)}</p>
                         </div>
-                        <strong style="color:var(--accent-color);">${circle.size} members</strong>
+                        <strong style="color:var(--accent-color);">${circle.size} relevant members</strong>
                     </div>
                     <div style="display:flex;gap:8px;flex-wrap:wrap;margin:12px 0;">
                         ${(circle.representativeTerms || []).map((term) => `<span class="badge">${escapeTechCircleText(term)}</span>`).join('')}
                     </div>
-                    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;">
-                        ${(circle.members || []).map((member) => `
-                            <button type="button" class="post-card" style="text-align:left;border:1px solid var(--border-color);cursor:pointer;padding:12px;" onclick="openUserProfilePage('${escapeTechCircleText(member._id)}')">
-                                <strong style="color:var(--text-primary);">${escapeTechCircleText(member.name)}</strong>
-                                <div style="color:var(--text-secondary);font-size:.85rem;margin-top:5px;">${escapeTechCircleText((member.skills || []).slice(0, 4).join(' · ') || 'Technical interests developing')}</div>
-                            </button>
-                        `).join('')}
-                    </div>
+                    <button type="button" class="btn-send tech-circle-explore" data-circle-id="${escapeTechCircleText(circle.id)}" style="margin-top:14px;padding:7px 14px;font-size:.82rem;">Explore domain</button>
                 </section>
             `).join('');
+        }
+
+        async function renderTechCircleDetail(circle) {
+            const container = document.getElementById('tech-circles-container');
+            if (!container) return;
+            container.innerHTML = '<div class="loading" style="text-align:center;padding:32px;color:var(--text-secondary);">Loading ranked people...</div>';
+            try {
+                const response = await fetch(`${API_BASE}/tech-circles/${encodeURIComponent(circle.id)}/members?limit=${techCircleMemberLimit}`, {
+                    headers: { Authorization: 'Bearer ' + token },
+                });
+                const data = await response.json();
+                if (!response.ok || !data.success) throw new Error(data.message || 'Unable to load this domain');
+                const loadedCircle = data.circle;
+                container.innerHTML = `
+                    <button type="button" class="btn-ghost tech-circle-back" style="margin-bottom:14px;">Back to domains</button>
+                    <section class="post-card">
+                        <div style="display:flex;justify-content:space-between;gap:12px;align-items:flex-start;flex-wrap:wrap;">
+                            <div>
+                                <h3 style="margin:0;color:var(--text-primary);">${escapeTechCircleText(loadedCircle.name)}</h3>
+                                <p style="margin:7px 0;color:var(--text-secondary);">${escapeTechCircleText(loadedCircle.description)}</p>
+                                <div style="color:var(--text-secondary);font-size:.85rem;">${loadedCircle.size} relevant members · ranked by profile evidence</div>
+                            </div>
+                            <div style="display:flex;gap:8px;">
+                                <button type="button" class="btn-ghost tech-circle-limit" data-limit="5">Top 5</button>
+                                <button type="button" class="btn-send tech-circle-limit" data-limit="10">Top 10</button>
+                            </div>
+                        </div>
+                        <div style="display:flex;gap:8px;flex-wrap:wrap;margin:14px 0;">
+                            ${(loadedCircle.representativeTerms || []).map((term) => `<span class="badge">${escapeTechCircleText(term)}</span>`).join('')}
+                        </div>
+                        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px;">
+                            ${(loadedCircle.members || []).map((member, index) => `
+                                <div class="post-card" style="text-align:left;border:1px solid var(--border-color);padding:12px;">
+                                    <div style="color:var(--accent-color);font-size:.78rem;margin-bottom:5px;">#${index + 1} · ${Number(member.relevanceScore || 0).toFixed(1)}% relevance</div>
+                                    <button type="button" style="display:block;width:100%;text-align:left;background:none;border:0;padding:0;cursor:pointer;" onclick="openUserProfilePage('${escapeTechCircleText(member._id)}')">
+                                        <strong style="color:var(--text-primary);">${escapeTechCircleText(member.name)}</strong>
+                                        <div style="color:var(--text-secondary);font-size:.85rem;margin-top:5px;">${escapeTechCircleText((member.skills || []).slice(0, 4).join(' · ') || 'Technical interests developing')}</div>
+                                        <div style="color:var(--text-secondary);font-size:.8rem;margin-top:5px;">Evidence: ${escapeTechCircleText((member.relevanceEvidence || []).join(' · ') || 'profile match')}</div>
+                                    </button>
+                                    <button type="button" class="btn-send tech-circle-follow" data-user-id="${escapeTechCircleText(member._id)}" data-following="${member.isFollowing ? 'true' : 'false'}" style="margin-top:10px;padding:6px 12px;font-size:.8rem;">${member.isFollowing ? 'Following' : 'Follow'}</button>
+                                </div>
+                            `).join('') || '<div style="color:var(--text-secondary);">No eligible people found for this domain.</div>'}
+                        </div>
+                    </section>
+                `;
+            } catch (error) {
+                container.innerHTML = `<div class="post-card"><div class="post-content" style="color:var(--text-secondary);">${escapeTechCircleText(error.message)}</div></div>`;
+            }
         }
 
         async function loadTechCircles() {
@@ -5435,7 +5482,7 @@
                 });
                 const data = await response.json();
                 if (!response.ok || !data.success) {
-                    throw new Error(data.message || 'Tech Circles are not available yet');
+                    throw new Error(data.message || 'Tech Circles have not been generated yet. Run the local refresh command.');
                 }
                 techCirclesSnapshot = data.snapshot;
                 renderTechCircles();
@@ -5445,6 +5492,47 @@
         }
 
         document.getElementById('tech-circles-search')?.addEventListener('input', renderTechCircles);
+        document.getElementById('tech-circles-container')?.addEventListener('click', async (event) => {
+            const exploreButton = event.target.closest('.tech-circle-explore');
+            if (exploreButton) {
+                activeTechCircle = techCirclesSnapshot.clusters.find((circle) => String(circle.id) === String(exploreButton.dataset.circleId));
+                renderTechCircles();
+                return;
+            }
+            if (event.target.closest('.tech-circle-back')) {
+                activeTechCircle = null;
+                renderTechCircles();
+                return;
+            }
+            const limitButton = event.target.closest('.tech-circle-limit');
+            if (limitButton) {
+                techCircleMemberLimit = Number(limitButton.dataset.limit);
+                if (activeTechCircle) renderTechCircleDetail(activeTechCircle);
+                return;
+            }
+            const button = event.target.closest('.tech-circle-follow');
+            if (!button) return;
+            const userId = button.dataset.userId;
+            const following = button.dataset.following === 'true';
+            button.disabled = true;
+            try {
+                const response = await fetch(`${API_BASE}/users/${encodeURIComponent(userId)}/${following ? 'unfollow' : 'follow'}`, {
+                    method: 'POST',
+                    headers: { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' },
+                });
+                const data = await response.json();
+                if (!response.ok || !data.success) throw new Error(data.message || 'Unable to update follow state');
+                button.dataset.following = String(!following);
+                button.textContent = following ? 'Follow' : 'Following';
+                techCirclesSnapshot.clusters.forEach((circle) => (circle.members || []).forEach((member) => {
+                    if (String(member._id) === String(userId)) member.isFollowing = !following;
+                }));
+            } catch (error) {
+                console.error('Failed to update Tech Circle follow state:', error);
+            } finally {
+                button.disabled = false;
+            }
+        });
 
         function showTechCirclesView() {
             hideAllViews();

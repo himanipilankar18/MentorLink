@@ -10,6 +10,7 @@
     "uploads:import": "powershell -ExecutionPolicy Bypass -File scripts/import-uploads.ps1",
     "uploads:backup": "powershell -ExecutionPolicy Bypass -File scripts/backup-uploads.ps1",
     "admin:create-first": "node scripts/create-first-admin.js",
+    "tech-circles:refresh": "node scripts/refresh-tech-circles.js",
     "users:delete-all": "node scripts/delete-all-users.js",
     "users:setup-test": "node scripts/setup-test-users.js",
     "email:test": "node scripts/test-email.js",

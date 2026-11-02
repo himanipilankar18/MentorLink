@@ -19,6 +19,61 @@ JavaScript recommendation engine. When it is set, the recommendation routes
 POST the seeker, candidate, interaction, and mentorship data to the Python
 service. The frontend and Express response contract are unchanged.
 
+## Tech Circles
+
+Tech Circles uses the same Python service through
+`POST /tech-circles/cluster`, but it is a separate unsupervised clustering
+module and does not change mentor recommendation scores. Express persists each
+refresh as a `TechCircleSnapshot`, so page loads read the latest stored
+classification instead of retraining.
+
+The clustering pipeline:
+
+- builds binary skill-only vectors from the MongoDB `User.skills` field;
+ `User.interests` and project technologies/descriptions are supporting signals
+ only. The current schema does not define separate experience, course,
+ certification, or career-goal fields, so those fields are not used;
+- evaluates K-Means candidates from `K=2` through `min(15, profile_count - 1)`;
+- records inertia, silhouette, Davies-Bouldin, Calinski-Harabasz, cluster sizes,
+  and repeated-seed ARI stability;
+- selects K using a rank aggregate of those metrics rather than silhouette
+  alone; and
+- emits soft memberships when a profile has comparable affinity to another
+  cluster.
+
+Domain relevance is calculated separately from cluster assignment. Normalized
+skills are the primary evidence and contribute most of the score; interests and
+project evidence can only provide a bounded supporting bonus. Profiles without
+at least one normalized skill matching a domain are not ranked in that domain.
+
+Useful authenticated endpoints are:
+
+```text
+GET  /api/tech-circles
+GET  /api/tech-circles/me
+GET  /api/tech-circles/search?q=python&department=CSE
+GET  /api/tech-circles/:circleId/members
+POST /api/tech-circles/refresh        # administrator only
+POST /api/users/:id/follow
+POST /api/users/:id/unfollow
+```
+
+### Local Tech Circles refresh
+
+The public refresh endpoint remains administrator-protected. For local
+maintenance, the repository also provides a direct operator command that reads
+the existing `.env` MongoDB connection, calls the local Python service, and
+persists a new `TechCircleSnapshot`:
+
+```powershell
+npm run tech-circles:refresh
+```
+
+The command exits nonzero when MongoDB, the Python service, feature extraction,
+or domain generation fails. It prints the actual profile count, valid-skill
+count, normalized vocabulary size, feature dimensions, tested K values,
+selected metrics, discovered domains, member counts, and top-five evidence.
+
 The supported version selector values are:
 
 ```text
