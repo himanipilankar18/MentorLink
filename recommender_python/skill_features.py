@@ -25,7 +25,7 @@ SKILL_ALIASES = {
 }
 
 INVALID_SKILL_TERMS = {
-    "project", "projects", "profile", "mentorlink", "fictional", "demo",
+    "project", "projects", "profile", "mentorconnect", "mentorlink", "fictional", "demo",
     "git", "github", "exploring", "explore", "peer", "peers", "student",
     "students", "user", "users", "account", "mentor", "mentee", "technical",
     "technology", "technologies", "interest", "interests", "experience",

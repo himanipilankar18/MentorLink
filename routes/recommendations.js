@@ -12,8 +12,14 @@ const { verifyToken } = require('../middleware/auth');
 const { apiLimiter } = require('../middleware/security');
 const { generateMentorRecommendations } = require('../utils/recommendationEngine');
 const externalRecommendationWeights = require('../config/externalRecommendationWeights');
+const RecommendationLog = require('../models/RecommendationLog');
+const { logRecommendationImpression, recordRecommendationEvent, trackSafely } = require('../utils/recommendationTracking');
+const { COUNTED_EVIDENCE } = require('../utils/evidencePolicy');
 
 const router = express.Router();
+
+// Events the browser may report. Requests, accepts and rejects are recorded by the server itself.
+const CLIENT_FEEDBACK_EVENTS = new Set(['viewed_details', 'opened_profile', 'helpful', 'not_helpful']);
 
 function requestPythonRecommendations(payload) {
   const serviceUrl = process.env.RECOMMENDATION_SERVICE_URL;
@@ -64,17 +70,6 @@ function normalizeStatus(status) {
   return status.toLowerCase();
 }
 
-function isPotentialMentorForMentee(mentee, candidate) {
-  const candidateRole = String(candidate.role || '').toLowerCase();
-  if (candidateRole === 'faculty' || candidateRole === 'admin') return true;
-
-  const menteeYear = Number(mentee.year);
-  const candidateYear = Number(candidate.year);
-  if (!Number.isFinite(menteeYear) || !Number.isFinite(candidateYear)) return false;
-
-  return candidateYear > menteeYear;
-}
-
 function isExternalUser(user) {
   return String(user?.userType || '').toUpperCase() === 'EXTERNAL';
 }
@@ -117,7 +112,7 @@ async function fetchInteractionStats(mentorIds) {
     {
       $match: {
         mentorId: { $in: mentorIds },
-        confirmationStatus: 'confirmed',
+        ...COUNTED_EVIDENCE,
       },
     },
     {
@@ -154,6 +149,10 @@ async function fetchInteractionStats(mentorIds) {
           },
         },
         lastInteractionAt: { $max: '$timestamp' },
+        recommendYes: { $sum: { $cond: [{ $eq: ['$menteeWouldRecommend', true] }, 1, 0] } },
+        recommendAnswers: {
+          $sum: { $cond: [{ $in: ['$menteeWouldRecommend', [true, false]] }, 1, 0] },
+        },
       },
     },
     {
@@ -166,6 +165,8 @@ async function fetchInteractionStats(mentorIds) {
         resolvedInteractions: 1,
         verifiedCompletedSessions: 1,
         lastInteractionAt: 1,
+        recommendYes: 1,
+        recommendAnswers: 1,
       },
     },
   ]);
@@ -261,11 +262,22 @@ function mergeDemoEvidence(interactionStats, achievementStats, demoEvidence) {
     const key = String(row._id);
     const demo = demoByMentor.get(key);
     if (!demo) return row;
+    const realRatings = Number(row.ratingCount || 0);
+    const demoRatings = Number(demo.ratingCount || 0);
+    const ratingTotal = realRatings + demoRatings;
+    const lastDates = [row.lastInteractionAt, demo.lastInteractionAt].filter(Boolean).map((d) => new Date(d));
     return {
       ...row,
       totalInteractions: Number(row.totalInteractions || 0) + Number(demo.totalInteractions || 0),
-      avgSatisfaction: Number(demo.avgSatisfaction || row.avgSatisfaction || 0),
+      avgSatisfaction: ratingTotal
+        ? (Number(row.avgSatisfaction || 0) * realRatings + Number(demo.avgSatisfaction || 0) * demoRatings) / ratingTotal
+        : Number(demo.avgSatisfaction || row.avgSatisfaction || 0),
+      ratingCount: ratingTotal,
       subjectBreadth: Math.max(Number(row.subjectBreadth || 0), Number(demo.subjectBreadth || 0)),
+      uniqueMentees: Number(row.uniqueMentees || 0) + Number(demo.uniqueMentees || 0),
+      resolvedInteractions: Number(row.resolvedInteractions || 0) + Number(demo.resolvedInteractions || 0),
+      verifiedCompletedSessions: Number(row.verifiedCompletedSessions || 0) + Number(demo.verifiedCompletedSessions || 0),
+      lastInteractionAt: lastDates.length ? new Date(Math.max(...lastDates)) : null,
       demoOnly: true,
     };
   });
@@ -277,7 +289,12 @@ function mergeDemoEvidence(interactionStats, achievementStats, demoEvidence) {
         _id: demo.mentorId,
         totalInteractions: demo.totalInteractions,
         avgSatisfaction: demo.avgSatisfaction,
+        ratingCount: demo.ratingCount,
         subjectBreadth: demo.subjectBreadth,
+        uniqueMentees: demo.uniqueMentees,
+        resolvedInteractions: demo.resolvedInteractions,
+        verifiedCompletedSessions: demo.verifiedCompletedSessions,
+        lastInteractionAt: demo.lastInteractionAt,
         demoOnly: true,
       });
     }
@@ -354,9 +371,8 @@ router.get('/mentors', verifyToken, apiLimiter, async (req, res) => {
       .select('-password')
       .lean();
 
-    const mentors = candidateMentors.filter((candidate) => (
-      isExternalUser(mentee) || isPotentialMentorForMentee(mentee, candidate)
-    ));
+    // No seniority rule: anyone who offers mentorship can mentor anyone, in any year.
+    const mentors = candidateMentors;
 
     const mentorIds = mentors.map((mentor) => mentor._id);
     const [interactionStats, mentorshipStats, achievementStats, demoEvidence, blockedMentorIds, academicSocialisation] = await Promise.all([
@@ -407,11 +423,22 @@ router.get('/mentors', verifyToken, apiLimiter, async (req, res) => {
       return safeRecommendation;
     });
 
+    // Record exactly what was shown, so later requests and feedback can be traced to a rank.
+    const recommendationLogId = await trackSafely(logRecommendationImpression({
+      seekerId: userId,
+      recommendations,
+      engine: pythonResult ? 'python' : 'js',
+      engineVersion: pythonResult ? version : 'js-fallback',
+      demoEvidence: demoEvidence.length > 0,
+      candidateCount: mentors.length,
+    }));
+
     res.json({
       success: true,
       count: recommendations.length,
       recommendations,
       clustering: result.clustering,
+      recommendationLogId,
     });
   } catch (error) {
     res.status(500).json({
@@ -450,13 +477,6 @@ router.get('/mentors/:mentorId/explain', verifyToken, apiLimiter, async (req, re
       return res.status(404).json({
         success: false,
         message: 'Mentor not found',
-      });
-    }
-
-    if (!isExternalUser(mentee) && !isPotentialMentorForMentee(mentee, mentor)) {
-      return res.status(400).json({
-        success: false,
-        message: 'Selected user is not an eligible mentor for this mentee relationship',
       });
     }
 
@@ -526,6 +546,42 @@ router.get('/mentors/:mentorId/explain', verifyToken, apiLimiter, async (req, re
       message: 'Failed to explain recommendation score',
       error: error.message,
     });
+  }
+});
+
+// @route   POST /api/recommendations/feedback
+// @desc    Record what a user did with a recommended mentor (views, helpful / not helpful)
+// @access  Private
+router.post('/feedback', verifyToken, apiLimiter, async (req, res) => {
+  try {
+    const { recommendationLogId, mentorId, type } = req.body || {};
+    if (!CLIENT_FEEDBACK_EVENTS.has(type)) {
+      return res.status(400).json({ success: false, message: 'Unknown feedback type' });
+    }
+    if (!mentorId || !/^[a-f0-9]{24}$/i.test(String(mentorId))) {
+      return res.status(400).json({ success: false, message: 'Invalid mentor ID' });
+    }
+    const logId = recommendationLogId && /^[a-f0-9]{24}$/i.test(String(recommendationLogId))
+      ? recommendationLogId
+      : null;
+
+    // "Helpful" is a single choice per shown list: replace any earlier vote for this mentor.
+    if (logId && (type === 'helpful' || type === 'not_helpful')) {
+      await RecommendationLog.updateOne(
+        { _id: logId, seekerId: req.user._id },
+        { $pull: { events: { mentorId, type: { $in: ['helpful', 'not_helpful'] } } } },
+      );
+    }
+
+    const recorded = await recordRecommendationEvent({
+      seekerId: req.user._id,
+      mentorId,
+      type,
+      logId,
+    });
+    res.json({ success: true, recorded });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Failed to record feedback', error: error.message });
   }
 });
 

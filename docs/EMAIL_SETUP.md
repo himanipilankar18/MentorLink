@@ -1,4 +1,4 @@
-# MentorLink – Send Real Emails to SPIT Inboxes
+# MentorConnect – Send Real Emails to SPIT Inboxes
 
 Follow these steps to send registration OTP emails to real SPIT (@spit.ac.in) inboxes for the active registration flow.
 
@@ -10,7 +10,7 @@ Follow these steps to send registration OTP emails to real SPIT (@spit.ac.in) in
 2. Go to **[myaccount.google.com](https://myaccount.google.com)** → **Security**.
 3. Turn on **2-Step Verification** if it’s off.
 4. Go to **[myaccount.google.com/apppasswords](https://myaccount.google.com/apppasswords)**.
-5. Choose **Mail** → **Other (Custom name)** → type `MentorLink`.
+5. Choose **Mail** → **Other (Custom name)** → type `MentorConnect`.
 6. Click **Generate** and copy the 16-character password (e.g. `abcd efgh ijkl mnop`).
 7. Store this somewhere safe; it won’t be shown again.
 
@@ -18,7 +18,7 @@ Follow these steps to send registration OTP emails to real SPIT (@spit.ac.in) in
 
 ## Step 2: Add SMTP to your `.env`
 
-1. Open `.env` in the MentorLink project root.
+1. Open `.env` in the MentorConnect project root.
 2. Add (or uncomment) these lines and replace the placeholders:
 
 ```env
@@ -26,7 +26,7 @@ SMTP_HOST=smtp.gmail.com
 SMTP_PORT=587
 SMTP_USER=your_spit_email@spit.ac.in
 SMTP_PASS=abcdefghijklmnop
-EMAIL_FROM=MentorLink <your_spit_email@spit.ac.in>
+EMAIL_FROM=MentorConnect <your_spit_email@spit.ac.in>
 BACKEND_BASE_URL=http://localhost:5000
 ```
 
@@ -39,7 +39,7 @@ BACKEND_BASE_URL=http://localhost:5000
 ## Step 3: Restart the server
 
 ```bash
-cd c:\Users\Chetan\OneDrive\Desktop\MENTORLINK
+cd c:\Users\Chetan\OneDrive\Desktop\MENTORCONNECT
 npm run dev
 ```
 
@@ -49,7 +49,7 @@ npm run dev
 
 1. Open `http://localhost:5000`.
 2. Register a new user with another valid SPIT email (e.g. teammate).
-3. Check that inbox for the “Verify your MentorLink email” message.
+3. Check that inbox for the “Verify your MentorConnect email” message.
 4. Enter the six-digit OTP in the registration flow.
 5. Log in with that user’s credentials after verification completes.
 
@@ -62,4 +62,4 @@ npm run dev
 | “Username and Password not accepted” | Use the **App Password**, not your normal Gmail password. |
 | “App passwords” option missing | Enable **2-Step Verification** first. |
 | Emails go to spam | Ask recipients to move the first email to Inbox and mark “Not spam”. |
-| No SPIT account | Ask faculty/admin for a shared SPIT account for MentorLink. |
+| No SPIT account | Request a shared SPIT account for MentorConnect from the institute email administrator. |

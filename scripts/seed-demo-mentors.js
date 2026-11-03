@@ -3,7 +3,7 @@ const mongoose = require('mongoose');
 const User = require('../models/User');
 const connectDB = require('../config/database');
 
-const DEMO_PASSWORD = 'MentorLinkDemo2026';
+const DEMO_PASSWORD = 'MentorConnectDemo2026';
 const DEMO_EMAIL_PREFIX = 'mentorlink.demo';
 
 const DEMO_USERS = [
@@ -56,7 +56,7 @@ function userDocument([name, year, department, mentorshipIntent, availability, s
     role: year >= 3 ? 'senior' : 'junior',
     skills,
     interests,
-    bio: `Fictional MentorLink demo profile. ${accomplishment}`,
+    bio: `Fictional MentorConnect demo profile. ${accomplishment}`,
     mentorshipIntent,
     availability,
     availableForExternalGuidance: false,

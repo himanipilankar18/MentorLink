@@ -8,8 +8,16 @@ const { createAndEmitNotification } = require('../utils/notifications');
 const { verifyToken } = require('../middleware/auth');
 const { apiLimiter } = require('../middleware/security');
 const { pendingRequestCap } = require('../config/externalMentorship');
+const { recordRecommendationEvent, trackSafely } = require('../utils/recommendationTracking');
 
 const router = express.Router();
+
+// Link a mentorship step back to the Find Mentor list that showed this mentor, if any.
+function trackMentorshipStep(mentorship, type) {
+  const seekerId = mentorship?.menteeId?._id || mentorship?.menteeId || mentorship?.requester;
+  const mentorId = mentorship?.mentorId?._id || mentorship?.mentorId || mentorship?.recipient;
+  trackSafely(recordRecommendationEvent({ seekerId, mentorId, type }));
+}
 const MIN_REQUEST_REASON_LENGTH = 20;
 const MIN_REJECTION_REASON_LENGTH = 5;
 
@@ -283,6 +291,8 @@ async function acceptMentorshipRequest(req, res) {
       console.error('Failed to create accept notification:', error.message);
     });
 
+    trackMentorshipStep(mentorship, 'accepted');
+
     return res.json({
       success: true,
       message: 'Mentorship request accepted',
@@ -387,6 +397,8 @@ async function rejectMentorshipRequest(req, res) {
         console.error('Failed to create reject notification:', error.message);
       });
     }
+
+    trackMentorshipStep(mentorship, 'rejected');
 
     return res.json({
       success: true,
@@ -547,6 +559,8 @@ router.post('/request', verifyToken, apiLimiter, async (req, res) => {
     }).catch((error) => {
       console.error('Failed to create mentorship request notification:', error.message);
     });
+
+    trackMentorshipStep(mentorship, 'requested');
 
     res.status(201).json({
       success: true,

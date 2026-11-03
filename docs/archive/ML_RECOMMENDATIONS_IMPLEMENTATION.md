@@ -10,7 +10,7 @@ Archived 2026-10-11, not authoritative; see docs/architecture.md
 
 ## 🎯 Overview
 
-The MentorLink frontend now displays **AI-powered mentor recommendations** in the right sidebar, powered by the backend ML engine (K-Means clustering + multi-factor compatibility scoring).
+The MentorConnect frontend now displays **AI-powered mentor recommendations** in the right sidebar, powered by the backend ML engine (K-Means clustering + multi-factor compatibility scoring).
 
 ### What Changed
 
@@ -186,7 +186,7 @@ Content-Type: application/json
 
 ```javascript
 // Get JWT token from localStorage
-const token = localStorage.getItem('mentorlink_token');
+const token = localStorage.getItem('mentorconnect_token');
 
 // Fetch recommendations with auth header
 const response = await fetch(
@@ -387,7 +387,7 @@ Cluster Bonus            +8%      Bonus if in primary cluster
 
 **Check:**
 1. Is `recommendations.js` loaded? Check browser DevTools Network tab
-2. Is JWT token in localStorage? Check `localStorage.getItem('mentorlink_token')`
+2. Is JWT token in localStorage? Check `localStorage.getItem('mentorconnect_token')`
 3. Is API accessible? Test: `curl http://localhost:5000/api/recommendations/mentors -H "Authorization: Bearer TOKEN"`
 
 ### Issue: Scores are all 0%

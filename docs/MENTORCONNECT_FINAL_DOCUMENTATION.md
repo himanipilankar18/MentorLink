@@ -1,13 +1,13 @@
-# MentorLink: Final Project Documentation
+# MentorConnect: Final Project Documentation
 
 **Status:** Current implementation and verified behavior
 **Last updated:** 2026-10-13
 
-This document is the consolidated source of truth for MentorLink's product scope, architecture, feature behavior, certificate module, External-user restrictions, testing status, and remaining work.
+This document is the consolidated source of truth for MentorConnect's product scope, architecture, feature behavior, certificate module, External-user restrictions, testing status, and remaining work.
 
 ## 1. Project Overview
 
-MentorLink is an institute-focused mentorship and academic interaction platform. It connects students, seniors, faculty, alumni, and approved External users through verified authentication, mentor discovery, mentorship requests, communities, discussions, posts, notifications, and analytics-ready interaction logging.
+MentorConnect is an institute-focused mentorship and academic interaction platform. It connects students, seniors, alumni, and approved External users through verified authentication, mentor discovery, mentorship requests, communities, discussions, posts, notifications, and analytics-ready interaction logging.
 
 The platform has two distinct account experiences:
 
@@ -53,8 +53,8 @@ The active application served by `server.js` is the `public/` tree. The React/Vi
 - Current students must use an approved SPIT email address.
 - Complete email OTP verification.
 - Use JWT authentication after verification.
-- Can be juniors, seniors, faculty, or administrators.
-- Seniors/faculty may offer mentorship.
+- Can be juniors, seniors or administrators.
+- Seniors may offer mentorship.
 
 ### External Users
 
@@ -215,7 +215,7 @@ Each certificate includes:
 
 The certificate is presented as a formal printable certificate with:
 
-- MentorLink branding
+- MentorConnect branding
 - Certificate of Recognition heading
 - Decorative border
 - Recipient name
@@ -307,7 +307,7 @@ Mentor recommendations use profile and interaction signals, including:
 - Activity recency
 - Cluster fit
 
-External recommendations are restricted to eligible, opted-in senior or faculty mentors under the current academic-year rules.
+External recommendations are restricted to eligible, opted-in senior mentors under the current academic-year rules.
 
 ## 15. Verification and Testing Evidence
 

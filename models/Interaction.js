@@ -75,14 +75,32 @@ const interactionSchema = new mongoose.Schema({
     type: Boolean,
     default: false
   },
+  // pending: logged by the mentor, waiting for the mentee.
+  // confirmed: the mentee verified it and gave the feedback fields.
+  // disputed: the mentee says it did not happen; it never counts as evidence.
   confirmationStatus: {
     type: String,
-    enum: ['pending', 'confirmed'],
+    enum: ['pending', 'confirmed', 'disputed'],
     default: 'pending',
     index: true
   },
   confirmedAt: {
     type: Date,
+    default: null
+  },
+  disputedAt: {
+    type: Date,
+    default: null
+  },
+  loggedBy: {
+    type: String,
+    enum: ['mentor', 'mentee', null],
+    default: null
+  },
+  // Set at confirmation: true only when a verified institute student confirmed the session.
+  // Records confirmed by other accounts stay in history but are not counted as mentoring evidence.
+  evidenceEligible: {
+    type: Boolean,
     default: null
   },
   notes: {

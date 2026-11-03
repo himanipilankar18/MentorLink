@@ -16,7 +16,7 @@
 
 \begin{document}
 
-\title{MentorLink: A Verified, Analytics-Ready Platform for\ Institutional Mentorship and Impact Recognition}
+\title{MentorConnect: A Verified, Analytics-Ready Platform for\ Institutional Mentorship and Impact Recognition}
 
 % Author names intentionally left blank pending final author and affiliation details.
 \author{}
@@ -24,7 +24,7 @@
 \maketitle
 
 \begin{abstract}
-Institutional mentoring is commonly distributed across informal conversations, making suitable mentors difficult to discover and mentoring outcomes difficult to measure. This paper presents MentorLink, a secure web platform that formalizes institute-focused mentorship while producing structured, analytics-ready interaction data. The system combines email-verified identity, role-aware access control, mentor discovery, mentorship lifecycle management, communities, realtime collaboration, and explicit interaction confirmation. Its main contribution is a hybrid mentoring-impact model that converts confirmed sessions into auditable contribution events using activity, mentee feedback, resolved outcomes, follow-up completion, and unique mentee reach. Achievement thresholds use both quantitative and quality gates, and formal certificates are issued through SMTP and exposed in an Institute Member profile. A synthetic end-to-end evaluation of the implemented system produced 109 contribution points from three confirmed sessions involving two mentees, three resolved outcomes, three follow-ups, a 5/5 average rating, and a valid Helpful Contributor certificate. External users are restricted to seeking mentorship while retaining mentor discovery and approved community access. The implementation demonstrates how a practical mentoring platform can connect user workflows, evidence capture, explainable recognition, and privacy-aware access boundaries.
+Institutional mentoring is commonly distributed across informal conversations, making suitable mentors difficult to discover and mentoring outcomes difficult to measure. This paper presents MentorConnect, a secure web platform that formalizes institute-focused mentorship while producing structured, analytics-ready interaction data. The system combines email-verified identity, role-aware access control, mentor discovery, mentorship lifecycle management, communities, realtime collaboration, and explicit interaction confirmation. Its main contribution is a hybrid mentoring-impact model that converts confirmed sessions into auditable contribution events using activity, mentee feedback, resolved outcomes, follow-up completion, and unique mentee reach. Achievement thresholds use both quantitative and quality gates, and formal certificates are issued through SMTP and exposed in an Institute Member profile. A synthetic end-to-end evaluation of the implemented system produced 109 contribution points from three confirmed sessions involving two mentees, three resolved outcomes, three follow-ups, a 5/5 average rating, and a valid Helpful Contributor certificate. External users are restricted to seeking mentorship while retaining mentor discovery and approved community access. The implementation demonstrates how a practical mentoring platform can connect user workflows, evidence capture, explainable recognition, and privacy-aware access boundaries.
 \end{abstract}
 
 \begin{IEEEkeywords}
@@ -34,9 +34,9 @@ academic mentoring, educational technology, interaction analytics, impact scorin
 \section{Introduction}
 Students frequently seek guidance about coursework, projects, placements, technical skills, and campus life. In many institutions, this guidance is exchanged through private messaging applications, personal networks, and disconnected group conversations. These channels may support communication, but they provide limited discoverability, weak accountability, and almost no structured evidence for evaluating mentoring programs.
 
-MentorLink addresses this problem as a combined platform and data-design challenge. It provides a verified environment in which users can create academic profiles, discover potential mentors, request mentorship, communicate, participate in communities, and record mentoring interactions. The system also distinguishes between users who provide mentorship and External users who seek it. This distinction is enforced both in the interface and at the API layer.
+MentorConnect addresses this problem as a combined platform and data-design challenge. It provides a verified environment in which users can create academic profiles, discover potential mentors, request mentorship, communicate, participate in communities, and record mentoring interactions. The system also distinguishes between users who provide mentorship and External users who seek it. This distinction is enforced both in the interface and at the API layer.
 
-A central design question is how a platform can recognize mentoring effort fairly. Counting requests or unverified sessions can reward activity without demonstrating useful help. MentorLink therefore introduces an auditable contribution ledger. A session becomes eligible for recognition only after the mentee confirms it. Points are then derived from multiple signals: verified activity, satisfaction, outcome resolution, follow-up completion, and the number of distinct mentees helped. Achievement certificates require minimum thresholds across these dimensions.
+A central design question is how a platform can recognize mentoring effort fairly. Counting requests or unverified sessions can reward activity without demonstrating useful help. MentorConnect therefore introduces an auditable contribution ledger. A session becomes eligible for recognition only after the mentee confirms it. Points are then derived from multiple signals: verified activity, satisfaction, outcome resolution, follow-up completion, and the number of distinct mentees helped. Achievement certificates require minimum thresholds across these dimensions.
 
 The contributions of this work are:
 \begin{itemize}
@@ -50,9 +50,9 @@ The contributions of this work are:
 \section{Related Work}
 Research on peer mentoring consistently identifies guidance, belonging, and social integration as important contributors to student persistence and development \cite{tinto1993,gershenfeld2014}. However, many mentoring programs still depend on manual matching and retrospective reporting. Learning analytics research emphasizes that educational systems should transform learner activity into interpretable evidence while respecting privacy and context \cite{siemens2013,ferguson2012,knox2013,drachsler2015}.
 
-Recommendation systems provide established methods for matching users based on preferences, similarity, and behavioral evidence. Collaborative filtering and hybrid recommendation methods are useful when explicit profile information is combined with interaction history \cite{resnick1997,burke2002,ekstrand2011}. MentorLink adapts this principle to an institutional setting by combining skills, interests, academic context, availability, profile strength, and interaction analytics. Unlike a generic social recommender, the system also applies eligibility constraints such as academic progression and mentor consent.
+Recommendation systems provide established methods for matching users based on preferences, similarity, and behavioral evidence. Collaborative filtering and hybrid recommendation methods are useful when explicit profile information is combined with interaction history \cite{resnick1997,burke2002,ekstrand2011}. MentorConnect adapts this principle to an institutional setting by combining skills, interests, academic context, availability, profile strength, and interaction analytics. Unlike a generic social recommender, the system also applies eligibility constraints such as academic progression and mentor consent.
 
-Recognition systems introduce a second design problem. A purely volume-based score is easy to explain but vulnerable to repetitive or low-value activity. A purely outcome-based score may be difficult to measure and may unfairly penalize mentors working on longer-term goals. MentorLink therefore uses a transparent hybrid model: auditable events provide the point total, while minimum session, reach, outcome, and rating requirements prevent a certificate from being earned through volume alone.
+Recognition systems introduce a second design problem. A purely volume-based score is easy to explain but vulnerable to repetitive or low-value activity. A purely outcome-based score may be difficult to measure and may unfairly penalize mentors working on longer-term goals. MentorConnect therefore uses a transparent hybrid model: auditable events provide the point total, while minimum session, reach, outcome, and rating requirements prevent a certificate from being earned through volume alone.
 
 \section{System Requirements and Design Goals}
 The system was designed around five requirements. First, only verified users should access protected platform operations. Second, mentorship should be represented as a lifecycle rather than a single message: request, acceptance, interaction, confirmation, and outcome. Third, stored interaction data should support aggregation and future recommendation experiments. Fourth, recognition should be understandable to users and traceable to evidence. Fifth, External users should have a constrained seeking-oriented experience that does not expose mentor or administrative operations.
@@ -83,7 +83,7 @@ Figure~\ref{fig:architecture} summarizes the deployed architecture.
 \draw[arrow] (db) -- (analytics);
 \draw[arrow] (analytics) -- (api);
 \end{tikzpicture}
-\caption{MentorLink architecture and evidence flow.}
+\caption{MentorConnect architecture and evidence flow.}
 \label{fig:architecture}
 \end{figure*}
 
@@ -138,7 +138,7 @@ When the highest newly eligible achievement is detected, an Achievement record i
 
 The certificate workflow has three delivery surfaces. First, the configured SMTP service receives an email notification when a new certificate is created. The email includes the achievement summary and a formal certificate HTML attachment. Second, Institute Member profiles contain a separate Mentor Achievements section. Third, the Achievements page displays all predefined levels: earned levels expose a \textit{View certificate} action, while locked levels show their remaining requirements.
 
-The certificate view is a formal printable document rather than a plain data page. It contains MentorLink branding, a double border, a certificate heading, recipient name, achievement distinction, evidence metrics, certificate ID, issue date, and a verification link. Public verification returns a limited safe response with recipient name, title, issue date, certificate ID, and validity state.
+The certificate view is a formal printable document rather than a plain data page. It contains MentorConnect branding, a double border, a certificate heading, recipient name, achievement distinction, evidence metrics, certificate ID, issue date, and a verification link. Public verification returns a limited safe response with recipient name, title, issue date, certificate ID, and validity state.
 
 \section{External-User Boundary}
 External users are seeking-only participants. Their interface keeps Feed, Media, mentor discovery, outgoing requests, and community browsing and membership. External users cannot access Messages, groups, private mentorship chat, Achievements, personal certificate data, mentor interaction logging, incoming request management, community creation, or moderation. Public certificate verification remains available so an issued certificate can be independently validated.
@@ -177,9 +177,9 @@ The platform applies JWT authentication, bcrypt password hashing, OTP verificati
 Several limitations remain. The pending registration map is process-local and should be replaced with a durable store such as Redis or a pending-user collection for production. The root automated test command is not yet a full test suite. Certificate revocation and administrative audit controls are not yet exposed as a complete management UI. The scoring model is interpretable but its weights require longitudinal validation with real mentoring outcomes. SMTP acceptance was tested through Nodemailer; actual mailbox receipt depends on the configured provider and account.
 
 \section{Conclusion and Future Work}
-MentorLink demonstrates an implementable approach for turning informal institutional mentoring into a verified, analytics-ready workflow. The system combines secure identity, constrained user roles, mentorship lifecycle management, explicit interaction confirmation, hybrid contribution scoring, and tiered certificate recognition. The design avoids equating activity volume with impact by requiring evidence from feedback, outcomes, follow-up, and mentee reach.
+MentorConnect demonstrates an implementable approach for turning informal institutional mentoring into a verified, analytics-ready workflow. The system combines secure identity, constrained user roles, mentorship lifecycle management, explicit interaction confirmation, hybrid contribution scoring, and tiered certificate recognition. The design avoids equating activity volume with impact by requiring evidence from feedback, outcomes, follow-up, and mentee reach.
 
-Future work includes durable pending-registration storage, automated integration tests, certificate administration and revocation, longitudinal validation of impact weights, richer outcome instruments, and privacy-preserving institutional analytics. With these extensions, MentorLink can evolve from a functional platform prototype into a measurable support infrastructure for academic mentoring programs.
+Future work includes durable pending-registration storage, automated integration tests, certificate administration and revocation, longitudinal validation of impact weights, richer outcome instruments, and privacy-preserving institutional analytics. With these extensions, MentorConnect can evolve from a functional platform prototype into a measurable support infrastructure for academic mentoring programs.
 
 \bibliographystyle{IEEEtran}
 \bibliography{bibliography}

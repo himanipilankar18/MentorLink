@@ -1,7 +1,7 @@
 {
-  "name": "mentorlink-backend",
+  "name": "mentorconnect-backend",
   "version": "1.0.0",
-  "description": "MentorLink - A Data-Driven Interaction and Academic Analytics Platform Backend",
+  "description": "MentorConnect - A Data-Driven Interaction and Academic Analytics Platform Backend",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",

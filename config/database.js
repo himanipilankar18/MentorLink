@@ -94,7 +94,7 @@ const connectDB = async () => {
       console.error('💡 Common causes:');
       console.error('   - IP not whitelisted in Atlas → Network Access');
       console.error('   - Wrong username/password; special chars URL-encoded (@→%40, #→%23)');
-      console.error('   - Database name /mentorlink before ? in URI');
+      console.error('   - Database name /mentorconnect before ? in URI');
       console.error('   - Add authSource=admin if user is in admin database');
     }
   process.exit(1);

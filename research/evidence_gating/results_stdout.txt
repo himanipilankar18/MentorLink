@@ -1,0 +1,24 @@
+Main condition: attacker rate 0.15, seeds [11, 23, 37, 41, 59]
+Ranker                        NDCG@10            P@5            MRR      Attack@10  Newcomer@10   Gini
+Random                    0.170±0.005    0.140±0.009    0.315±0.014    0.147±0.005        0.193  0.203
+Popularity                0.099±0.013    0.023±0.028    0.108±0.048    0.700±0.110        0.000  0.933
+Content-only              0.714±0.013    0.503±0.019    0.697±0.032    0.188±0.022        0.191  0.294
+V1 (all logs)             0.637±0.023    0.438±0.032    0.584±0.040    0.332±0.025        0.021  0.552
+V3 ungated                0.664±0.023    0.466±0.031    0.624±0.045    0.298±0.026        0.023  0.518
+V3 evidence-gated         0.718±0.019    0.562±0.040    0.754±0.044    0.188±0.010        0.025  0.487
+
+By attack type (share of top-10):
+Random                 stuffer 0.055  inflator 0.049  colluder 0.043
+Popularity             stuffer 0.000  inflator 0.640  colluder 0.060
+Content-only           stuffer 0.089  inflator 0.051  colluder 0.048
+V1 (all logs)          stuffer 0.050  inflator 0.178  colluder 0.104
+V3 ungated             stuffer 0.042  inflator 0.158  colluder 0.098
+V3 evidence-gated      stuffer 0.050  inflator 0.033  colluder 0.105
+
+Sweep (NDCG@10 / attacker share@10):
+0.0 {'V1 (all logs)': (0.777, 0.0), 'V3 ungated': (0.782, 0.0), 'V3 evidence-gated': (0.779, 0.0), 'Content-only': (0.788, 0.0)}
+0.1 {'V1 (all logs)': (0.663, 0.259), 'V3 ungated': (0.684, 0.238), 'V3 evidence-gated': (0.733, 0.141), 'Content-only': (0.732, 0.139)}
+0.2 {'V1 (all logs)': (0.613, 0.421), 'V3 ungated': (0.636, 0.384), 'V3 evidence-gated': (0.703, 0.245), 'Content-only': (0.706, 0.232)}
+0.3 {'V1 (all logs)': (0.55, 0.577), 'V3 ungated': (0.581, 0.531), 'V3 evidence-gated': (0.661, 0.374), 'Content-only': (0.667, 0.346)}
+
+Population: {'mentors': 150, 'seekers': 100, 'sessions': 889, 'attackers': 22, 'attacker_pool_share': 0.14666666666666667, 'newcomers': 33, 'newcomer_pool_share': 0.22, 'confirmed_share': 0.5050618672665916}

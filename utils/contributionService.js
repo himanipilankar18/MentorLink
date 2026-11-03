@@ -4,9 +4,10 @@ const Achievement = require('../models/Achievement');
 const Certificate = require('../models/Certificate');
 const User = require('../models/User');
 const sendEmail = require('./sendEmail');
+const { COUNTED_EVIDENCE } = require('./evidencePolicy');
 
 function buildCertificateEmailMarkup({ mentorName, achievementTitle, certificateId, points, sessions, mentees, rating }) {
-  return `<!doctype html><html lang="en"><head><meta charset="utf-8"><style>body{margin:0;padding:32px;background:#eef1f4;color:#172a3a;font-family:Arial,sans-serif}.certificate{max-width:760px;margin:auto;padding:58px;text-align:center;background:#fffdf8;border:2px solid #b77a32;box-shadow:0 12px 30px rgba(23,42,58,.16)}.certificate-inner{border:1px solid rgba(183,122,50,.55);padding:42px}.brand{letter-spacing:.28em;color:#b77a32;font-weight:700;font-size:13px}.kicker{margin:34px 0 10px;color:#647484;text-transform:uppercase;letter-spacing:.18em;font-size:11px}.title{font:400 42px Georgia,serif;margin:10px 0 28px}.recipient{font:400 32px Georgia,serif;color:#b77a32;margin:20px}.achievement{font:22px Georgia,serif}.evidence{margin:30px 0;padding:16px;border-top:1px solid #b77a32;border-bottom:1px solid #b77a32;line-height:1.8}.id{color:#647484;font-size:11px}</style></head><body><main class="certificate"><div class="certificate-inner"><div class="brand">MENTORLINK</div><div class="kicker">Certificate of mentoring achievement</div><h1 class="title">Certificate of Recognition</h1><p>This certificate is proudly presented to</p><div class="recipient">${mentorName}</div><p class="achievement">for earning the <strong>${achievementTitle}</strong> distinction</p><div class="evidence">${points} verified points · ${sessions} confirmed sessions · ${mentees} mentees helped · ${rating ? `${Number(rating).toFixed(1)}/5 average rating` : 'rating pending'}</div><p class="id">Certificate ID: ${certificateId}</p></div></main></body></html>`;
+  return `<!doctype html><html lang="en"><head><meta charset="utf-8"><style>body{margin:0;padding:32px;background:#eef1f4;color:#172a3a;font-family:Arial,sans-serif}.certificate{max-width:760px;margin:auto;padding:58px;text-align:center;background:#fffdf8;border:2px solid #b77a32;box-shadow:0 12px 30px rgba(23,42,58,.16)}.certificate-inner{border:1px solid rgba(183,122,50,.55);padding:42px}.brand{letter-spacing:.28em;color:#b77a32;font-weight:700;font-size:13px}.kicker{margin:34px 0 10px;color:#647484;text-transform:uppercase;letter-spacing:.18em;font-size:11px}.title{font:400 42px Georgia,serif;margin:10px 0 28px}.recipient{font:400 32px Georgia,serif;color:#b77a32;margin:20px}.achievement{font:22px Georgia,serif}.evidence{margin:30px 0;padding:16px;border-top:1px solid #b77a32;border-bottom:1px solid #b77a32;line-height:1.8}.id{color:#647484;font-size:11px}</style></head><body><main class="certificate"><div class="certificate-inner"><div class="brand">MENTORCONNECT</div><div class="kicker">Certificate of mentoring achievement</div><h1 class="title">Certificate of Recognition</h1><p>This certificate is proudly presented to</p><div class="recipient">${mentorName}</div><p class="achievement">for earning the <strong>${achievementTitle}</strong> distinction</p><div class="evidence">${points} verified points · ${sessions} confirmed sessions · ${mentees} mentees helped · ${rating ? `${Number(rating).toFixed(1)}/5 average rating` : 'rating pending'}</div><p class="id">Certificate ID: ${certificateId}</p></div></main></body></html>`;
 }
 
 const ACHIEVEMENTS = [
@@ -33,14 +34,14 @@ async function getContributionStats(mentorId) {
       { $match: { mentorId } },
       { $group: { _id: null, points: { $sum: '$points' } } },
     ]),
-    Interaction.countDocuments({ mentorId, confirmationStatus: 'confirmed' }),
-    Interaction.distinct('menteeId', { mentorId, confirmationStatus: 'confirmed' }),
+    Interaction.countDocuments({ mentorId, ...COUNTED_EVIDENCE }),
+    Interaction.distinct('menteeId', { mentorId, ...COUNTED_EVIDENCE }),
     Interaction.aggregate([
-      { $match: { mentorId, confirmationStatus: 'confirmed', satisfactionRating: { $ne: null } } },
+      { $match: { mentorId, ...COUNTED_EVIDENCE, satisfactionRating: { $ne: null } } },
       { $group: { _id: null, average: { $avg: '$satisfactionRating' } } },
     ]),
     Interaction.aggregate([
-      { $match: { mentorId, confirmationStatus: 'confirmed' } },
+      { $match: { mentorId, ...COUNTED_EVIDENCE } },
       { $group: {
         _id: null,
         resolvedInteractions: { $sum: { $cond: [{ $eq: ['$outcomeStatus', 'resolved'] }, 1, 0] } },
@@ -69,11 +70,12 @@ async function getContributionStats(mentorId) {
 async function awardForConfirmedInteraction(interactionId) {
   const interaction = await Interaction.findById(interactionId).lean();
   if (!interaction || interaction.confirmationStatus !== 'confirmed') return null;
+  if (interaction.evidenceEligible === false) return null;
 
   const previousMenteeInteractions = await Interaction.countDocuments({
     mentorId: interaction.mentorId,
     menteeId: interaction.menteeId,
-    confirmationStatus: 'confirmed',
+    ...COUNTED_EVIDENCE,
     _id: { $ne: interaction._id },
   });
   const ratingPoints = { 1: 0, 2: 1, 3: 4, 4: 7, 5: 10 };
@@ -131,7 +133,7 @@ async function awardForConfirmedInteraction(interactionId) {
   let certificate = await Certificate.findOne({ achievementId: savedAchievement._id });
   if (!certificate) {
     certificate = await Certificate.create({
-      certificateId: `ML-${new Date().getFullYear()}-${String(savedAchievement._id).slice(-8).toUpperCase()}`,
+      certificateId: `MC-${new Date().getFullYear()}-${String(savedAchievement._id).slice(-8).toUpperCase()}`,
       mentorId: interaction.mentorId,
       achievementId: savedAchievement._id,
       title: achievement.title,
@@ -153,8 +155,8 @@ async function awardForConfirmedInteraction(interactionId) {
       });
       await sendEmail({
         to: mentor.email,
-        subject: `MentorLink achievement earned: ${achievement.title}`,
-        html: `<h2>Congratulations, ${mentor.name || 'Mentor'}!</h2><p>Your verified mentoring contributions have earned the <strong>${achievement.title}</strong> achievement.</p><ul><li>${stats.points} contribution points</li><li>${stats.confirmedInteractions} confirmed sessions</li><li>${stats.uniqueMentees} mentees helped</li></ul><p>Your certificate ID is <strong>${certificate.certificateId}</strong>. You can view it in your MentorLink profile.</p>`,
+        subject: `MentorConnect achievement earned: ${achievement.title}`,
+        html: `<h2>Congratulations, ${mentor.name || 'Mentor'}!</h2><p>Your verified mentoring contributions have earned the <strong>${achievement.title}</strong> achievement.</p><ul><li>${stats.points} contribution points</li><li>${stats.confirmedInteractions} confirmed sessions</li><li>${stats.uniqueMentees} mentees helped</li></ul><p>Your certificate ID is <strong>${certificate.certificateId}</strong>. You can view it in your MentorConnect profile.</p>`,
         attachments: [{
           filename: `${certificate.certificateId}.html`,
           content: certificateMarkup,

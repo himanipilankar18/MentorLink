@@ -1,5 +1,5 @@
 /**
- * MentorLink ML-Based Recommendation System
+ * MentorConnect ML-Based Recommendation System
  * Fetches and renders intelligent mentor recommendations using:
  * - Clustering (K-Means++)
  * - Multi-factor compatibility scoring
@@ -7,22 +7,22 @@
  * - Mentor quality analytics
  */
 
-console.log('[MentorLink ML] recommendations.js loaded');
+console.log('[MentorConnect ML] recommendations.js loaded');
 
 const RecommendationEngine = {
   async fetchMentorRecommendations(limit = 10) {
     try {
-      const token = localStorage.getItem('mentorlink_token');
+      const token = localStorage.getItem('mentorconnect_token');
       if (!token) {
         console.warn('No authentication token found');
         return null;
       }
 
-      const apiUrl = window.MENTORLINK_API_URL || (window.location.origin && window.location.origin !== 'null'
+      const apiUrl = window.MENTORCONNECT_API_URL || (window.location.origin && window.location.origin !== 'null'
         ? window.location.origin
         : 'http://localhost:5000');
 
-      console.log('[MentorLink ML] Fetching recommendations', { apiUrl, limit });
+      console.log('[MentorConnect ML] Fetching recommendations', { apiUrl, limit });
       const response = await fetch(`${apiUrl}/api/recommendations/mentors?limit=${limit}`, {
         method: 'GET',
         headers: {
@@ -37,7 +37,7 @@ const RecommendationEngine = {
       }
 
       const data = await response.json();
-      console.log('[MentorLink ML] Recommendation API response', {
+      console.log('[MentorConnect ML] Recommendation API response', {
         success: data?.success,
         count: Array.isArray(data?.recommendations) ? data.recommendations.length : 0,
       });
@@ -135,17 +135,48 @@ function buildMetricRow(icon, label, value) {
   `;
 }
 
+// ----- Feedback tracking -----
+// Each Find Mentor list is logged by the server; these events say what the user did with it.
+let currentRecommendationLogId = null;
+const trackedRecommendationEvents = new Set();
+const DETAIL_VIEW_DWELL_MS = 1200; // ignore cards the mouse just passes over
+
+function sendRecommendationFeedback(mentorId, type) {
+  if (!mentorId) return;
+  if (type === 'viewed_details' || type === 'opened_profile') {
+    const key = `${currentRecommendationLogId}:${mentorId}:${type}`;
+    if (trackedRecommendationEvents.has(key)) return;
+    trackedRecommendationEvents.add(key);
+  }
+  const token = localStorage.getItem('mentorconnect_token');
+  if (!token) return;
+  fetch(`${window.MENTORCONNECT_API_URL || window.location.origin}/api/recommendations/feedback`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ recommendationLogId: currentRecommendationLogId, mentorId, type }),
+    keepalive: true,
+  }).catch((error) => console.warn('[MentorConnect ML] Feedback not recorded', error));
+}
+
 function bindRecommendationCardInteractions(card) {
   if (!card) return;
+
+  const mentorId = card.getAttribute('data-user-id');
+  let dwellTimer = null;
 
   const showDetails = () => {
     card.classList.add('is-expanded');
     card.setAttribute('aria-expanded', 'true');
+    if (mentorId && !dwellTimer) {
+      dwellTimer = setTimeout(() => sendRecommendationFeedback(mentorId, 'viewed_details'), DETAIL_VIEW_DWELL_MS);
+    }
   };
 
   const hideDetails = () => {
     card.classList.remove('is-expanded');
     card.setAttribute('aria-expanded', 'false');
+    clearTimeout(dwellTimer);
+    dwellTimer = null;
   };
 
   card.addEventListener('mouseenter', showDetails);
@@ -177,6 +208,19 @@ function ensureRecommendationStyles() {
   const style = document.createElement('style');
   style.id = 'recommendations-styles';
   style.textContent = `
+    .ml-feedback-buttons { display: flex; gap: 8px; flex-wrap: wrap; }
+    .ml-feedback-btn {
+      background: transparent;
+      color: var(--text-secondary, #888);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 999px;
+      padding: 6px 12px;
+      font: inherit;
+      font-size: 0.8rem;
+      cursor: pointer;
+    }
+    .ml-feedback-btn:hover { color: var(--text-primary, #fff); border-color: rgba(255, 255, 255, 0.3); }
+    .ml-feedback-btn.is-selected { background: rgba(167, 139, 250, 0.2); border-color: #a78bfa; color: #fff; }
     @keyframes spin {
       from { transform: rotate(0deg); }
       to { transform: rotate(360deg); }
@@ -491,7 +535,7 @@ async function initializeRecommendations(containerId = 'find-mentor-recommendati
   }
 
   container.dataset.recommendationsInitialized = 'true';
-  console.log('[MentorLink ML] Initializing mentor recommendations');
+  console.log('[MentorConnect ML] Initializing mentor recommendations');
 
   container.innerHTML = `
     <div class="loading" style="text-align:center;padding:20px;color:var(--text-secondary);font-size:0.85rem;">
@@ -502,10 +546,12 @@ async function initializeRecommendations(containerId = 'find-mentor-recommendati
 
   const result = await RecommendationEngine.fetchMentorRecommendations(10);
   if (!result || !result.recommendations || result.recommendations.length === 0) {
+    currentRecommendationLogId = null;
     renderDefaultSuggestions(container);
     return;
   }
 
+  currentRecommendationLogId = result.recommendationLogId || null;
   renderMLRecommendations(container, result.recommendations);
 }
 function resetRecommendations(containerId = 'find-mentor-recommendations') {
@@ -627,6 +673,14 @@ function renderMLRecommendations(container, recommendations) {
             ${buildMetricRow('⏰', 'Schedule Match', breakdown.availabilityMatch)}
           </div>
         </div>
+        ${mentorId ? `
+        <div class="ml-card-section ml-feedback-section">
+          <div class="ml-section-heading ml-section-heading-secondary">Is this a good match for you?</div>
+          <div class="ml-feedback-buttons">
+            <button type="button" class="ml-feedback-btn" data-feedback="helpful">👍 Helpful</button>
+            <button type="button" class="ml-feedback-btn" data-feedback="not_helpful">👎 Not a good match</button>
+          </div>
+        </div>` : ''}
       </div>
     `;
 
@@ -678,9 +732,21 @@ function renderMLRecommendations(container, recommendations) {
     const avatarEl = suggestionItem.querySelector('.avatar-sm');
     const infoEl = suggestionItem.querySelector('.info');
     if (mentorId && typeof window.openUserProfilePage === 'function') {
-      avatarEl?.addEventListener('click', () => window.openUserProfilePage(mentorId));
-      infoEl?.addEventListener('click', () => window.openUserProfilePage(mentorId));
+      const openProfile = () => {
+        sendRecommendationFeedback(mentorId, 'opened_profile');
+        window.openUserProfilePage(mentorId);
+      };
+      avatarEl?.addEventListener('click', openProfile);
+      infoEl?.addEventListener('click', openProfile);
     }
+
+    suggestionItem.querySelectorAll('.ml-feedback-btn').forEach((button) => {
+      button.addEventListener('click', (event) => {
+        event.stopPropagation();
+        suggestionItem.querySelectorAll('.ml-feedback-btn').forEach((b) => b.classList.toggle('is-selected', b === button));
+        sendRecommendationFeedback(mentorId, button.dataset.feedback);
+      });
+    });
 
     bindRecommendationCardInteractions(suggestionItem);
     container.appendChild(suggestionItem);
@@ -730,10 +796,10 @@ function renderDefaultSuggestions(container) {
 function generateDefaultMentorCards() {
   return [
     { id: '1', name: 'Alex Johnson', role: 'Senior · CS', initials: 'AJ' },
-    { id: '2', name: 'Sarah Chen', role: 'Faculty · AI/ML', initials: 'SC' },
+    { id: '2', name: 'Sarah Chen', role: 'Senior · AI/ML', initials: 'SC' },
     { id: '3', name: 'Mike Patel', role: 'Senior · Web Dev', initials: 'MP' },
     { id: '4', name: 'Emma Wilson', role: 'Senior · DevOps', initials: 'EW' },
-    { id: '5', name: 'David Kumar', role: 'Faculty · Data Science', initials: 'DK' },
+    { id: '5', name: 'David Kumar', role: 'Senior · Data Science', initials: 'DK' },
   ];
 }
 
@@ -749,7 +815,7 @@ function handleFollowClick(mentorId, button) {
   }
 }
 
-window.MENTORLINK_API_URL = window.MENTORLINK_API_URL || window.location.origin;
+window.MENTORCONNECT_API_URL = window.MENTORCONNECT_API_URL || window.location.origin;
 window.RecommendationEngine = RecommendationEngine;
 window.RecommendationEngine.initializeRecommendations = initializeRecommendations;
 window.RecommendationEngine.resetRecommendations = resetRecommendations;

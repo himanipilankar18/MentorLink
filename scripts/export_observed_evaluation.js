@@ -83,7 +83,7 @@ async function main() {
     },
     populations,
   };
-  const outputPath = path.join(__dirname, '..', 'research', 'data', 'observed-mentorlink-evaluation.json');
+  const outputPath = path.join(__dirname, '..', 'research', 'data', 'observed-mentorconnect-evaluation.json');
   fs.mkdirSync(path.dirname(outputPath), { recursive: true });
   fs.writeFileSync(outputPath, JSON.stringify(output, null, 2));
   console.log(JSON.stringify({ outputPath, evidence: output.evidence, populations: populations.length }, null, 2));

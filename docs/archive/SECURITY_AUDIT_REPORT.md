@@ -1,10 +1,10 @@
 Archived 2026-10-11, not authoritative; see docs/architecture.md
 
-# MentorLink Security Audit Report
+# MentorConnect Security Audit Report
 
 **Date:** February 28, 2026  
 **Auditor:** AI Security Analysis  
-**Application:** MentorLink - Academic Mentoring Platform  
+**Application:** MentorConnect - Academic Mentoring Platform  
 
 ---
 
@@ -74,7 +74,7 @@ if (req.body.role === 'admin') {
 }
 
 // OPTION 3: Whitelist allowed roles
-const allowedRoles = ['junior', 'senior', 'faculty'];
+const allowedRoles = ['junior', 'senior'];
 const role = allowedRoles.includes(req.body.role) ? req.body.role : 'junior';
 ```
 
@@ -91,13 +91,13 @@ After detailed analysis, here are the shortlisted solutions for implementation:
 
 **What it does:**
 - Blocks 'admin' from the registration endpoint
-- Only allows: `['junior', 'senior', 'faculty']`
+- Only allows: `['junior', 'senior']`
 - Any other role defaults to 'junior'
 
 **Implementation:**
 ```javascript
 // routes/auth.js - Registration endpoint
-const ALLOWED_REGISTRATION_ROLES = ['junior', 'senior', 'faculty'];
+const ALLOWED_REGISTRATION_ROLES = ['junior', 'senior'];
 
 // In register endpoint (line ~42)
 const requestedRole = req.body.role;
@@ -214,7 +214,7 @@ router.post('/create-admin',
 **Step 1: Whitelist public registration (Solution 2)**
 ```javascript
 // routes/auth.js
-const ALLOWED_REGISTRATION_ROLES = ['junior', 'senior', 'faculty'];
+const ALLOWED_REGISTRATION_ROLES = ['junior', 'senior'];
 
 // In POST /api/auth/register
 const role = ALLOWED_REGISTRATION_ROLES.includes(req.body.role) 
@@ -269,7 +269,6 @@ createFirstAdmin();
   <option value="">Select Role</option>
   <option value="junior">Junior (1st/2nd year)</option>
   <option value="senior">Senior (3rd/4th year)</option>
-  <option value="faculty">Faculty</option>
   <!-- <option value="admin">Admin</option> --> <!-- REMOVED -->
 </select>
 ```
@@ -310,7 +309,7 @@ app.use(cors());  // <-- No origin restrictions!
 
 **Attack Scenario:**
 1. Attacker creates malicious website (evil.com)
-2. User visits evil.com while logged into MentorLink
+2. User visits evil.com while logged into MentorConnect
 3. evil.com makes API requests with user's credentials
 4. Attacker steals user data, performs actions as the user
 
@@ -325,7 +324,7 @@ app.use(cors());  // <-- No origin restrictions!
 const corsOptions = {
   origin: process.env.ALLOWED_ORIGINS?.split(',') || [
     'http://localhost:5000',
-    'https://mentorlink.spit.ac.in'  // Your production domain
+    'https://mentorconnect.spit.ac.in'  // Your production domain
   ],
   credentials: true,
   optionsSuccessStatus: 200
@@ -335,7 +334,7 @@ app.use(cors(corsOptions));
 
 **Add to .env:**
 ```
-ALLOWED_ORIGINS=http://localhost:5000,https://mentorlink.spit.ac.in
+ALLOWED_ORIGINS=http://localhost:5000,https://mentorconnect.spit.ac.in
 ```
 
 **Priority:** HIGH - Fix before deployment
@@ -752,9 +751,9 @@ After implementing fixes, test:
 
 ## Conclusion
 
-The MentorLink application has a solid foundation but requires immediate security hardening before production deployment. The admin role privilege escalation vulnerability is particularly critical and must be fixed immediately.
+The MentorConnect application has a solid foundation but requires immediate security hardening before production deployment. The admin role privilege escalation vulnerability is particularly critical and must be fixed immediately.
 
-After implementing the recommended fixes, the application will have enterprise-grade security suitable for handling sensitive student and faculty data.
+After implementing the recommended fixes, the application will have enterprise-grade security suitable for handling sensitive student data.
 
 **Contact for Questions:**  
 Review this document and confirm which fixes to implement first.

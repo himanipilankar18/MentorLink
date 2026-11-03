@@ -60,7 +60,7 @@ class TechCirclesTests(unittest.TestCase):
             {
                 "_id": "generic",
                 "skills": [],
-                "projects": [{"title": "Project Profile", "description": "MentorLink demo project exploring peer learning"}],
+                "projects": [{"title": "Project Profile", "description": "MentorConnect demo project exploring peer learning"}],
             },
             {"_id": "web", "skills": ["HTML", "CSS", "JavaScript"]},
             {"_id": "ml", "skills": ["Python", "TensorFlow", "NLP"]},

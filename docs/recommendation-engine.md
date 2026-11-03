@@ -30,7 +30,7 @@
 
 ### External-user variant
 
-1. The same mentor endpoint is used, but the candidate query is restricted to active senior/faculty users who opted into External guidance and whose lock date is still in the future. [source: `routes/recommendations.js:37-52,140-145`; status: VERIFIED-CODE]
+1. The same mentor endpoint is used, but the candidate query is restricted to active senior users who opted into External guidance and whose lock date is still in the future. [source: `routes/recommendations.js:37-52,140-145`; status: VERIFIED-CODE]
 2. The `User` model stores the opt-in and academic-year lock fields; the schema default for opt-in is false. [source: `models/User.js:184-205`; status: VERIFIED-CODE]
 3. The route removes External guidance consent fields from each recommendation and explanation before responding. [source: `routes/recommendations.js:167-179,253-270`; status: VERIFIED-CODE]
 4. The code does not independently require an External mentee to have a year or department after the External candidate query; missing academic fields therefore remain possible inputs to scoring. [source: `routes/recommendations.js:129-164`, `utils/recommendationEngine.js:387-480`; status: VERIFIED-CODE]
@@ -75,8 +75,8 @@ sequenceDiagram
 flowchart TD
   A[verifyToken + apiLimiter] --> B{Candidate eligibility}
   B -->|Institute| B1[Not self; active; intent offering or both]
-  B1 --> B2[Faculty/admin OR candidate year greater than mentee year]
-  B -->|External| B3[Not self; active; role senior or faculty]
+  B1 --> B2[Admin OR candidate year greater than mentee year]
+  B -->|External| B3[Not self; active; role senior]
   B3 --> B4[availableForExternalGuidance true; lock date greater than now]
   B2 --> C[Exclude pending/accepted mentors]
   B4 --> C
@@ -205,7 +205,7 @@ The static home page loads `/js/recommendations.js`, initializes recommendations
 
 ### Safe commands
 
-Run from `MentorLink`:
+Run from `MentorConnect`:
 
 ```powershell
 node --check .\utils\recommendationEngine.js
@@ -344,7 +344,7 @@ All items in this section are `📋 Planned`; none changes the current implement
 | Measure | Counts/frequencies |
 |---|---|
 | Database scope | 448 User documents; aggregate-only query on 2026-11-01; no names, emails, bios, or other personal text emitted |
-| Role | `junior` 263; `senior` 184; `faculty` 1; `admin` 0 |
+| Role | `junior` 263; `senior` 184; `admin` 0 |
 | `userType` | missing 447; `EXTERNAL` 1; `INSTITUTE_MEMBER` 0 |
 | Year | 1: 141; 2: 121; 3: 130; 4: 54; missing: 2 |
 | Mentorship intent | `both` 170; `offering` 139; `seeking` 138; missing: 1 |
@@ -356,7 +356,7 @@ All items in this section are `📋 Planned`; none changes the current implement
 | Interests per user | 0: 1; 1: 11; 2: 134; 3: 296; 4: 3; 5: 2; 6: 1 |
 | Projects per user | 0: 5; 1: 350; 2: 92; 3: 1 |
 | Bio length buckets | 0: 1; 1-50: 6; 51-100: 439; 101-150: 1; 151-200: 1; over 200: 0 |
-| Mentor pool | Seniors 184; faculty 1; `offering` 139; `both` 170; senior + offering/both 130; faculty + offering/both 1 |
+| Mentor pool | Seniors 184; `offering` 139; `both` 170; senior + offering/both 130 |
 | Interactions | Total 1,438; confirmation missing 1,427; confirmed 11; distinct mentors with confirmed interaction 3 |
 | Mentorships | Total 10; accepted 10; terminated 0; accepted or terminated 10 |
 | Recognition | Achievements 3, all level 1; ContributionEvents 43 |
@@ -372,7 +372,7 @@ All items in this section are `📋 Planned`; none changes the current implement
 
 | Scoring/eligibility component | User fields and other inputs | Observed data effect |
 |---|---|---|
-| Candidate eligibility | `role`, `isActive`, `mentorshipIntent`, `userType`, External consent, `year`, active mentorships | 130 senior and 1 faculty have offering/both; the single External record and two missing-year users make External/generalized behavior underpowered |
+| Candidate eligibility | `role`, `isActive`, `mentorshipIntent`, `userType`, External consent, `year`, active mentorships | 130 seniors have offering/both; the single External record and two missing-year users make External/generalized behavior underpowered |
 | Skill alignment (Jaccard) | `skills`, `interests` | 447/448 users have both arrays non-empty; high coverage, but aliases and case variants fragment overlap |
 | TF-IDF/content similarity | `skills`, `interests`, `bio`, project title/description/technologies | Bio is non-empty for 447/448 and projects for 443/448; content coverage is strong, but free-text/array taxonomy variants reduce exact-token recall |
 | Department match | `department` | Only one missing department; `COMPS` and `CSE` are separate categories (304 vs 138), so institutional equivalence is not represented |
@@ -477,8 +477,8 @@ flowchart TD
 
 | Rule/component | V1 behavior | Status |
 |---|---|---|
-| Internal eligibility | Active, not self, `offering`/`both`, and faculty/admin or candidate year greater than seeker year; pending/accepted mentorships excluded | VERIFIED-CODE |
-| External eligibility | Active senior/faculty, `availableForExternalGuidance === true`, and lock date after injected `now`; pending/accepted mentorships excluded | VERIFIED-CODE |
+| Internal eligibility | Active, not self, `offering`/`both`, and admin or candidate year greater than seeker year; pending/accepted mentorships excluded | VERIFIED-CODE |
+| External eligibility | Active senior, `availableForExternalGuidance === true`, and lock date after injected `now`; pending/accepted mentorships excluded | VERIFIED-CODE |
 | Profile text | Lowercase skills, interests, bio, and project title/description/technologies; URL removal and punctuation tokenizer from baseline | VERIFIED-CODE |
 | TF-IDF | `idf = log((1 + documentCount) / (1 + documentFrequency)) + 1`; term frequency is count/document length; cosine clamped to 0–1 | VERIFIED-CODE |
 | Skill alignment | Jaccard of seeker interests+skills against candidate skills+interests | VERIFIED-CODE |

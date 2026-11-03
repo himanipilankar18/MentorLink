@@ -5,7 +5,7 @@ const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000'
 export default function Landing() {
   useEffect(() => {
     // Check if user is already logged in
-    const token = localStorage.getItem('mentorlink_token')
+    const token = localStorage.getItem('mentorconnect_token')
     if (token) {
       // Redirect to home page if already authenticated
       window.location.href = `${API_BASE}/home.html`

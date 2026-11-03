@@ -76,7 +76,53 @@
 
         .header-project-search {
             position: relative;
-            width: min(340px, 42vw);
+            width: min(300px, 32vw);
+        }
+
+        .header-people-search {
+            position: relative;
+            width: min(260px, 28vw);
+        }
+
+        .people-result {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            width: 100%;
+            padding: 9px 10px;
+            border: 0;
+            border-radius: 10px;
+            background: transparent;
+            color: var(--text-primary);
+            font: inherit;
+            text-align: left;
+            cursor: pointer;
+        }
+        .people-result:hover, .people-result.active { background: rgba(167, 139, 250, 0.14); }
+        .people-result .avatar-sm {
+            flex: 0 0 36px;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: var(--gradient-splash);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 700;
+            font-size: 0.8rem;
+        }
+        .people-result-name { font-weight: 600; font-size: 0.9rem; }
+        .people-result-meta { color: var(--text-secondary); font-size: 0.78rem; margin-top: 2px; }
+        .people-result-tag {
+            margin-left: auto;
+            font-size: 0.7rem;
+            font-weight: 600;
+            padding: 3px 8px;
+            border-radius: 999px;
+            border: 1px solid rgba(167, 139, 250, 0.45);
+            color: #c4b5fd;
+            white-space: nowrap;
         }
 
         .header-project-input {
@@ -2261,12 +2307,65 @@
             .sidebar-footer { display: none; }
             .profile-header { flex-direction: column; align-items: flex-start; }
             .profile-main-grid { grid-template-columns: minmax(0, 1fr); }
-            .header-project-search { width: min(240px, 56vw); }
+            .header-project-search { width: min(200px, 42vw); }
+            .header-people-search { width: min(180px, 38vw); }
         }
 
         @media (max-width: 420px) {
             .nav-menu { grid-template-columns: 1fr; }
         }
+
+        /* Sessions: logging, confirming and rating mentoring sessions */
+        .sessions-section { margin-bottom: 28px; }
+        .sessions-section h3 { font-size: 1.05rem; margin: 0 0 4px; color: var(--text-primary); }
+        .sessions-section .section-hint { color: var(--text-secondary); font-size: 0.85rem; margin: 0 0 14px; }
+        .session-card {
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-lg);
+            padding: 16px 18px;
+            margin-bottom: 12px;
+        }
+        .session-card.needs-action { border-color: rgba(167, 139, 250, 0.45); }
+        .session-card-head { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+        .session-card-title { font-weight: 600; color: var(--text-primary); }
+        .session-card-meta { color: var(--text-secondary); font-size: 0.82rem; margin-top: 4px; }
+        .session-status {
+            font-size: 0.72rem; font-weight: 700; padding: 3px 9px; border-radius: 999px;
+            border: 1px solid var(--border-subtle); color: var(--text-secondary); height: max-content;
+        }
+        .session-status.pending { color: #fcd34d; border-color: rgba(252, 211, 77, 0.45); }
+        .session-status.confirmed { color: #6ee7b7; border-color: rgba(16, 185, 129, 0.45); }
+        .session-status.disputed { color: #fca5a5; border-color: rgba(252, 165, 165, 0.45); }
+        .session-form { display: grid; gap: 12px; margin-top: 14px; }
+        .session-form-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; }
+        .session-form label { display: grid; gap: 6px; font-size: 0.82rem; color: var(--text-secondary); }
+        .session-form input, .session-form select, .session-form textarea {
+            background: #111; color: var(--text-primary); border: 1px solid var(--border-subtle);
+            border-radius: 10px; padding: 10px 12px; font: inherit; font-size: 0.9rem;
+        }
+        .session-form textarea { min-height: 64px; resize: vertical; }
+        .session-question { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+        .session-question span { color: var(--text-primary); font-size: 0.88rem; }
+        .choice-group { display: inline-flex; gap: 6px; }
+        .choice-group button, .star-rating button {
+            background: transparent; border: 1px solid var(--border-subtle); color: var(--text-secondary);
+            border-radius: 999px; padding: 6px 12px; font: inherit; font-size: 0.82rem; cursor: pointer;
+        }
+        .choice-group button.selected { background: var(--accent-purple); border-color: var(--accent-purple); color: #fff; }
+        .star-rating { display: inline-flex; gap: 2px; }
+        .star-rating button { border: none; padding: 2px 4px; font-size: 1.35rem; line-height: 1; color: #444; }
+        .star-rating button.on { color: #fcd34d; }
+        .session-actions { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+        .btn-quiet {
+            background: transparent; color: var(--text-secondary); border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-lg); padding: 10px 16px; font: inherit; font-size: 0.85rem; cursor: pointer;
+        }
+        .btn-quiet:hover { color: var(--text-primary); border-color: rgba(255, 255, 255, 0.25); }
+        .session-message { font-size: 0.84rem; min-height: 1.2em; }
+        .session-message.error { color: #fca5a5; }
+        .session-message.ok { color: #6ee7b7; }
+        .sessions-empty { color: var(--text-tertiary); font-size: 0.88rem; padding: 6px 0; }
     </style>
 </head>
 <body>
@@ -2274,6 +2373,13 @@
             <div class="app-header-inner">
                 <div class="app-logo">MentorConnect</div>
                 <div class="header-actions" id="header-actions">
+                    <div class="header-people-search">
+                        <input id="people-search-input" class="header-project-input" type="search" placeholder="Search people by name" autocomplete="off" aria-label="Search people by name" aria-controls="people-search-dropdown">
+                        <div id="people-search-dropdown" class="header-project-dropdown" role="listbox" aria-label="People">
+                            <div id="people-search-status" class="project-search-status"></div>
+                            <div id="people-search-results"></div>
+                        </div>
+                    </div>
                     <div class="header-project-search">
                         <input id="project-search-input" class="header-project-input" type="text" placeholder="Search projects (e.g. donation)">
                         <div id="project-search-dropdown" class="header-project-dropdown">
@@ -2305,7 +2411,7 @@
                     <span class="avatar-badge"></span>
                 </div>
                 <span class="name" id="user-name">User</span>
-                <span class="handle" id="user-handle">@mentorlink</span>
+                <span class="handle" id="user-handle">@mentorconnect</span>
             </div>
 
             <ul class="nav-menu">
@@ -2328,6 +2434,11 @@
                 </a></li>
                 <li><a href="#" class="nav-item" id="find-mentor-btn" data-nav="find-mentor">
                     <span>Find Mentor</span>
+                </a></li>
+                <li><a href="#" class="nav-item" id="sessions-btn" data-nav="sessions">
+                    <span class="icon">◐</span>
+                    <span>Sessions</span>
+                    <span class="badge" id="sessions-pending-badge" style="display:none;"></span>
                 </a></li>
                 <li><a href="#" class="nav-item" id="tech-circles-btn" data-nav="tech-circles">
                     <span>Tech Circles</span>
@@ -2622,6 +2733,59 @@
                 </div>
                 <div id="find-mentor-status" style="color:var(--text-secondary);font-size:0.85rem;margin-bottom:16px;"></div>
                 <div id="find-mentor-recommendations" class="mentor-recommendations-grid"></div>
+            </div>
+
+            <div id="sessions-view" style="display:none;">
+                <div style="margin-bottom:24px;">
+                    <h2 style="font-size:1.8rem;margin:0 0 8px;color:var(--text-primary);">Sessions</h2>
+                    <p style="color:var(--text-secondary);font-size:0.92rem;margin:0;">Log mentoring sessions and confirm the ones you received. Only sessions the mentee confirms count toward mentor recommendations and achievements.</p>
+                </div>
+
+                <section class="sessions-section" id="sessions-pending-section">
+                    <h3>Waiting for you to confirm</h3>
+                    <p class="section-hint">Your mentor logged these. Confirm and rate them, or say if one didn't happen.</p>
+                    <div id="sessions-pending-list"></div>
+                </section>
+
+                <section class="sessions-section">
+                    <h3>Log a session</h3>
+                    <p class="section-hint" id="session-log-hint">Pick one of your active mentorships.</p>
+                    <form id="session-log-form" class="session-form session-card" novalidate>
+                        <label>Mentorship
+                            <select id="session-log-mentorship" required></select>
+                        </label>
+                        <div class="session-form-row">
+                            <label>What did you work on?
+                                <input id="session-log-topic" type="text" maxlength="200" placeholder="e.g. Debugging a Flask API" required>
+                            </label>
+                            <label>Subject
+                                <select id="session-log-subject" required></select>
+                            </label>
+                        </div>
+                        <div class="session-form-row">
+                            <label>How did you meet?
+                                <select id="session-log-type" required></select>
+                            </label>
+                            <label>Duration (minutes)
+                                <input id="session-log-duration" type="number" min="0" max="600" step="5" placeholder="45">
+                            </label>
+                        </div>
+                        <div id="session-log-feedback" style="display:none;"></div>
+                        <label>Notes (optional)
+                            <textarea id="session-log-notes" maxlength="1000" placeholder="Anything worth remembering"></textarea>
+                        </label>
+                        <div class="session-actions">
+                            <button type="submit" class="btn-send" id="session-log-submit">Log session</button>
+                            <span class="session-message" id="session-log-message" role="status"></span>
+                        </div>
+                    </form>
+                </section>
+
+                <section class="sessions-section">
+                    <h3>History</h3>
+                    <p class="section-hint">Sessions you gave or received.</p>
+                    <div id="sessions-history-list"></div>
+                </section>
             </div>
 
         </main>
@@ -3008,7 +3172,7 @@
 
     <script src="/socket.io/socket.io.js"></script>
     <script>
-        const token = localStorage.getItem('mentorlink_token');
+        const token = localStorage.getItem('mentorconnect_token');
         const API_BASE = window.location.origin + '/api';
         let currentUser = null;
         let messagesViewInitialized = false;
@@ -3305,6 +3469,8 @@
                         navigateTo('messages');
                     } else if (notificationType === 'MENTORSHIP_REQUEST') {
                         navigateTo('friends');
+                    } else if (notificationType && notificationType.indexOf('SESSION_') === 0) {
+                        navigateTo('sessions');
                     }
 
                     closeNotificationDropdown();
@@ -3872,7 +4038,8 @@
                 'messages-view',
                 'friends-view',
                 'tech-circles-view',
-                'find-mentor-view'
+                'find-mentor-view',
+                'sessions-view'
             ];
             ids.forEach(id => {
                 const el = document.getElementById(id);
@@ -3887,7 +4054,7 @@
             }
         }
 
-        const NAV_STATE_KEY = 'mentorlink_last_view';
+        const NAV_STATE_KEY = 'mentorconnect_last_view';
 
         function saveNavState(view, extra) {
             const state = Object.assign({ view }, extra || {});
@@ -3932,6 +4099,9 @@
                     break;
                 case 'find-mentor':
                     showFindMentorView();
+                    break;
+                case 'sessions':
+                    showSessionsView();
                     break;
                 case 'communityDetail':
                     if (extra && extra.communityId) {
@@ -5742,6 +5912,333 @@
             saveNavState('find-mentor');
         }
 
+        // ===== Sessions: log, confirm and rate mentoring sessions =====
+        // Only the mentee's confirmation and feedback count as evidence for recommendations.
+        const SESSION_SUBJECTS = [
+            'Data Structures', 'Algorithms', 'Database Systems', 'Operating Systems',
+            'Computer Networks', 'Software Engineering', 'Machine Learning', 'Web Development',
+            'Mobile Development', 'Cybersecurity', 'Cloud Computing', 'DevOps',
+            'Mathematics', 'Physics', 'Chemistry', 'Other'
+        ];
+        const SESSION_TYPES = ['Chat', 'Video Call', 'In-Person', 'Email', 'Forum Discussion', 'Code Review', 'Project Guidance'];
+        let sessionMentorships = [];
+
+        function showSessionsView() {
+            hideAllViews();
+            document.getElementById('sessions-view').style.display = 'block';
+            resetNavActive('sessions');
+            loadSessionsView();
+            saveNavState('sessions');
+        }
+
+        async function sessionsApi(path, options) {
+            const response = await fetch(API_BASE + path, Object.assign({}, options, {
+                headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' }
+            }));
+            const data = await response.json().catch(() => ({}));
+            if (!response.ok || data.success === false) {
+                throw new Error(data.message || 'Something went wrong. Please try again.');
+            }
+            return data;
+        }
+
+        function sessionDate(value) {
+            const date = value ? new Date(value) : null;
+            if (!date || Number.isNaN(date.getTime())) return '';
+            return date.toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' });
+        }
+
+        function mentorshipParties(mentorship) {
+            const mentor = mentorship.mentorId || mentorship.recipient || {};
+            const mentee = mentorship.menteeId || mentorship.requester || {};
+            return { mentor, mentee, mentorId: String(getEntityId(mentor) || ''), menteeId: String(getEntityId(mentee) || '') };
+        }
+
+        function feedbackFieldsHtml() {
+            const choice = (name, yes, no) => `
+                <div class="choice-group" data-choice="${name}">
+                    <button type="button" data-value="true">${yes}</button>
+                    <button type="button" data-value="false">${no}</button>
+                </div>`;
+            return `
+                <div class="session-question"><span>How helpful was it?</span>
+                    <div class="star-rating" data-rating="0" aria-label="Rating out of 5">
+                        ${[1, 2, 3, 4, 5].map(n => `<button type="button" data-star="${n}" aria-label="${n} star${n > 1 ? 's' : ''}">★</button>`).join('')}
+                    </div>
+                </div>
+                <div class="session-question"><span>Was your problem solved?</span>${choice('resolved', 'Yes', 'Not yet')}</div>
+                <div class="session-question"><span>Did you do the follow-up you agreed on?</span>${choice('followUp', 'Yes', 'Not yet')}</div>
+                <div class="session-question"><span>Would you recommend this mentor?</span>${choice('recommend', 'Yes', 'No')}</div>`;
+        }
+
+        function bindFeedbackControls(root) {
+            root.querySelectorAll('.star-rating').forEach(group => {
+                group.querySelectorAll('button').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        const value = Number(btn.dataset.star);
+                        group.dataset.rating = String(value);
+                        group.querySelectorAll('button').forEach(b => b.classList.toggle('on', Number(b.dataset.star) <= value));
+                    });
+                });
+            });
+            root.querySelectorAll('.choice-group').forEach(group => {
+                group.querySelectorAll('button').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        group.dataset.value = btn.dataset.value;
+                        group.querySelectorAll('button').forEach(b => b.classList.toggle('selected', b === btn));
+                    });
+                });
+            });
+        }
+
+        // Returns { feedback } or { error } with a message for the user.
+        function readFeedback(root) {
+            const rating = Number(root.querySelector('.star-rating')?.dataset.rating || 0);
+            const pick = name => root.querySelector(`.choice-group[data-choice="${name}"]`)?.dataset.value;
+            if (!rating) return { error: 'Please give a star rating.' };
+            if (pick('resolved') === undefined) return { error: 'Please say whether your problem was solved.' };
+            const feedback = {
+                satisfactionRating: rating,
+                outcomeStatus: pick('resolved') === 'true' ? 'resolved' : 'unresolved',
+                followUpCompleted: pick('followUp') === 'true',
+            };
+            if (pick('recommend') !== undefined) feedback.menteeWouldRecommend = pick('recommend') === 'true';
+            return { feedback };
+        }
+
+        function setSessionMessage(el, text, kind) {
+            if (!el) return;
+            el.textContent = text || '';
+            el.className = 'session-message' + (kind ? ' ' + kind : '');
+        }
+
+        function updateSessionsBadge(count) {
+            const badge = document.getElementById('sessions-pending-badge');
+            if (!badge) return;
+            badge.textContent = count > 0 ? String(count) : '';
+            badge.style.display = count > 0 ? '' : 'none';
+        }
+
+        async function refreshSessionsBadge() {
+            try {
+                const data = await sessionsApi('/interactions?as=mentee&confirmationStatus=pending&limit=50');
+                updateSessionsBadge((data.interactions || []).length);
+            } catch (error) {
+                console.warn('Could not load pending sessions', error);
+            }
+        }
+
+        async function loadSessionsView() {
+            const pendingList = document.getElementById('sessions-pending-list');
+            const historyList = document.getElementById('sessions-history-list');
+            pendingList.innerHTML = '<div class="sessions-empty">Loading…</div>';
+            historyList.innerHTML = '<div class="sessions-empty">Loading…</div>';
+            try {
+                const [mentorshipData, interactionData] = await Promise.all([
+                    sessionsApi('/mentorship/active'),
+                    sessionsApi('/interactions?limit=100'),
+                ]);
+                sessionMentorships = mentorshipData.mentorships || [];
+                const interactions = interactionData.interactions || [];
+                const me = String(getEntityId(currentUser) || '');
+                const pending = interactions.filter(i => i.confirmationStatus === 'pending' && String(getEntityId(i.menteeId)) === me);
+                renderPendingSessions(pending);
+                renderSessionLogForm();
+                renderSessionHistory(interactions.filter(i => !pending.includes(i)), me);
+                updateSessionsBadge(pending.length);
+            } catch (error) {
+                pendingList.innerHTML = `<div class="sessions-empty">${escapeHtml(error.message)}</div>`;
+                historyList.innerHTML = '';
+            }
+        }
+
+        function renderPendingSessions(pending) {
+            const section = document.getElementById('sessions-pending-section');
+            const list = document.getElementById('sessions-pending-list');
+            section.style.display = pending.length ? '' : 'none';
+            list.innerHTML = pending.map(item => `
+                <div class="session-card needs-action" data-session-id="${escapeHtml(item._id)}">
+                    <div class="session-card-head">
+                        <div>
+                            <div class="session-card-title">${escapeHtml(item.topic)}</div>
+                            <div class="session-card-meta">With ${escapeHtml(item.mentorId?.name || 'your mentor')} · ${escapeHtml(item.subjectTag)} · ${escapeHtml(item.interactionType)}${item.duration ? ' · ' + Number(item.duration) + ' min' : ''} · ${sessionDate(item.timestamp)}</div>
+                        </div>
+                        <span class="session-status pending">Needs your confirmation</span>
+                    </div>
+                    <div class="session-form">
+                        ${feedbackFieldsHtml()}
+                        <div class="session-actions">
+                            <button type="button" class="btn-send" data-action="confirm">Confirm session</button>
+                            <button type="button" class="btn-quiet" data-action="dispute">This didn't happen</button>
+                            <span class="session-message" role="status"></span>
+                        </div>
+                    </div>
+                </div>`).join('');
+
+            list.querySelectorAll('.session-card').forEach(card => {
+                bindFeedbackControls(card);
+                const id = card.dataset.sessionId;
+                const message = card.querySelector('.session-message');
+                card.querySelector('[data-action="confirm"]').addEventListener('click', async (event) => {
+                    const button = event.currentTarget;
+                    const { feedback, error } = readFeedback(card);
+                    if (error) { setSessionMessage(message, error, 'error'); return; }
+                    button.disabled = true;
+                    try {
+                        await sessionsApi(`/interactions/${id}/confirm`, { method: 'POST', body: JSON.stringify(feedback) });
+                        await loadSessionsView();
+                    } catch (err) {
+                        button.disabled = false;
+                        setSessionMessage(message, err.message, 'error');
+                    }
+                });
+                card.querySelector('[data-action="dispute"]').addEventListener('click', async (event) => {
+                    const button = event.currentTarget;
+                    if (!confirm('Report that this session did not happen? Your mentor will be told, and it will not count.')) return;
+                    button.disabled = true;
+                    try {
+                        await sessionsApi(`/interactions/${id}/dispute`, { method: 'POST', body: '{}' });
+                        await loadSessionsView();
+                    } catch (err) {
+                        button.disabled = false;
+                        setSessionMessage(message, err.message, 'error');
+                    }
+                });
+            });
+        }
+
+        function renderSessionLogForm() {
+            const me = String(getEntityId(currentUser) || '');
+            const form = document.getElementById('session-log-form');
+            const select = document.getElementById('session-log-mentorship');
+            const hint = document.getElementById('session-log-hint');
+            if (!sessionMentorships.length) {
+                form.style.display = 'none';
+                hint.textContent = 'You can log sessions once a mentorship request is accepted.';
+                return;
+            }
+            form.style.display = '';
+            hint.textContent = 'Mentors log sessions for the mentee to confirm. If you were the mentee, your log is confirmed straight away.';
+            select.innerHTML = sessionMentorships.map(m => {
+                const p = mentorshipParties(m);
+                const iAmMentor = p.mentorId === me;
+                const other = iAmMentor ? p.mentee : p.mentor;
+                return `<option value="${escapeHtml(getEntityId(m))}" data-role="${iAmMentor ? 'mentor' : 'mentee'}">${iAmMentor ? 'Mentoring' : 'Mentored by'} ${escapeHtml(other.name || 'someone')}</option>`;
+            }).join('');
+            const subject = document.getElementById('session-log-subject');
+            if (!subject.options.length) subject.innerHTML = SESSION_SUBJECTS.map(s => `<option>${s}</option>`).join('');
+            const type = document.getElementById('session-log-type');
+            if (!type.options.length) type.innerHTML = SESSION_TYPES.map(t => `<option>${t}</option>`).join('');
+            updateSessionLogRole();
+        }
+
+        // Mentees rate their own logged sessions in the same step; mentors never see feedback fields.
+        function updateSessionLogRole() {
+            const select = document.getElementById('session-log-mentorship');
+            const role = select.selectedOptions[0]?.dataset.role;
+            const box = document.getElementById('session-log-feedback');
+            if (role === 'mentee') {
+                if (!box.dataset.ready) {
+                    box.innerHTML = feedbackFieldsHtml();
+                    box.className = 'session-form';
+                    bindFeedbackControls(box);
+                    box.dataset.ready = '1';
+                }
+                box.style.display = '';
+            } else {
+                box.style.display = 'none';
+            }
+        }
+
+        document.getElementById('session-log-mentorship')?.addEventListener('change', updateSessionLogRole);
+
+        document.getElementById('session-log-form')?.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            const message = document.getElementById('session-log-message');
+            const select = document.getElementById('session-log-mentorship');
+            const topic = document.getElementById('session-log-topic').value.trim();
+            if (!topic) { setSessionMessage(message, 'Please describe what you worked on.', 'error'); return; }
+            const payload = {
+                mentorshipId: select.value,
+                topic,
+                subjectTag: document.getElementById('session-log-subject').value,
+                interactionType: document.getElementById('session-log-type').value,
+                notes: document.getElementById('session-log-notes').value.trim(),
+            };
+            const duration = document.getElementById('session-log-duration').value;
+            if (duration) payload.duration = Number(duration);
+            if (select.selectedOptions[0]?.dataset.role === 'mentee') {
+                const { feedback, error } = readFeedback(document.getElementById('session-log-feedback'));
+                if (error) { setSessionMessage(message, error, 'error'); return; }
+                Object.assign(payload, feedback);
+            }
+            const submit = document.getElementById('session-log-submit');
+            submit.disabled = true;
+            try {
+                const data = await sessionsApi('/interactions', { method: 'POST', body: JSON.stringify(payload) });
+                event.target.reset();
+                const box = document.getElementById('session-log-feedback');
+                box.innerHTML = ''; delete box.dataset.ready;
+                await loadSessionsView();
+                setSessionMessage(document.getElementById('session-log-message'), data.message, 'ok');
+            } catch (err) {
+                setSessionMessage(message, err.message, 'error');
+            } finally {
+                submit.disabled = false;
+            }
+        });
+
+        function renderSessionHistory(items, me) {
+            const list = document.getElementById('sessions-history-list');
+            if (!items.length) {
+                list.innerHTML = '<div class="sessions-empty">No sessions yet.</div>';
+                return;
+            }
+            const label = { pending: 'Waiting for mentee', confirmed: 'Confirmed', disputed: "Didn't happen" };
+            list.innerHTML = items.map(item => {
+                const iAmMentee = String(getEntityId(item.menteeId)) === me;
+                const other = iAmMentee ? item.mentorId : item.menteeId;
+                const details = [];
+                if (item.satisfactionRating) details.push('★'.repeat(item.satisfactionRating) + '☆'.repeat(5 - item.satisfactionRating));
+                if (item.confirmationStatus === 'confirmed') {
+                    details.push(item.outcomeStatus === 'resolved' ? 'Solved' : 'Not solved yet');
+                    details.push(item.followUpCompleted ? 'Follow-up done' : 'No follow-up yet');
+                }
+                const canMarkFollowUp = iAmMentee && item.confirmationStatus === 'confirmed' && !item.followUpCompleted;
+                return `
+                    <div class="session-card" data-session-id="${escapeHtml(item._id)}">
+                        <div class="session-card-head">
+                            <div>
+                                <div class="session-card-title">${escapeHtml(item.topic)}</div>
+                                <div class="session-card-meta">${iAmMentee ? 'Mentored by' : 'Mentoring'} ${escapeHtml(other?.name || 'someone')} · ${escapeHtml(item.subjectTag)} · ${sessionDate(item.timestamp)}</div>
+                                ${details.length ? `<div class="session-card-meta">${escapeHtml(details.join(' · '))}</div>` : ''}
+                            </div>
+                            <span class="session-status ${escapeHtml(item.confirmationStatus)}">${escapeHtml(label[item.confirmationStatus] || item.confirmationStatus)}</span>
+                        </div>
+                        ${canMarkFollowUp ? `<div class="session-actions" style="margin-top:12px;">
+                            <button type="button" class="btn-quiet" data-action="follow-up">Mark follow-up done</button>
+                            <span class="session-message" role="status"></span>
+                        </div>` : ''}
+                    </div>`;
+            }).join('');
+
+            list.querySelectorAll('[data-action="follow-up"]').forEach(btn => {
+                btn.addEventListener('click', async () => {
+                    const card = btn.closest('.session-card');
+                    btn.disabled = true;
+                    try {
+                        await sessionsApi(`/interactions/${card.dataset.sessionId}`, { method: 'PUT', body: JSON.stringify({ followUpCompleted: true }) });
+                        await loadSessionsView();
+                    } catch (err) {
+                        btn.disabled = false;
+                        setSessionMessage(card.querySelector('.session-message'), err.message, 'error');
+                    }
+                });
+            });
+        }
+
+        if (token) refreshSessionsBadge();
+
         document.getElementById('refresh-mentor-recommendations')?.addEventListener('click', () => {
             if (window.RecommendationEngine && typeof window.RecommendationEngine.resetRecommendations === 'function') {
                 window.RecommendationEngine.resetRecommendations('find-mentor-recommendations');
@@ -7505,7 +8002,7 @@
                 return;
             }
 
-            const authToken = localStorage.getItem('mentorlink_token');
+            const authToken = localStorage.getItem('mentorconnect_token');
             if (!authToken) {
                 alert('You must be logged in to create a post.');
                 return;
@@ -9052,6 +9549,127 @@
             });
         }
 
+        // Header people search: find anyone by name, open their profile, and request mentorship from there.
+        function initHeaderPeopleSearch() {
+            const input = document.getElementById('people-search-input');
+            const dropdown = document.getElementById('people-search-dropdown');
+            const status = document.getElementById('people-search-status');
+            const results = document.getElementById('people-search-results');
+            if (!input || !dropdown || !status || !results) return;
+
+            let timer = null;
+            let requestId = 0;
+            let activeIndex = -1;
+
+            const close = () => { dropdown.classList.remove('open'); activeIndex = -1; };
+            const items = () => Array.from(results.querySelectorAll('.people-result'));
+            const highlight = (index) => {
+                const list = items();
+                list.forEach((el, i) => el.classList.toggle('active', i === index));
+                activeIndex = index;
+            };
+            const openProfile = (userId) => {
+                close();
+                input.value = '';
+                status.textContent = '';
+                results.innerHTML = '';
+                openUserProfilePage(userId);
+            };
+            const describe = (user) => {
+                const parts = [];
+                if (user.role) parts.push(user.role.charAt(0).toUpperCase() + user.role.slice(1));
+                if (user.year) parts.push('Year ' + user.year);
+                if (user.department) parts.push(user.department);
+                if (String(user.userType || '').toUpperCase() === 'EXTERNAL') parts.push('External');
+                return parts.join(' · ');
+            };
+
+            async function search(query) {
+                const current = ++requestId;
+                status.textContent = 'Searching…';
+                results.innerHTML = '';
+                dropdown.classList.add('open');
+                try {
+                    const response = await fetch(API_BASE + '/users/search?limit=8&q=' + encodeURIComponent(query), {
+                        headers: { 'Authorization': 'Bearer ' + token }
+                    });
+                    const data = await response.json();
+                    if (current !== requestId) return; // a newer search is running
+                    if (!data.success) throw new Error(data.message || 'Search failed');
+                    const users = data.users || [];
+                    if (!users.length) {
+                        status.textContent = 'No people found for "' + query + '"';
+                        return;
+                    }
+                    status.textContent = users.length === 1 ? '1 person' : users.length + ' people';
+                    results.innerHTML = users.map((user) => {
+                        const userId = user.id || user._id;
+                        const avatar = user.profilePicture
+                            ? `<div class="avatar-sm" style="background-image:url('${escapeHtml(user.profilePicture)}');background-size:cover;background-position:center;"></div>`
+                            : `<div class="avatar-sm">${escapeHtml(getInitials(user.name || 'User'))}</div>`;
+                        const offers = ['offering', 'both'].includes(String(user.mentorshipIntent || '').toLowerCase());
+                        return `
+                            <button type="button" class="people-result" role="option" data-user-id="${escapeHtml(String(userId))}">
+                                ${avatar}
+                                <div>
+                                    <div class="people-result-name">${escapeHtml(user.name || 'Unnamed user')}</div>
+                                    <div class="people-result-meta">${escapeHtml(describe(user))}</div>
+                                </div>
+                                ${offers ? '<span class="people-result-tag">Mentors</span>' : ''}
+                            </button>`;
+                    }).join('');
+                    items().forEach((el) => el.addEventListener('click', () => openProfile(el.getAttribute('data-user-id'))));
+                } catch (err) {
+                    if (current !== requestId) return;
+                    console.error('People search failed:', err);
+                    status.textContent = 'Search failed. Please try again.';
+                }
+            }
+
+            input.addEventListener('input', () => {
+                const value = input.value.trim();
+                clearTimeout(timer);
+                if (value.length < 2) {
+                    requestId++;
+                    status.textContent = value ? 'Type at least 2 letters' : '';
+                    results.innerHTML = '';
+                    if (value) dropdown.classList.add('open'); else close();
+                    return;
+                }
+                timer = setTimeout(() => search(value), 250);
+            });
+
+            input.addEventListener('keydown', (e) => {
+                const list = items();
+                if (e.key === 'ArrowDown' && list.length) {
+                    e.preventDefault();
+                    highlight((activeIndex + 1) % list.length);
+                } else if (e.key === 'ArrowUp' && list.length) {
+                    e.preventDefault();
+                    highlight((activeIndex - 1 + list.length) % list.length);
+                } else if (e.key === 'Enter') {
+                    e.preventDefault();
+                    const target = list[activeIndex >= 0 ? activeIndex : 0];
+                    if (target) openProfile(target.getAttribute('data-user-id'));
+                    else if (input.value.trim().length >= 2) search(input.value.trim());
+                } else if (e.key === 'Escape') {
+                    input.value = '';
+                    status.textContent = '';
+                    results.innerHTML = '';
+                    close();
+                }
+            });
+
+            input.addEventListener('focus', () => {
+                if (status.textContent || results.innerHTML.trim()) dropdown.classList.add('open');
+            });
+
+            document.addEventListener('click', (event) => {
+                const wrapper = document.querySelector('.header-people-search');
+                if (wrapper && !wrapper.contains(event.target)) close();
+            });
+        }
+
         function renderFindPeopleResults(payload) {
             if (!findPeopleResults || !findPeopleStatus) return;
 
@@ -9178,6 +9796,7 @@
         } else {
             initNotificationUI();
             initPeopleSearch();
+            initHeaderPeopleSearch();
             initProjectSearch();
 
             // Set up custom dropdowns once DOM is ready
@@ -9528,6 +10147,11 @@
             navigateTo('find-mentor');
         });
 
+        document.getElementById('sessions-btn')?.addEventListener('click', (e) => {
+            e.preventDefault();
+            navigateTo('sessions');
+        });
+
         document.getElementById('back-to-communities')?.addEventListener('click', (e) => {
             e.preventDefault();
             if (window.history && window.history.length > 1) {
@@ -9683,7 +10307,7 @@
                 socketClient.disconnect();
                 socketClient = null;
             }
-            localStorage.removeItem('mentorlink_token');
+            localStorage.removeItem('mentorconnect_token');
             localStorage.removeItem('user');
             window.location.href = 'login.html';
         });

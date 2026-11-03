@@ -26,7 +26,7 @@ async function sendEmail({ to, subject, html, attachments = [] }) {
   });
 
   await transporter.sendMail({
-    from: process.env.EMAIL_FROM || `"MentorLink" <no-reply@mentorlink.local>`,
+    from: process.env.EMAIL_FROM || `"MentorConnect" <no-reply@mentorconnect.local>`,
     to,
     subject,
     html,

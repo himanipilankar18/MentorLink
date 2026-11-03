@@ -14,7 +14,7 @@ async function testEmail() {
     console.log('Emails will be logged to console instead of being sent.\n');
     console.log('To fix:');
     console.log('1. Go to https://myaccount.google.com/apppasswords');
-    console.log('2. Generate an App Password for "MentorLink"');
+    console.log('2. Generate an App Password for "MentorConnect"');
     console.log('3. Update SMTP_PASS in .env file\n');
     return;
   }
@@ -40,10 +40,10 @@ async function testEmail() {
     });
 
     const info = await transporter.sendMail({
-      from: process.env.EMAIL_FROM || '"MentorLink" <no-reply@mentorlink.local>',
+      from: process.env.EMAIL_FROM || '"MentorConnect" <no-reply@mentorconnect.local>',
       to: process.env.SMTP_USER, // Send test email to yourself
-      subject: 'MentorLink Test Email',
-      html: '<h2>✅ Success!</h2><p>Your MentorLink email configuration is working correctly.</p>',
+      subject: 'MentorConnect Test Email',
+      html: '<h2>✅ Success!</h2><p>Your MentorConnect email configuration is working correctly.</p>',
     });
 
     console.log('✅ Test email sent successfully!');

@@ -1,5 +1,5 @@
 ================================================================================
-MENTORLINK - WEEKLY REPORTS - WORK DONE (Based on Actual Implementation)
+MENTORCONNECT - WEEKLY REPORTS - WORK DONE (Based on Actual Implementation)
 ================================================================================
 
 🔹 WEEK 1 PROGRESS REPORT (Planning & Requirement Analysis Phase)
@@ -11,10 +11,10 @@ Details of Work Done and Review of Meeting:
    informal mentoring platforms such as lack of structure, verification, and 
    analytics.
 
-2. Finalized the project scope and objectives of MentorLink as an institute-
+2. Finalized the project scope and objectives of MentorConnect as an institute-
    exclusive mentoring and academic analytics platform.
 
-3. Identified and documented user types: Junior, Senior, Faculty, and Admin with 
+3. Identified and documented user types: Junior, Senior and Admin with 
    role-based permissions and access levels.
 
 4. Prepared a structured list of functionalities per user type including 

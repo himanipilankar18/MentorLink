@@ -80,7 +80,7 @@ The active application served by `server.js` is the static `public/` tree. The V
 
 `utils/communityAccess.js` is the shared access decision for community list/search, joined communities, details, join/leave, posts, moderation, edits, assets, deletion, and community-linked post interactions. Disallowed communities return 404 to avoid revealing their existence. Membership records remain unchanged if a flag is later disabled.
 
-External users cannot create, own, or moderate communities. They can only request mentorship from an active senior/faculty mentor whose External Guidance opt-in is valid for the current academic year.
+External users cannot create, own, or moderate communities. They can only request mentorship from an active senior mentor whose External Guidance opt-in is valid for the current academic year.
 
 ## Directory Structure
 
@@ -140,7 +140,7 @@ The pending map is volatile and stores the password before hashing. The password
 4. `isActive`, `isVerified`, and `profileComplete` are checked.
 5. `comparePassword()` verifies bcrypt.
 6. A seven-day JWT containing the user ID is returned.
-7. The browser stores `mentorlink_token` and redirects admins to `dashboard.html`, everyone else to `home.html`.
+7. The browser stores `mentorconnect_token` and redirects admins to `dashboard.html`, everyone else to `home.html`.
 
 Protected API requests use `Authorization: Bearer <token>`. `middleware/auth.js` verifies the token, loads the user, and checks `isActive`.
 
@@ -162,7 +162,7 @@ Recommendation engine details, baseline evidence, and planned evolution are main
 
 ### External guidance consent
 
-`User.availableForExternalGuidance` defaults to `false` and is only changed through `PATCH /api/users/profile/external-guidance`, which uses the authenticated user's ID and accepts only legacy `User.role` values `senior` and `faculty`. The optional `externalGuidanceTermsVersion` and `externalGuidanceTermsAcceptedAt` fields have no defaults and require no migration. Turning on requires the current `MENTOR_GUIDANCE_TERMS_VERSION` from `config/externalGuidanceTerms.js`; the server stores that version and the acceptance timestamp with the change. Turning off does not require terms.
+`User.availableForExternalGuidance` defaults to `false` and is only changed through `PATCH /api/users/profile/external-guidance`, which uses the authenticated user's ID and accepts only the `senior` role. The optional `externalGuidanceTermsVersion` and `externalGuidanceTermsAcceptedAt` fields have no defaults and require no migration. Turning on requires the current `MENTOR_GUIDANCE_TERMS_VERSION` from `config/externalGuidanceTerms.js`; the server stores that version and the acceptance timestamp with the change. Turning off does not require terms.
 
 A successful change also stores `externalGuidanceLockedUntil`; both enabling and disabling are locked until that date, and a second change is rejected while the date is still in the future. The lock is evaluated at request time, so no reset job is required. The response includes `availableForExternalGuidance`, `externalGuidanceLockedUntil`, and `termsVersion`.
 

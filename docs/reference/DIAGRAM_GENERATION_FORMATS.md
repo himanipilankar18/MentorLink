@@ -1,6 +1,6 @@
 > Reference; may lag architecture.md
 
-# MentorLink - Diagram Generation Formats
+# MentorConnect - Diagram Generation Formats
 
 This file contains diagram descriptions in multiple formats for easy integration with image generation tools (Lucidchart, Draw.io, Visio, Mermaid, PlantUML, etc.).
 
@@ -55,7 +55,6 @@ This file contains diagram descriptions in multiple formats for easy integration
 graph TB
     Actor1[👤 Junior User]
     Actor2[👤 Senior User]
-    Actor3[👥 Faculty User]
     Actor4[⚙️ Admin User]
     
     UC1[Register & Login]
@@ -88,12 +87,6 @@ graph TB
     Actor2 -->|performs| UC8
     Actor2 -->|performs| UC10
     Actor2 -->|performs| UC11
-    
-    Actor3 -->|uses| UC1
-    Actor3 -->|responds to| UC5
-    Actor3 -->|logs| UC6
-    Actor3 -->|views| UC12
-    Actor3 -->|generates| UC13
     
     Actor4 -->|views| UC12
     Actor4 -->|generates| UC13
@@ -136,14 +129,14 @@ graph TB
 ### Format: PlantUML Syntax
 
 ```plantuml
-@startuml MentorLink_Classes
+@startuml MentorConnect_Classes
 
 class User {
   _id: ObjectId
   name: String
   email: String [unique]
   password: String [hashed]
-  role: Enum [junior, senior, faculty, admin]
+  role: Enum [junior, senior, admin]
   year: Number
   department: String
   skills: Array<String>
@@ -868,7 +861,7 @@ GET /recommendations/topics
 
 === ANALYTICS ENDPOINTS ===
 GET /analytics/mentor-performance?mentorId=...&timeRange=...
-  - Headers: Authorization: Bearer {token} + Role: faculty/admin
+  - Headers: Authorization: Bearer {token} + Role: admin
   - Output: { success, metrics }
 
 GET /analytics/subject-engagement?month=202605

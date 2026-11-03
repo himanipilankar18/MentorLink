@@ -282,7 +282,7 @@ USER SEES 5 intelligent recommendations
 
 ### Step 1: Start Server
 ```bash
-cd d:\finalyrproject\MentorLink
+cd d:\finalyrproject\MentorConnect
 npm run dev
 # Output: Server running on http://localhost:5000
 ```

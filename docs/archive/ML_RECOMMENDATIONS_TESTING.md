@@ -7,7 +7,7 @@ Archived 2026-10-11, not authoritative; see docs/architecture.md
 ### 1. Ensure Backend is Running
 
 ```bash
-cd d:\finalyrproject\MentorLink
+cd d:\finalyrproject\MentorConnect
 npm run dev
 ```
 
@@ -201,7 +201,7 @@ document.querySelectorAll('.suggestion-item').length
 ```javascript
 // Copy this to console
 fetch('http://localhost:5000/api/recommendations/mentors?limit=5', {
-  headers: { 'Authorization': `Bearer ${localStorage.getItem('mentorlink_token')}` }
+  headers: { 'Authorization': `Bearer ${localStorage.getItem('mentorconnect_token')}` }
 })
 .then(r => r.json())
 .then(d => console.log(d))
@@ -232,7 +232,7 @@ typeof RecommendationEngine
 1. Check if backend is running: `curl http://localhost:5000`
 2. Check API response: Use debug command above
 3. Check browser console for errors
-4. Verify JWT token exists: `localStorage.getItem('mentorlink_token')`
+4. Verify JWT token exists: `localStorage.getItem('mentorconnect_token')`
 
 ### Issue: Tooltip doesn't appear on hover
 

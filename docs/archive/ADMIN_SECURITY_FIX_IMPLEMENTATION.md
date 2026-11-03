@@ -41,7 +41,7 @@ const user = await User.create({
 ### After Fix (SECURE) ✅
 ```javascript
 // ✅ SECURE: Whitelist validation
-const ALLOWED_REGISTRATION_ROLES = ['junior', 'senior', 'faculty'];
+const ALLOWED_REGISTRATION_ROLES = ['junior', 'senior'];
 const sanitizedRole = ALLOWED_REGISTRATION_ROLES.includes(role) ? role : 'junior';
 
 const user = await User.create({
@@ -51,7 +51,7 @@ const user = await User.create({
 ```
 
 **What's now enforced:**
-- Public registration limited to: `junior`, `senior`, `faculty`
+- Public registration limited to: `junior`, `senior`
 - Any attempt to register as `admin` defaults to `junior`
 - Admin creation only through protected endpoint
 - Admin endpoint requires existing admin authentication
@@ -67,7 +67,7 @@ const user = await User.create({
 **Changes Made:**
 ```javascript
 // Added at top of file
-const ALLOWED_REGISTRATION_ROLES = ['junior', 'senior', 'faculty'];
+const ALLOWED_REGISTRATION_ROLES = ['junior', 'senior'];
 
 // Modified in POST /api/auth/register endpoint
 const sanitizedRole = ALLOWED_REGISTRATION_ROLES.includes(role) ? role : 'junior';
@@ -202,7 +202,6 @@ node scripts/create-first-admin.js
     <option value="junior">Student (Junior)</option>
     <option value="senior">Student (Senior)</option>
     <option value="senior">Alumni/Mentor</option>
-    <option value="faculty">Faculty</option>
     <!-- SECURITY: Admin role NOT allowed in public registration -->
     <!-- Admin users can only be created via protected /api/auth/create-admin endpoint -->
 </select>
@@ -530,4 +529,4 @@ For questions or issues with this implementation:
 ✅ **Testing guidelines included**  
 ✅ **Future enhancement roadmap defined**
 
-The MentorLink application is now secure against admin privilege escalation attacks and ready for production deployment.
+The MentorConnect application is now secure against admin privilege escalation attacks and ready for production deployment.

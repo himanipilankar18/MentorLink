@@ -790,7 +790,7 @@ async function updateProfileHandler(req, res) {
       const profileUpdateHtml = `
         <h2>Profile Updated</h2>
         <p>Hello ${user.name},</p>
-        <p>Your MentorLink profile was updated successfully.</p>
+        <p>Your MentorConnect profile was updated successfully.</p>
         <div style="background: #f5f5f5; padding: 15px; border-radius: 8px; margin: 20px 0;">
           <p style="margin: 5px 0;"><strong>Time:</strong> ${updateTime}</p>
           <p style="margin: 5px 0 10px 0;"><strong>Changes made:</strong></p>
@@ -800,12 +800,12 @@ async function updateProfileHandler(req, res) {
         </div>
         <p><strong>If you didn't make these changes, please contact support immediately.</strong></p>
         <hr style="margin: 20px 0; border: none; border-top: 1px solid #e0e0e0;">
-        <p style="color: #666; font-size: 0.9em;">This is an automated notification from MentorLink.</p>
+        <p style="color: #666; font-size: 0.9em;">This is an automated notification from MentorConnect.</p>
       `;
 
       sendEmail({ 
         to: user.email, 
-        subject: 'Your MentorLink Profile Was Updated', 
+        subject: 'Your MentorConnect Profile Was Updated', 
         html: profileUpdateHtml 
       }).catch(console.error);
     }
@@ -1070,8 +1070,8 @@ router.get('/mentors', verifyToken, apiLimiter, async (req, res) => {
     const includeScores = String(req.query.includeScores || 'true').toLowerCase() !== 'false';
     const interactionWindowDays = Math.max(30, Math.min(Number(req.query.interactionWindowDays) || 180, 365));
     
+    // Any role or year can mentor; only the user's own mentorship intent matters.
     const query = {
-      role: { $in: ['senior', 'faculty'] },
       isActive: true,
       mentorshipIntent: { $in: ['offering', 'both'] },
     };
@@ -1611,7 +1611,7 @@ router.get('/profile-completion', verifyToken, apiLimiter, async (req, res) => {
 router.get('/search', verifyToken, apiLimiter, async (req, res) => {
   try {
     const { q = '', limit = 10 } = req.query;
-    const query = (q || '').trim();
+    const query = String(q || '').trim().slice(0, 60);
 
     if (!query) {
       return res.json({ success: true, count: 0, users: [] });
@@ -1619,15 +1619,30 @@ router.get('/search', verifyToken, apiLimiter, async (req, res) => {
 
     const parsedLimit = Math.max(1, Math.min(parseInt(limit, 10) || 10, 30));
     const currentUser = await User.findById(req.user._id).select('following');
-    const regex = new RegExp(query, 'i');
 
-    const users = await User.find({
+    // Every word must match the start of a word in the name (or the email username),
+    // so "tith tal" finds "Tithi Talele". Searching the database directly covers all users.
+    const words = query.split(/\s+/).filter(Boolean).slice(0, 4).map(escapeRegex);
+    const filter = {
       _id: { $ne: req.user._id },
       isVerified: true,
       isActive: true,
-    })
-      .select('name email department year role profilePicture bio followers following isOnline lastActiveAt')
-      .limit(250);
+      $and: words.map((word) => ({
+        $or: [
+          { name: new RegExp(`(^|\\s)${word}`, 'i') },
+          { email: new RegExp(`^${word}`, 'i') },
+        ],
+      })),
+    };
+    // External users may only find institute mentors who opted in to external guidance.
+    if (String(req.user.userType || '').toUpperCase() === 'EXTERNAL') {
+      filter.availableForExternalGuidance = true;
+      filter.externalGuidanceLockedUntil = { $gt: new Date() };
+    }
+
+    const users = await User.find(filter)
+      .select('name email department year role profilePicture bio followers following isOnline lastActiveAt mentorshipIntent skills userType')
+      .limit(100);
 
     const followingSet = new Set((currentUser.following || []).map((id) => String(id)));
     const queryLower = query.toLowerCase();
@@ -1640,11 +1655,13 @@ router.get('/search', verifyToken, apiLimiter, async (req, res) => {
           id: u._id,
           _id: u._id,
           name: u.name,
-          email: u.email,
           department: u.department,
           year: u.year,
           role: u.role,
           bio: u.bio,
+          mentorshipIntent: u.mentorshipIntent,
+          skills: (u.skills || []).slice(0, 4),
+          userType: u.userType,
           profilePicture: u.profilePicture,
           followersCount: (u.followers || []).length,
           followingCount: (u.following || []).length,
@@ -1654,7 +1671,6 @@ router.get('/search', verifyToken, apiLimiter, async (req, res) => {
           _score: computeUserSearchScore(u, queryLower, isFollowing),
         };
       })
-      .filter((row) => row._score > 0)
       .sort((a, b) => {
         if (b._score !== a._score) return b._score - a._score;
         if ((b.followersCount || 0) !== (a.followersCount || 0)) {

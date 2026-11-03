@@ -1,6 +1,6 @@
-# MentorLink
+# MentorConnect
 
-MentorLink is an institute-focused mentoring and academic collaboration platform. It connects junior students with senior students and faculty, supports structured mentorship and discussion, and provides analytics-ready data for academic decision-making.
+MentorConnect is an institute-focused mentoring and academic collaboration platform. It connects junior students with senior students, supports structured mentorship and discussion, and provides analytics-ready data for academic decision-making.
 
 The repository contains both sides of the application:
 
@@ -10,7 +10,7 @@ The repository contains both sides of the application:
 ## What the platform provides
 
 - Institute-restricted registration and email/OTP verification.
-- Role-based accounts for juniors, seniors, faculty, and administrators.
+- Role-based accounts for juniors, seniors and administrators.
 - Academic profiles with skills, interests, department, year, CGPA, bio, projects, and mentorship intent.
 - Mentor discovery, mentorship requests, acceptance/rejection, and termination.
 - Structured interaction logging with topics, subject tags, duration, satisfaction, and notes.
@@ -22,12 +22,12 @@ The repository contains both sides of the application:
 
 ## Current progress
 
-The core MentorLink application is implemented across the backend and frontend. The following features are currently completed in the repository:
+The core MentorConnect application is implemented across the backend and frontend. The following features are currently completed in the repository:
 
 ### Completed features
 
 - **Authentication and account access:** institute-domain registration, OTP/email verification, login, JWT sessions, logout, forgot-password, and reset-password flows.
-- **Role-based access:** junior, senior, faculty, and admin roles with protected routes and permission checks.
+- **Role-based access:** junior, senior and admin roles with protected routes and permission checks.
 - **Profiles:** profile creation and editing, academic information, skills, interests, bio, projects, CGPA, profile pictures, profile-strength information, and mentorship intent.
 - **Mentorship:** mentor discovery, filtering/search, mentorship requests, accept/reject actions, active mentorships, termination, and duplicate-request prevention.
 - **External Guidance:** mentor opt-in consent, terms-version tracking, academic-year locking, institute-only visibility controls, and admin summary information.
@@ -72,7 +72,7 @@ The backend serves the static pages in `public/` and exposes the API under `/api
 ## Repository structure
 
 ```text
-MentorLink/
+MentorConnect/
 ├── config/             MongoDB and application configuration
 ├── controllers/        Request and business-logic handlers
 ├── middleware/         Authentication, validation, security, and errors
@@ -112,7 +112,7 @@ Important backend variables include:
 ```env
 PORT=5000
 NODE_ENV=development
-MONGODB_URI=mongodb://localhost:27017/mentorlink
+MONGODB_URI=mongodb://localhost:27017/mentorconnect
 JWT_SECRET=replace_with_a_long_random_secret
 JWT_EXPIRE=7d
 ALLOWED_DOMAINS=spit.ac.in

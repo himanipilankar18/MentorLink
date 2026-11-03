@@ -4,7 +4,7 @@ const User = require('../models/User');
 const connectDB = require('../config/database');
 
 const EMAIL_PATTERN = /^mentorlink\.demo(\d+)@spit\.ac\.in$/;
-const DEMO_PASSWORD = 'MentorLinkDemo2026';
+const DEMO_PASSWORD = 'MentorConnectDemo2026';
 const departments = ['COMPS', 'CSE', 'IT', 'ECE', 'EEE', 'MECH'];
 const topics = [
   ['Python', 'Machine Learning', 'SQL'], ['Java', 'Data Structures', 'C++'],
@@ -35,7 +35,7 @@ function newUser(index) {
     userType: 'INSTITUTE_MEMBER', instituteRole: 'CURRENT_STUDENT', year,
     department: departments[index % departments.length], role: year >= 3 ? 'senior' : 'junior',
     skills: [...topic, 'Git'], interests: [topic[1], 'Career Preparation'],
-    bio: `Fictional MentorLink demo profile for testing recommendations. ${name} is exploring ${topic[1]} and peer learning.`,
+    bio: `Fictional MentorConnect demo profile for testing recommendations. ${name} is exploring ${topic[1]} and peer learning.`,
     mentorshipIntent: offering ? (index % 3 === 0 ? 'both' : 'offering') : 'seeking',
     availability: ['flexible', 'weekends', 'weekdays'][index % 3],
     projects: [{ title: `${first}'s demo ${topic[1]} project`, description: `Fictional demo project using ${topic.join(', ')}.`, technologies: topic }],

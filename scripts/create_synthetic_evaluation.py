@@ -12,7 +12,7 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[1]
-OUTPUT = ROOT / "research" / "data" / "synthetic-mentorlink-evaluation.json"
+OUTPUT = ROOT / "research" / "data" / "synthetic-mentorconnect-evaluation.json"
 
 TRACKS = [
     ("python", "machine learning", "data science"),

@@ -1,12 +1,12 @@
-# MentorLink Project Report Information
+# MentorConnect Project Report Information
 
 ## 1. Project Title
 
-**MentorLink: A Data-Driven Interaction and Academic Analytics Platform**
+**MentorConnect: A Data-Driven Interaction and Academic Analytics Platform**
 
 ## 2. Project Overview
 
-MentorLink is a web-based, institute-focused mentorship and academic interaction platform. It connects juniors, seniors, faculty, and admins inside a verified institutional environment. The platform supports profile creation, mentor discovery, mentorship requests, real-time group chat, communities, posts, discussions, notifications, and analytics-ready interaction logging.
+MentorConnect is a web-based, institute-focused mentorship and academic interaction platform. It connects juniors, seniors and admins inside a verified institutional environment. The platform supports profile creation, mentor discovery, mentorship requests, real-time group chat, communities, posts, discussions, notifications, and analytics-ready interaction logging.
 
 The main purpose of the system is not only communication, but also structured data collection. Every mentorship request, accepted relationship, discussion, message, and academic interaction can become useful data for recommendation, clustering, engagement analysis, and future academic decision-making.
 
@@ -18,12 +18,12 @@ Students often need guidance for academics, projects, placements, technical skil
 2. Mentorship activity is not recorded in a structured way, so institutions cannot analyze common academic problems or engagement trends.
 3. Existing communication channels do not provide a verified, institute-only platform with secure access and role-based workflows.
 
-MentorLink solves this by providing a centralized platform where students can discover mentors, request mentorship, communicate, participate in communities, and log structured interactions for analytics.
+MentorConnect solves this by providing a centralized platform where students can discover mentors, request mentorship, communicate, participate in communities, and log structured interactions for analytics.
 
 ## 4. Objectives
 
 - Build a verified institute-only platform using allowed email domains.
-- Enable juniors to discover and request mentorship from seniors/faculty/admin users.
+- Enable juniors to discover and request mentorship from senior students.
 - Use machine learning inspired recommendation logic to rank suitable mentors.
 - Provide real-time chat and notification support.
 - Maintain structured interaction records for academic analytics.
@@ -70,7 +70,6 @@ MentorLink solves this by providing a centralized platform where students can di
 - Users can fetch eligible mentors.
 - Mentors are filtered by active status, mentorship intent, department, role, and academic year.
 - Seniors must generally be from a higher year than the mentee.
-- Faculty/admin users are treated as eligible mentors.
 
 ### 6.4 ML-Based Mentor Recommendations
 
@@ -135,7 +134,7 @@ MentorLink solves this by providing a centralized platform where students can di
 ### 6.12 Security Features
 
 - JWT authentication middleware protects private routes.
-- Role-based access control supports junior, senior, faculty, and admin roles.
+- Role-based access control supports junior, senior and admin roles.
 - bcrypt password hashing protects stored credentials.
 - Helmet applies security headers.
 - Rate limiting protects auth and API endpoints.
@@ -159,7 +158,6 @@ The platform defines four main roles:
 |---|---|
 | Junior | Seeks mentorship, asks doubts, joins communities |
 | Senior | Offers mentorship, accepts/rejects requests, guides juniors |
-| Faculty | Provides expert mentorship and academic guidance |
 | Admin | Manages system-level privileges and administrative actions |
 
 ### Step 3: Data Modeling
@@ -297,7 +295,7 @@ Formula:
 Jaccard(A, B) = intersection(A, B) / union(A, B)
 ```
 
-In MentorLink, set A contains mentee skills/interests and set B contains mentor skills/interests.
+In MentorConnect, set A contains mentee skills/interests and set B contains mentor skills/interests.
 
 ### 8.9 Weighted Compatibility Scoring
 
@@ -341,7 +339,7 @@ It evaluates:
 
 **Used for:** Measuring verified mentoring contribution for achievements and certificates.
 
-MentorLink does not issue recognition from request volume alone. A mentee must confirm an interaction before it contributes to the mentor's auditable ledger. Each confirmed interaction is evaluated across four dimensions:
+MentorConnect does not issue recognition from request volume alone. A mentee must confirm an interaction before it contributes to the mentor's auditable ledger. Each confirmed interaction is evaluated across four dimensions:
 
 - **Verified activity:** confirmation and a capped duration contribution.
 - **Feedback quality:** mentee satisfaction rating and recommendation response.
@@ -562,6 +560,6 @@ Current data structures support:
 
 ## 19. Conclusion
 
-MentorLink is a secure, data-driven academic mentorship platform. It combines user verification, structured profiles, mentor recommendation, mentorship request management, real-time chat, community interaction, discussion forums, and analytics-ready data logging. The project uses K-Means clustering, similarity scoring, weighted ranking, MongoDB aggregation, JWT authentication, bcrypt hashing, OTP verification, and Socket.IO-based real-time communication.
+MentorConnect is a secure, data-driven academic mentorship platform. It combines user verification, structured profiles, mentor recommendation, mentorship request management, real-time chat, community interaction, discussion forums, and analytics-ready data logging. The project uses K-Means clustering, similarity scoring, weighted ranking, MongoDB aggregation, JWT authentication, bcrypt hashing, OTP verification, and Socket.IO-based real-time communication.
 
 The most important strength of the project is that it transforms informal student mentoring into structured, measurable, and analyzable academic interaction data.

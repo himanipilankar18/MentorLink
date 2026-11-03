@@ -1,6 +1,6 @@
 Archived 2026-10-11, not authoritative; see docs/architecture.md
 
-# MentorLink – Institute Email Verification Options
+# MentorConnect – Institute Email Verification Options
 
 Goal: **Only real, institute‑issued SPIT email IDs** should be able to register, not just anything that ends with `@spit.ac.in`.
 
@@ -111,7 +111,7 @@ Below are implementation options with pros/cons so we can pick what is feasible.
 
 ---
 
-## Recommended Practical Approach for MentorLink
+## Recommended Practical Approach for MentorConnect
 
 Given this is a college major project and you **already**:
 

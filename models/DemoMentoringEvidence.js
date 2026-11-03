@@ -18,6 +18,13 @@ const demoMentoringEvidenceSchema = new mongoose.Schema({
   achievementInteractions: { type: Number, min: 0, default: 0 },
   achievementMentees: { type: Number, min: 0, default: 0 },
   achievementRating: { type: Number, min: 0, max: 5, default: 0 },
+  // Session-level summary fields, matching what real confirmed interactions provide.
+  ratingCount: { type: Number, min: 0, default: 0 },
+  uniqueMentees: { type: Number, min: 0, default: 0 },
+  resolvedInteractions: { type: Number, min: 0, default: 0 },
+  verifiedCompletedSessions: { type: Number, min: 0, default: 0 },
+  lastInteractionAt: { type: Date, default: null },
+  generator: { type: String, default: null },
   demoOnly: { type: Boolean, required: true, default: true },
 }, { timestamps: true });
 

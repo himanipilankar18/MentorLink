@@ -260,7 +260,6 @@
                             <select id="regRole">
                                 <option value="junior" selected>Junior</option>
                                 <option value="senior">Senior</option>
-                                <option value="faculty">Faculty</option>
                             </select>
                         </div>
                         <button type="button" id="registerBtn" onclick="register()">Register</button>
@@ -376,7 +375,7 @@
     </div>
 
     <script>
-        let authToken = localStorage.getItem('mentorlink_token') || '';
+        let authToken = localStorage.getItem('mentorconnect_token') || '';
 
         window.onload = function() {
             try {
@@ -487,7 +486,7 @@
 
                 if (result.success && result.token) {
                     authToken = result.token;
-                    localStorage.setItem('mentorlink_token', authToken);
+                    localStorage.setItem('mentorconnect_token', authToken);
                     var td = document.getElementById('tokenDisplay');
                     var tv = document.getElementById('tokenValue');
                     if (td) td.style.display = 'block';
@@ -530,7 +529,7 @@
                 try { result = JSON.parse(text); } catch (e) { showToast('Server returned invalid response', 'error'); return; }
                 if (result.success && result.token) {
                     authToken = result.token;
-                    localStorage.setItem('mentorlink_token', authToken);
+                    localStorage.setItem('mentorconnect_token', authToken);
                     var td = document.getElementById('tokenDisplay');
                     var tv = document.getElementById('tokenValue');
                     if (td) td.style.display = 'block';

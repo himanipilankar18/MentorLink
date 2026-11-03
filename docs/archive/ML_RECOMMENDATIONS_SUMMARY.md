@@ -114,7 +114,7 @@ public/home.html
 ### File Structure
 
 ```
-d:\finalyrproject\MentorLink\
+d:\finalyrproject\MentorConnect\
 ├── public/
 │   ├── home.html (MODIFIED)
 │   │   ├── New ML CSS styles (80 lines)
@@ -149,7 +149,7 @@ if (document.readyState === 'loading') {
 ### Step 2: Fetch JWT & Call API
 
 ```javascript
-const token = localStorage.getItem('mentorlink_token');
+const token = localStorage.getItem('mentorconnect_token');
 const response = await fetch(
   `http://localhost:5000/api/recommendations/mentors?limit=5`,
   {
@@ -307,7 +307,7 @@ Frontend Rendering:
 ### 1. Start Backend
 
 ```bash
-cd d:\finalyrproject\MentorLink
+cd d:\finalyrproject\MentorConnect
 npm run dev
 ```
 
@@ -510,7 +510,7 @@ console.log(typeof RecommendationEngine);
 console.log(document.querySelectorAll('.suggestion-item').length);
 
 // Check JWT token
-console.log(localStorage.getItem('mentorlink_token'));
+console.log(localStorage.getItem('mentorconnect_token'));
 
 // Test API directly
 fetch('http://localhost:5000/api/recommendations/mentors', {

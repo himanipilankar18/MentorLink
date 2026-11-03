@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>MentorLink | Achievements</title>
+  <title>MentorConnect | Achievements</title>
   <style>
     :root { --ink:#f8fafc; --muted:#a1a1aa; --line:#27272a; --paper:#0a0a0a; --gold:#f59e0b; --green:#10b981; --blue:#a78bfa; }
     * { box-sizing:border-box; }
@@ -46,10 +46,10 @@
 </head>
 <body>
   <main class="shell">
-    <nav class="topbar"><div class="brand">MENTORLINK</div><a href="home.html">Back to platform</a></nav>
+    <nav class="topbar"><div class="brand">MENTORCONNECT</div><a href="home.html">Back to platform</a></nav>
     <div class="eyebrow">Contribution record</div>
     <h1>Recognition for the help you give.</h1>
-    <p class="intro">MentorLink converts confirmed mentoring sessions into an auditable contribution record. Points are awarded only after the mentee confirms the session, so recognition reflects help that was actually received.</p>
+    <p class="intro">MentorConnect converts confirmed mentoring sessions into an auditable contribution record. Points are awarded only after the mentee confirms the session, so recognition reflects help that was actually received.</p>
     <div id="login-notice" class="notice hidden">Sign in to view your contribution record. Your points are connected to your verified mentoring activity.</div>
     <section id="achievement-content" class="hidden">
       <div class="metrics">
@@ -70,7 +70,7 @@
     </section>
   </main>
   <script>
-    const token = localStorage.getItem('mentorlink_token');
+    const token = localStorage.getItem('mentorconnect_token');
     const loginNotice = document.getElementById('login-notice');
     const content = document.getElementById('achievement-content');
     const achievementLevels = [

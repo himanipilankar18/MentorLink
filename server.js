@@ -34,7 +34,7 @@ app.use(express.urlencoded({ extended: true }));
 app.get('/api/health', (req, res) => {
   res.json({
     success: true,
-    message: 'MentorLink API is running',
+    message: 'MentorConnect API is running',
     timestamp: new Date().toISOString(),
   });
 });
@@ -112,7 +112,7 @@ app.get('/favicon.ico', (req, res) => {
 app.get('/', (req, res) => {
   res.json({
     success: true,
-    message: 'Welcome to MentorLink API',
+    message: 'Welcome to MentorConnect API',
     version: '1.0.0',
     endpoints: {
       auth: '/api/auth',

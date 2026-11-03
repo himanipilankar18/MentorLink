@@ -595,7 +595,7 @@
                 if (response.ok) {
                     showMessage('Login successful! Redirecting...', 'success');
                     
-                    localStorage.setItem('mentorlink_token', data.token);
+                    localStorage.setItem('mentorconnect_token', data.token);
                     localStorage.setItem('user', JSON.stringify(data.user));
                     
                     setTimeout(() => {

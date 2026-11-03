@@ -83,7 +83,7 @@ const upload = multer({
 
 // Security: Whitelist of roles allowed for public registration
 // Admin role can only be created through protected endpoint
-const ALLOWED_REGISTRATION_ROLES = ['junior', 'senior', 'faculty'];
+const ALLOWED_REGISTRATION_ROLES = ['junior', 'senior'];
 const ADMISSION_EXAMS = ['JEE Main', 'MHT-CET', 'GATE', 'Other', 'Not Appeared', 'Prefer not to say'];
 const GUIDANCE_TOPICS = ['Academics', 'Placements', 'Campus Life', 'Internships', 'Projects', 'Clubs & Activities', 'Branch Experience', 'Student Life', 'Admission Process'];
 
@@ -198,9 +198,9 @@ router.post('/register',
       });
 
       const html = `
-        <h2>Verify your MentorLink account</h2>
+        <h2>Verify your MentorConnect account</h2>
         <p>Hello ${name || ''},</p>
-        <p>Thank you for registering on MentorLink. Please verify that this is your official SPIT email by entering the OTP below:</p>
+        <p>Thank you for registering on MentorConnect. Please verify that this is your official SPIT email by entering the OTP below:</p>
         <h1 style="color: #4F46E5; font-size: 32px; letter-spacing: 5px; font-family: monospace;">${otp}</h1>
         <p><strong>This OTP will expire in 15 minutes.</strong></p>
         <p>If you did not request this, please ignore this email.</p>
@@ -209,7 +209,7 @@ router.post('/register',
       // Send email with better error handling
       console.log(`📧 Sending OTP to ${normalizedEmail}, OTP: ${otp}`);
       try {
-        await sendEmail({ to: normalizedEmail, subject: 'Verify your MentorLink email', html });
+        await sendEmail({ to: normalizedEmail, subject: 'Verify your MentorConnect email', html });
         console.log(`✅ OTP email sent successfully to ${normalizedEmail}`);
       } catch (emailError) {
         console.error(`❌ Failed to send OTP email to ${email.toLowerCase()}:`, emailError);
@@ -284,9 +284,9 @@ router.post('/create-admin',
 
       // Send welcome email to new admin
       const html = `
-        <h2>Welcome to MentorLink Admin Team</h2>
+        <h2>Welcome to MentorConnect Admin Team</h2>
         <p>Hello ${admin.name},</p>
-        <p>An admin account has been created for you on MentorLink with the following credentials:</p>
+        <p>An admin account has been created for you on MentorConnect with the following credentials:</p>
         <ul>
           <li><strong>Email:</strong> ${admin.email}</li>
           <li><strong>Role:</strong> Administrator</li>
@@ -298,7 +298,7 @@ router.post('/create-admin',
 
       sendEmail({ 
         to: admin.email, 
-        subject: 'MentorLink Admin Account Created', 
+        subject: 'MentorConnect Admin Account Created', 
         html 
       }).catch(console.error);
 
@@ -395,9 +395,9 @@ router.post('/login',
       });
 
       const loginHtml = `
-        <h2>New Login to Your MentorLink Account</h2>
+        <h2>New Login to Your MentorConnect Account</h2>
         <p>Hello ${user.name},</p>
-        <p>We detected a login to your MentorLink account:</p>
+        <p>We detected a login to your MentorConnect account:</p>
         <div style="background: #f5f5f5; padding: 15px; border-radius: 8px; margin: 20px 0;">
           <p style="margin: 5px 0;"><strong>Time:</strong> ${loginTime}</p>
           <p style="margin: 5px 0;"><strong>Email:</strong> ${user.email}</p>
@@ -405,12 +405,12 @@ router.post('/login',
         <p>If this was you, you can safely ignore this email.</p>
         <p><strong>If this wasn't you, please reset your password immediately and contact support.</strong></p>
         <hr style="margin: 20px 0; border: none; border-top: 1px solid #e0e0e0;">
-        <p style="color: #666; font-size: 0.9em;">This is an automated security notification from MentorLink.</p>
+        <p style="color: #666; font-size: 0.9em;">This is an automated security notification from MentorConnect.</p>
       `;
 
       sendEmail({ 
         to: user.email, 
-        subject: 'New Login to Your MentorLink Account', 
+        subject: 'New Login to Your MentorConnect Account', 
         html: loginHtml 
       }).catch(console.error);
 
@@ -610,26 +610,26 @@ router.post('/verify-otp',
 
       // Send welcome email
       const welcomeHtml = `
-        <h2>Welcome to MentorLink! 🎉</h2>
+        <h2>Welcome to MentorConnect! 🎉</h2>
         <p>Hello ${user.name},</p>
-        <p>Your email has been successfully verified! Welcome to the MentorLink community at SPIT.</p>
+        <p>Your email has been successfully verified! Welcome to the MentorConnect community at SPIT.</p>
         <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 20px; border-radius: 10px; color: white; margin: 20px 0;">
           <h3 style="margin: 0 0 10px 0; color: white;">What's Next?</h3>
           <ul style="margin: 10px 0; padding-left: 20px;">
-            <li style="margin: 8px 0;">Explore your MentorLink home page</li>
+            <li style="margin: 8px 0;">Explore your MentorConnect home page</li>
             <li style="margin: 8px 0;">Connect with peers and mentors</li>
             <li style="margin: 8px 0;">Join discussions and share projects</li>
           </ul>
         </div>
-        <p><a href="${process.env.BACKEND_BASE_URL || 'http://localhost:5000'}/home.html" style="display: inline-block; padding: 12px 24px; background: #667eea; color: white; text-decoration: none; border-radius: 5px; margin: 10px 0;">Open MentorLink</a></p>
+        <p><a href="${process.env.BACKEND_BASE_URL || 'http://localhost:5000'}/home.html" style="display: inline-block; padding: 12px 24px; background: #667eea; color: white; text-decoration: none; border-radius: 5px; margin: 10px 0;">Open MentorConnect</a></p>
         <p>If you have any questions, feel free to reach out to our support team.</p>
         <hr style="margin: 20px 0; border: none; border-top: 1px solid #e0e0e0;">
-        <p style="color: #666; font-size: 0.9em;">You're receiving this email because you registered for MentorLink at SPIT.</p>
+        <p style="color: #666; font-size: 0.9em;">You're receiving this email because you registered for MentorConnect at SPIT.</p>
       `;
 
       sendEmail({ 
         to: user.email, 
-        subject: 'Welcome to MentorLink! 🎓', 
+        subject: 'Welcome to MentorConnect! 🎓', 
         html: welcomeHtml 
       }).catch(console.error);
 
@@ -954,9 +954,9 @@ router.post('/complete-profile',
 
       // Send welcome email after profile completion
       const welcomeHtml = `
-        <h2>Welcome to MentorLink! 🎉</h2>
+        <h2>Welcome to MentorConnect! 🎉</h2>
         <p>Hello ${user.name},</p>
-        <p>Your profile has been successfully completed! Welcome to the MentorLink community at SPIT.</p>
+        <p>Your profile has been successfully completed! Welcome to the MentorConnect community at SPIT.</p>
         <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 20px; border-radius: 10px; color: white; margin: 20px 0;">
           <h3 style="margin: 0 0 10px 0; color: white;">What's Next?</h3>
           <ul style="margin: 10px 0; padding-left: 20px;">
@@ -969,12 +969,12 @@ router.post('/complete-profile',
         <p><a href="${process.env.BACKEND_BASE_URL || 'http://localhost:5000'}/login.html" style="display: inline-block; padding: 12px 24px; background: #667eea; color: white; text-decoration: none; border-radius: 5px; margin: 10px 0;">Login to Your Account</a></p>
         <p>If you have any questions, feel free to reach out to our support team.</p>
         <hr style="margin: 20px 0; border: none; border-top: 1px solid #e0e0e0;">
-        <p style="color: #666; font-size: 0.9em;">You're receiving this email because you completed your MentorLink profile at SPIT.</p>
+        <p style="color: #666; font-size: 0.9em;">You're receiving this email because you completed your MentorConnect profile at SPIT.</p>
       `;
 
       sendEmail({ 
         to: user.email, 
-        subject: 'Welcome to MentorLink! 🎓', 
+        subject: 'Welcome to MentorConnect! 🎓', 
         html: welcomeHtml 
       }).catch(console.error);
 
@@ -1042,7 +1042,7 @@ router.post('/resend-otp',
       await user.save();
 
       const html = `
-        <h2>Verify your MentorLink account</h2>
+        <h2>Verify your MentorConnect account</h2>
         <p>Hello ${user.name || ''},</p>
         <p>Here is your new OTP to verify your SPIT email:</p>
         <h1 style="color: #4F46E5; font-size: 32px; letter-spacing: 5px; font-family: monospace;">${otp}</h1>
@@ -1051,7 +1051,7 @@ router.post('/resend-otp',
       `;
 
       // Send email
-      sendEmail({ to: user.email, subject: 'MentorLink - New OTP', html }).catch(console.error);
+      sendEmail({ to: user.email, subject: 'MentorConnect - New OTP', html }).catch(console.error);
 
       res.json({
         success: true,
@@ -1106,7 +1106,7 @@ router.post('/forgot-password',
       const resetUrl = `${backendBase}/reset-password.html?token=${resetToken}`;
 
       const html = `
-        <h2>Reset Your MentorLink Password</h2>
+        <h2>Reset Your MentorConnect Password</h2>
         <p>Hello ${user.name},</p>
         <p>You requested to reset your password. Click the link below to set a new password:</p>
         <p><a href="${resetUrl}" style="display: inline-block; padding: 12px 24px; background: #667eea; color: white; text-decoration: none; border-radius: 5px;">Reset Password</a></p>
@@ -1117,7 +1117,7 @@ router.post('/forgot-password',
       `;
 
       // Send email
-      sendEmail({ to: user.email, subject: 'MentorLink - Password Reset Request', html }).catch(console.error);
+      sendEmail({ to: user.email, subject: 'MentorConnect - Password Reset Request', html }).catch(console.error);
 
       res.json({
         success: true,
@@ -1187,7 +1187,7 @@ router.post('/reset-password',
       const passwordChangeHtml = `
         <h2>Password Changed Successfully</h2>
         <p>Hello ${user.name},</p>
-        <p>Your MentorLink password was successfully changed.</p>
+        <p>Your MentorConnect password was successfully changed.</p>
         <div style="background: #f5f5f5; padding: 15px; border-radius: 8px; margin: 20px 0;">
           <p style="margin: 5px 0;"><strong>Time:</strong> ${changeTime}</p>
           <p style="margin: 5px 0;"><strong>Account:</strong> ${user.email}</p>
@@ -1195,12 +1195,12 @@ router.post('/reset-password',
         <p>You can now login with your new password.</p>
         <p><strong>If you didn't make this change, please contact support immediately.</strong></p>
         <hr style="margin: 20px 0; border: none; border-top: 1px solid #e0e0e0;">
-        <p style="color: #666; font-size: 0.9em;">This is an automated security notification from MentorLink.</p>
+        <p style="color: #666; font-size: 0.9em;">This is an automated security notification from MentorConnect.</p>
       `;
 
       sendEmail({ 
         to: user.email, 
-        subject: 'Your MentorLink Password Was Changed', 
+        subject: 'Your MentorConnect Password Was Changed', 
         html: passwordChangeHtml 
       }).catch(console.error);
 

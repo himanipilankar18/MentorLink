@@ -24,7 +24,6 @@ MentorConnect aims to provide one authenticated place for:
 
 - Current students seeking academic, project, placement, or campus guidance.
 - Alumni who may participate as experienced community members or mentors.
-- Faculty who may act as mentors or administrators.
 - External users who can register with general email addresses and provide optional admission context.
 - Administrators who manage protected platform operations.
 

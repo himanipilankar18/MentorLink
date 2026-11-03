@@ -1,4 +1,4 @@
-# MentorLink API Documentation
+# MentorConnect API Documentation
 
 ## Base URL
 ```
@@ -349,7 +349,7 @@ Authorization: Bearer <token>
 2. **Role Constraints**: 
    - Juniors: Year 1-2 only
    - Seniors: Year 3-4 only
-3. **Mentorship**: Only juniors can request, only seniors/faculty can accept
+3. **Mentorship**: Only juniors can request, only seniors can accept
 4. **Interaction Logging**: Requires active (Accepted) mentorship
 5. **Rate Limiting**: Authentication endpoints limited to 5 requests per 15 minutes
 

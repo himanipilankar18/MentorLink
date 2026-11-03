@@ -116,7 +116,7 @@ Prerequisite for External matching/dashboard phase — do not start that phase u
 - [x] Add `allowInternal`/`allowExternal` Community fields with legacy-default behavior.
 - [x] Enforce shared request-time community visibility for list, detail, membership, posts, moderation, edits, assets, deletion, and post interactions.
 - [x] Add internal-only community creation toggles and owner/admin edit support.
-- [x] Restrict External recommendations and mentorship requests to current-year opted-in senior/faculty mentors.
+- [x] Restrict External recommendations and mentorship requests to current-year opted-in senior mentors.
 - [ ] Verify SPIT and Machine Learning community names and visibility against the test database.
 - [ ] Run seeded endpoint and browser regression checks for External navigation, communities, recommendations, and requests.
 - [ ] Decide and implement the deferred External peer, call, and group scope.

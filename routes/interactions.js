@@ -5,8 +5,38 @@ const { verifyToken } = require('../middleware/auth');
 const { validateInteraction, handleValidationErrors } = require('../middleware/validation');
 const { apiLimiter } = require('../middleware/security');
 const { awardForConfirmedInteraction } = require('../utils/contributionService');
+const { canVouchForMentoring, NOT_COUNTED_NOTE } = require('../utils/evidencePolicy');
+const { createAndEmitNotification } = require('../utils/notifications');
 
 const router = express.Router();
+
+// Feedback that only the mentee may give. Mentors can never set these on their own sessions,
+// otherwise the "verified evidence" the recommender relies on could be self-reported.
+function parseMenteeFeedback(body = {}) {
+  const feedback = {};
+  const errors = [];
+  if (body.satisfactionRating !== undefined && body.satisfactionRating !== null && body.satisfactionRating !== '') {
+    const rating = Number(body.satisfactionRating);
+    if (!Number.isInteger(rating) || rating < 1 || rating > 5) errors.push('Rating must be a whole number from 1 to 5');
+    else feedback.satisfactionRating = rating;
+  }
+  if (body.outcomeStatus !== undefined) {
+    if (!['resolved', 'unresolved'].includes(body.outcomeStatus)) errors.push('Outcome must be resolved or unresolved');
+    else feedback.outcomeStatus = body.outcomeStatus;
+  }
+  if (body.menteeWouldRecommend !== undefined && body.menteeWouldRecommend !== null) {
+    feedback.menteeWouldRecommend = body.menteeWouldRecommend === true || body.menteeWouldRecommend === 'true';
+  }
+  if (body.followUpCompleted !== undefined) {
+    feedback.followUpCompleted = body.followUpCompleted === true || body.followUpCompleted === 'true';
+  }
+  return { feedback, errors };
+}
+
+function notifySafely(req, payload) {
+  return createAndEmitNotification({ io: req.app.get('io'), ...payload })
+    .catch((error) => console.warn('[interactions] notification failed:', error.message));
+}
 
 // @route   POST /api/interactions
 // @desc    Log a structured interaction (MOST CRITICAL FOR ANALYTICS)
@@ -86,7 +116,15 @@ router.post('/',
         });
       }
 
-      // Create interaction record
+      // Only the mentee's own feedback is accepted. A session the mentee logs is
+      // confirmed straight away (they are the verifier); a mentor-logged session waits for them.
+      const { feedback, errors } = isMentee
+        ? parseMenteeFeedback({ satisfactionRating, outcomeStatus, menteeWouldRecommend, followUpCompleted })
+        : { feedback: {}, errors: [] };
+      if (errors.length) {
+        return res.status(400).json({ success: false, message: errors.join('; ') });
+      }
+
       const interaction = await Interaction.create({
         mentorId: mentorshipMentorId,
         menteeId: mentorshipMenteeId,
@@ -95,13 +133,35 @@ router.post('/',
         subjectTag,
         interactionType,
         duration: duration || null,
-        satisfactionRating: satisfactionRating || null,
-        outcomeStatus: outcomeStatus || 'unresolved',
-        menteeWouldRecommend: menteeWouldRecommend ?? null,
-        followUpCompleted: followUpCompleted === true,
+        satisfactionRating: feedback.satisfactionRating ?? null,
+        outcomeStatus: feedback.outcomeStatus || 'unresolved',
+        menteeWouldRecommend: feedback.menteeWouldRecommend ?? null,
+        followUpCompleted: feedback.followUpCompleted === true,
         notes: notes || '',
+        loggedBy: isMentee ? 'mentee' : 'mentor',
+        evidenceEligible: isMentee ? canVouchForMentoring(req.user) : null,
+        confirmationStatus: isMentee ? 'confirmed' : 'pending',
+        confirmedAt: isMentee ? new Date() : null,
         timestamp: new Date()
       });
+
+      let contribution = null;
+      if (isMentee) {
+        contribution = await awardForConfirmedInteraction(interaction._id);
+        notifySafely(req, {
+          userId: mentorshipMentorId,
+          type: 'SESSION_CONFIRMED',
+          message: `${req.user.name || 'Your mentee'} logged and confirmed a session: "${topic}"`,
+          relatedId: interaction._id,
+        });
+      } else {
+        notifySafely(req, {
+          userId: mentorshipMenteeId,
+          type: 'SESSION_TO_CONFIRM',
+          message: `${req.user.name || 'Your mentor'} logged a session with you: "${topic}". Please confirm and rate it.`,
+          relatedId: interaction._id,
+        });
+      }
 
       await interaction.populate('mentorId', 'name email department');
       await interaction.populate('menteeId', 'name email department');
@@ -109,8 +169,11 @@ router.post('/',
 
       res.status(201).json({
         success: true,
-        message: 'Interaction logged successfully',
-        interaction
+        message: isMentee
+          ? (interaction.evidenceEligible ? 'Session logged and confirmed' : `Session logged and confirmed. ${NOT_COUNTED_NOTE}`)
+          : 'Session logged. Your mentee has been asked to confirm and rate it.',
+        interaction,
+        contribution,
       });
     } catch (error) {
       res.status(500).json({
@@ -127,16 +190,19 @@ router.post('/',
 // @access  Private
 router.get('/', verifyToken, apiLimiter, async (req, res) => {
   try {
-    const { mentorshipId, subjectTag, interactionType, startDate, endDate, limit = 50 } = req.query;
+    const { mentorshipId, subjectTag, interactionType, startDate, endDate, confirmationStatus, as, limit = 50 } = req.query;
     const userId = req.user._id;
 
-    // Build query based on user role
-    const query = {
-      $or: [
-        { mentorId: userId },
-        { menteeId: userId }
-      ]
-    };
+    // Build query based on user role; `as=mentee` or `as=mentor` narrows to one side.
+    const query = as === 'mentee'
+      ? { menteeId: userId }
+      : as === 'mentor'
+        ? { mentorId: userId }
+        : { $or: [{ mentorId: userId }, { menteeId: userId }] };
+
+    if (['pending', 'confirmed', 'disputed'].includes(confirmationStatus)) {
+      query.confirmationStatus = confirmationStatus;
+    }
 
     if (mentorshipId) {
       query.mentorshipId = mentorshipId;
@@ -190,20 +256,68 @@ router.post('/:id/confirm', verifyToken, apiLimiter, async (req, res) => {
     if (interaction.confirmationStatus === 'confirmed') {
       return res.json({ success: true, message: 'Interaction was already confirmed', interaction });
     }
+    if (interaction.confirmationStatus === 'disputed') {
+      return res.status(400).json({ success: false, message: 'This session was reported as not having happened' });
+    }
 
+    // The mentee's feedback is saved together with the confirmation and then locked.
+    const { feedback, errors } = parseMenteeFeedback(req.body);
+    if (errors.length) return res.status(400).json({ success: false, message: errors.join('; ') });
+    Object.assign(interaction, feedback);
     interaction.confirmationStatus = 'confirmed';
     interaction.confirmedAt = new Date();
+    interaction.evidenceEligible = canVouchForMentoring(req.user);
     await interaction.save();
     const contribution = await awardForConfirmedInteraction(interaction._id);
 
+    notifySafely(req, {
+      userId: interaction.mentorId,
+      type: 'SESSION_CONFIRMED',
+      message: `${req.user.name || 'Your mentee'} confirmed your session "${interaction.topic}"`,
+      relatedId: interaction._id,
+    });
+
     res.json({
       success: true,
-      message: 'Interaction confirmed and contribution points updated',
+      message: interaction.evidenceEligible
+        ? 'Interaction confirmed and contribution points updated'
+        : `Interaction confirmed. ${NOT_COUNTED_NOTE}`,
       interaction,
       contribution,
     });
   } catch (error) {
     res.status(500).json({ success: false, message: 'Failed to confirm interaction', error: error.message });
+  }
+});
+
+// @route   POST /api/interactions/:id/dispute
+// @desc    Mentee reports that a mentor-logged session did not happen
+// @access  Private (mentee only)
+router.post('/:id/dispute', verifyToken, apiLimiter, async (req, res) => {
+  try {
+    const interaction = await Interaction.findById(req.params.id);
+    if (!interaction) return res.status(404).json({ success: false, message: 'Interaction not found' });
+    if (String(interaction.menteeId) !== String(req.user._id)) {
+      return res.status(403).json({ success: false, message: 'Only the mentee can dispute a session' });
+    }
+    if (interaction.confirmationStatus !== 'pending') {
+      return res.status(400).json({ success: false, message: `This session is already ${interaction.confirmationStatus}` });
+    }
+
+    interaction.confirmationStatus = 'disputed';
+    interaction.disputedAt = new Date();
+    await interaction.save();
+
+    notifySafely(req, {
+      userId: interaction.mentorId,
+      type: 'SESSION_DISPUTED',
+      message: `${req.user.name || 'Your mentee'} said the session "${interaction.topic}" did not happen`,
+      relatedId: interaction._id,
+    });
+
+    res.json({ success: true, message: 'Session marked as not having happened', interaction });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Failed to dispute interaction', error: error.message });
   }
 });
 
@@ -357,15 +471,43 @@ router.put('/:id', verifyToken, apiLimiter, async (req, res) => {
       });
     }
 
-    // Update allowed fields only
-    if (duration !== undefined) interaction.duration = duration;
-    if (satisfactionRating !== undefined) interaction.satisfactionRating = satisfactionRating;
-    if (outcomeStatus !== undefined) interaction.outcomeStatus = outcomeStatus;
-    if (menteeWouldRecommend !== undefined) interaction.menteeWouldRecommend = menteeWouldRecommend;
-    if (followUpCompleted !== undefined) interaction.followUpCompleted = followUpCompleted;
-    if (notes !== undefined) interaction.notes = notes;
+    const isMentee = interaction.menteeId.toString() === userId;
+    const status = interaction.confirmationStatus;
+    const feedbackTouched = [satisfactionRating, outcomeStatus, menteeWouldRecommend]
+      .some((value) => value !== undefined);
+
+    if (status === 'disputed') {
+      return res.status(400).json({ success: false, message: 'A disputed session cannot be edited' });
+    }
+
+    let reaward = false;
+    if (status === 'pending') {
+      // While pending, the logger can fix details; feedback is only given when the mentee confirms.
+      if (feedbackTouched || followUpCompleted !== undefined) {
+        return res.status(400).json({ success: false, message: 'Feedback is given by the mentee when confirming the session' });
+      }
+      if (duration !== undefined) interaction.duration = duration;
+      if (notes !== undefined) interaction.notes = notes;
+    } else {
+      // Confirmed sessions are locked evidence. The one allowed change: the mentee can
+      // record later that the follow-up happened.
+      if (feedbackTouched || duration !== undefined) {
+        return res.status(400).json({ success: false, message: 'Confirmed sessions are locked and cannot be changed' });
+      }
+      if (followUpCompleted !== undefined) {
+        if (!isMentee) return res.status(403).json({ success: false, message: 'Only the mentee can mark the follow-up as done' });
+        if (followUpCompleted !== true) return res.status(400).json({ success: false, message: 'A completed follow-up cannot be undone' });
+        if (!interaction.followUpCompleted) {
+          interaction.followUpCompleted = true;
+          reaward = true;
+        }
+      }
+      if (notes !== undefined) interaction.notes = notes;
+    }
 
     await interaction.save();
+    // Contribution events are idempotent, so this only adds the follow-up points.
+    if (reaward) await awardForConfirmedInteraction(interaction._id);
     await interaction.populate('mentorId', 'name email department');
     await interaction.populate('menteeId', 'name email department');
 

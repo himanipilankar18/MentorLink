@@ -106,8 +106,8 @@ These are the repository's tested or declared assumptions:
 
 ```powershell
 # Terminal: PowerShell, from any directory
-git clone https://github.com/himanipilankar18/MentorLink.git MentorLink
-Set-Location .\MentorLink
+git clone https://github.com/himanipilankar18/MentorConnect.git MentorConnect
+Set-Location .\MentorConnect
 
 # Terminal: repository root
 py -3.13 -m venv .venv
@@ -133,8 +133,8 @@ Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 
 ```bash
 # Terminal: shell, from any directory
-git clone https://github.com/himanipilankar18/MentorLink.git MentorLink
-cd MentorLink
+git clone https://github.com/himanipilankar18/MentorConnect.git MentorConnect
+cd MentorConnect
 
 # Terminal: repository root
 python3 -m venv .venv
@@ -305,7 +305,7 @@ The exact output depends on the MongoDB deployment.
 Windows PowerShell:
 
 ```powershell
-Set-Location C:\path\to\MentorLink
+Set-Location C:\path\to\MentorConnect
 .\.venv\Scripts\Activate.ps1
 python -m uvicorn recommender_python.service:app --host 127.0.0.1 --port 8000
 ```
@@ -313,7 +313,7 @@ python -m uvicorn recommender_python.service:app --host 127.0.0.1 --port 8000
 macOS/Linux:
 
 ```bash
-cd /path/to/MentorLink
+cd /path/to/MentorConnect
 source .venv/bin/activate
 python -m uvicorn recommender_python.service:app --host 127.0.0.1 --port 8000
 ```
@@ -350,7 +350,7 @@ Expected response:
 Windows PowerShell:
 
 ```powershell
-Set-Location C:\path\to\MentorLink
+Set-Location C:\path\to\MentorConnect
 $env:RECOMMENDATION_SERVICE_URL = "http://127.0.0.1:8000"
 $env:RECOMMENDATION_ENGINE_VERSION = "v1"
 npm start
@@ -359,7 +359,7 @@ npm start
 macOS/Linux:
 
 ```bash
-cd /path/to/MentorLink
+cd /path/to/MentorConnect
 export RECOMMENDATION_SERVICE_URL=http://127.0.0.1:8000
 export RECOMMENDATION_ENGINE_VERSION=v1
 npm start
@@ -375,7 +375,7 @@ http://localhost:5000/api/health
 ```
 
 Expected response has `success: true` and
-`message: "MentorLink API is running"`.
+`message: "MentorConnect API is running"`.
 
 If `RECOMMENDATION_SERVICE_URL` is omitted, the backend still works through the
 existing JavaScript recommendation engine.
@@ -386,13 +386,13 @@ Run from the repository root:
 
 ```powershell
 # Windows PowerShell
-Set-Location C:\path\to\MentorLink
+Set-Location C:\path\to\MentorConnect
 npm run dev
 ```
 
 ```bash
 # macOS/Linux
-cd /path/to/MentorLink
+cd /path/to/MentorConnect
 npm run dev
 ```
 

@@ -1,9 +1,9 @@
 > Reference; may lag architecture.md
 
-# MentorLink - Detailed Diagram Descriptions
+# MentorConnect - Detailed Diagram Descriptions
 
 ## Overview
-This document contains detailed descriptions for all diagrams required for the MentorLink system documentation. Each section provides comprehensive specifications that can be used to generate professional diagrams using external tools (Lucidchart, Draw.io, Visio, or AI image generation tools).
+This document contains detailed descriptions for all diagrams required for the MentorConnect system documentation. Each section provides comprehensive specifications that can be used to generate professional diagrams using external tools (Lucidchart, Draw.io, Visio, or AI image generation tools).
 
 ---
 
@@ -97,8 +97,7 @@ Shows the interactions between different user types (actors) and the system func
 ### Actors
 1. **Junior User** (Student seeking mentorship)
 2. **Senior User** (Student providing mentorship)
-3. **Faculty User** (Academic advisor, can both mentor and review)
-4. **Admin User** (System administrator)
+3. **Admin User** (System administrator)
 5. **System** (automated background processes)
 
 ### Use Cases & Actor Relationships
@@ -114,7 +113,7 @@ Shows the interactions between different user types (actors) and the system func
 
 **Mentorship Management (Junior Users)**
 - Browse available mentors (with filters: year, department, skills)
-- Request mentorship from senior/faculty
+- Request mentorship from senior
 - View pending mentorship requests
 - View active mentorships
 - Log interactions with mentor
@@ -122,7 +121,7 @@ Shows the interactions between different user types (actors) and the system func
 - Rate mentor satisfaction
 - Terminate mentorship
 
-**Mentorship Management (Senior/Faculty Users)**
+**Mentorship Management (Senior Users)**
 - View incoming mentorship requests
 - Accept mentorship request
 - Reject mentorship request with reason
@@ -151,7 +150,7 @@ Shows the interactions between different user types (actors) and the system func
 - Search discussions by subject
 - View discussion statistics
 
-**Community Management (Senior/Faculty)**
+**Community Management (Senior)**
 - Create community/group
 - Invite members
 - Manage community content
@@ -171,7 +170,7 @@ Shows the interactions between different user types (actors) and the system func
 - Share file attachments
 - See online status
 
-**Analytics Dashboard (Faculty/Admin)**
+**Analytics Dashboard (Admin)**
 - View mentor performance metrics
 - View mentee progress analytics
 - Generate reports on interaction trends
@@ -204,7 +203,7 @@ CLASS: User
 │  ├─ displayName: String
 │  ├─ email: String (Unique, Indexed)
 │  ├─ password: String (Hashed with bcrypt)
-│  ├─ role: Enum [junior, senior, faculty, admin]
+│  ├─ role: Enum [junior, senior, admin]
 │  ├─ year: Number (1-4, for current academic year)
 │  ├─ department: String (CSE, ECE, Mechanical, etc.)
 │  ├─ skills: Array<String> (Normalized, indexed)
@@ -442,7 +441,7 @@ Shows the step-by-step flow when a junior user requests mentorship from a senior
    ↓
    Check if requester is junior/valid user
    ↓
-   Check if mentor exists and is senior/faculty
+   Check if mentor exists and is senior
    ↓
    Check for duplicate request (compound index: mentorId + menteeId + status:pending)
    ↓
@@ -738,7 +737,7 @@ Shows the major functional modules and their interactions at a high level, depic
 
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
-│                    MENTORLINK PLATFORM ARCHITECTURE                 │
+│                    MENTORCONNECT PLATFORM ARCHITECTURE                 │
 └─────────────────────────────────────────────────────────────────────┘
 
 ┌─ PRESENTATION LAYER ────────────────────────────────────────────┐
@@ -790,7 +789,7 @@ Shows the major functional modules and their interactions at a high level, depic
 │  │  │ • Skills & interests management                      │ │ │
 │  │  │ • CGPA tracking                                      │ │ │
 │  │  │ • Mentor/Mentee discovery with filters              │ │ │
-│  │  │ • User roles (Junior, Senior, Faculty, Admin)       │ │ │
+│  │  │ • User roles (Junior, Senior, Admin)       │ │ │
 │  │  │ • Online status tracking                            │ │ │
 │  │  └─────────────────────────────────────────────────────┘ │ │
 │  │                                                             │ │
@@ -863,7 +862,7 @@ Shows the major functional modules and their interactions at a high level, depic
 │  │  │ • Mentee progress tracking                           │ │ │
 │  │  │ • Clustering analysis (grouping students)            │ │ │
 │  │  │ • Association rule mining (topics co-occurrence)     │ │ │
-│  │  │ • Report generation for faculty/admin                │ │ │
+│  │  │ • Report generation for admin                │ │ │
 │  │  │ • Time-series analysis                               │ │ │
 │  │  └─────────────────────────────────────────────────────┘ │ │
 │  │                                                             │ │
@@ -992,14 +991,14 @@ Shows the major functional modules and their interactions at a high level, depic
 ## 5.3 Technology Stack Diagram
 
 ### Purpose
-Shows all technologies and frameworks used in the MentorLink platform and how they interact.
+Shows all technologies and frameworks used in the MentorConnect platform and how they interact.
 
 ### Stack Layers
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
 │                     TECHNOLOGY STACK                             │
-│                    MentorLink Platform                           │
+│                    MentorConnect Platform                           │
 └─────────────────────────────────────────────────────────────────┘
 
 ┌─────────────────────────────────────────────────────────────────┐
@@ -1282,7 +1281,7 @@ File Storage (S3/Cloud Storage)
 
 ## Summary
 
-MentorLink uses a modern, scalable technology stack designed for:
+MentorConnect uses a modern, scalable technology stack designed for:
 - **Rapid Development**: Express + React ecosystem
 - **Real-time Features**: Socket.io for live updates
 - **Data Integrity**: Mongoose validation and MongoDB transactions

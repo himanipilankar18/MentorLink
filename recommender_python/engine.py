@@ -328,7 +328,21 @@ def _analytics(candidates: list[dict[str, Any]], interactions: list[dict[str, An
             and str(row["_id"].get("mentorId")) == candidate_id
             and str(row["_id"].get("status", "")).lower() == "pending"
         )
-        last = max(dates, default=0)
+        rejected = sum(
+            _number(row.get("count"))
+            for row in mentorships
+            if isinstance(row.get("_id"), dict)
+            and str(row["_id"].get("mentorId")) == candidate_id
+            and str(row["_id"].get("status", "")).lower() == "rejected"
+        ) or sum(1 for row in mentorships if str(row.get("mentorId")) == candidate_id and str(row.get("status", "")).lower() == "rejected")
+        # Pre-aggregated stats carry no session dates, so use their last-session timestamp.
+        last = _date_value(precomputed.get("lastInteractionAt")) if precomputed else max(dates, default=0)
+        if precomputed:
+            recommend_yes = _number(precomputed.get("recommendYes"))
+            recommend_answers = _number(precomputed.get("recommendAnswers"))
+        else:
+            answers = [row.get("menteeWouldRecommend") for row in related if row.get("menteeWouldRecommend") in (True, False)]
+            recommend_yes, recommend_answers = float(sum(1 for a in answers if a)), float(len(answers))
         achievement = next((row for row in achievements if str(row.get("_id")) == candidate_id), {})
         result[candidate_id] = {
             "totalInteractions": _number(precomputed.get("totalInteractions")) if precomputed else len(related),
@@ -341,6 +355,11 @@ def _analytics(candidates: list[dict[str, Any]], interactions: list[dict[str, An
             ),
             "acceptedMentorships": accepted,
             "activeMentorships": accepted + pending,
+            "rejectedRequests": rejected,
+            # Share of requests the mentor said yes to, with a Beta(2,2) prior so new mentors start at 0.5.
+            "responsiveness": (accepted + terminated + 2) / (accepted + terminated + rejected + 4),
+            "recommendYes": recommend_yes,
+            "recommendAnswers": recommend_answers,
             "completionRate": (
                 _clamp(
                     _number(precomputed.get("verifiedCompletedSessions")) / _number(precomputed.get("totalInteractions")),
@@ -466,9 +485,8 @@ def _eligible(seeker: dict[str, Any], candidates: list[dict[str, Any]], mentorsh
             continue
         if str(candidate.get("mentorshipIntent", "")).lower() not in {"offering", "both"}:
             continue
-        role = str(candidate.get("role", "")).lower()
-        if role in {"faculty", "admin"} or _number(candidate.get("year"), math.nan) > _number(seeker.get("year"), math.nan):
-            pool.append(candidate)
+        # No seniority rule: any year or role can mentor any other.
+        pool.append(candidate)
     return sorted(pool, key=lambda candidate: str(candidate.get("id") or candidate.get("_id")))
 
 
@@ -510,6 +528,12 @@ def _score(seeker: dict[str, Any], candidate: dict[str, Any], stats: dict[str, A
         rating_confidence = 0
         rating_quality = (_number(stats.get("avgSatisfaction")) / 5) * 0.6
     quality = _clamp(rating_quality + _number(stats.get("completionRate")) * 0.4, 0, 1)
+    # "Would you recommend this mentor?" answers, pulled toward 70% until there are a few.
+    recommend_answers = _number(stats.get("recommendAnswers"))
+    would_recommend = (_number(stats.get("recommendYes")) + 1.4) / (recommend_answers + 2) if recommend_answers > 0 else None
+    if version == "v3" and would_recommend is not None:
+        quality = _clamp(quality * 0.8 + would_recommend * 0.2, 0, 1)
+    responsiveness = _clamp(_number(stats.get("responsiveness"), 0.5), 0, 1)
     activity = _clamp((_number(stats.get("totalInteractions")) / 60) * 0.5 + _number(stats.get("recencyScore")) * 0.5, 0, 1)
     achievement_progress = _clamp(_number(stats.get("achievementProgressStars")) / 5, 0, 1)
     achievement_confidence = 1.0 if _number(stats.get("achievementLevel")) > 0 else 0.0
@@ -527,7 +551,7 @@ def _score(seeker: dict[str, Any], candidate: dict[str, Any], stats: dict[str, A
         seeker_topics = _learning_needs(seeker)
         mentor_topics = _mentor_expertise(candidate)
         enriched = len(seeker_topics & mentor_topics) / len(seeker_topics | mentor_topics) if seeker_topics | mentor_topics else 0
-    values = {"skills": skill, "interests": content, "project": project, "department": department, "progression": progression, "availability": availability, "quality": quality, "activity": activity, "profile": _strength(candidate), "cluster": fit, "enriched": enriched}
+    values = {"skills": skill, "interests": content, "project": project, "department": department, "progression": progression, "availability": availability, "goals": quality, "activity": activity, "profile": _strength(candidate), "cluster": fit, "enriched": enriched, "responsiveness": responsiveness}
     weights = _weights(profile)
     if version == "v2.0":
         total = sum(weights.values()) + 0.10 + 0.10 + 0.11 + 0.08 + 0.03 + 0.05
@@ -545,6 +569,7 @@ def _score(seeker: dict[str, Any], candidate: dict[str, Any], stats: dict[str, A
             "enriched": .05,
             "mentoring": .08,
             "project": .10,
+            "responsiveness": .05,
         }
         total = sum(coefficient_values.values())
         coefficients = {key: value / total for key, value in coefficient_values.items()}
@@ -573,6 +598,8 @@ def _score(seeker: dict[str, Any], candidate: dict[str, Any], stats: dict[str, A
         "mentoringEvidence": round(mentoring_evidence * 100),
         "achievementConfidence": round(achievement_confidence * 100),
         "achievementProgressStars": round(achievement_progress * 5, 2),
+        "responsiveness": round(responsiveness * 100),
+        "wouldRecommendRate": None if would_recommend is None else round(would_recommend * 100),
     }
     if version == "v3":
         contributions = {
@@ -590,6 +617,7 @@ def _score(seeker: dict[str, Any], candidate: dict[str, Any], stats: dict[str, A
             "mentoringEvidence": mentoring_evidence * coefficients["mentoring"],
             "skillAlignment": max(skill - learning_alignment, 0) * coefficients["skills"],
             "learningNeedsCompatibility": min(skill, learning_alignment) * coefficients["skills"],
+            "responsiveness": responsiveness * coefficients["responsiveness"],
             "exposurePenalty": -exposure_penalty,
         }
     else:

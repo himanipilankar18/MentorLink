@@ -29,7 +29,7 @@ Last updated: 2026-10-11
 - `register.html` sends the email and OTP to `POST /api/auth/verify-otp`.
 - The route creates a `User` document with `isVerified: true` and `profileComplete: true`.
 - `models/User.js` hashes the password in its `pre('save')` hook.
-- The route returns a seven-day JWT; the browser stores it in `localStorage.mentorlink_token`.
+- The route returns a seven-day JWT; the browser stores it in `localStorage.mentorconnect_token`.
 - For External users, the browser redirects to `complete-external-profile.html` with that token already stored.
 - The External page sends multipart data with the Bearer token to `POST /api/auth/external-profile`.
 - That route updates only profile picture, bio, mentorship intent, availability, interests, skills, project link, and GitHub URL.
@@ -88,7 +88,7 @@ Status: `⚠️ Legacy (needs cleanup)`.
 
 ### Mentor External Guidance Settings
 
-1. A senior or faculty Institute Member opens their own profile in the live `home.html` `#profile` view and uses the Edit Profile guidance control. The standalone `profile.html` page remains a supported consistent fallback with the same consent route.
+1. A senior Institute Member opens their own profile in the live `home.html` `#profile` view and uses the Edit Profile guidance control. The standalone `profile.html` page remains a supported consistent fallback with the same consent route.
 2. The `Open to External Guidance` switch shows the current state and, after a change, the academic-year lock date. Juniors, other users, and External accounts do not see this setting.
 3. Turning the switch on leaves the switch unchanged and opens the terms modal. The modal fetches the current academic-year end date and draft terms from `/api/users/academic-year-config`; terms are not shown on the profile by default.
 4. The checkbox starts unchecked on every open, and the real Confirm button remains disabled until `I have read and agree to these terms` is checked. Cancel, Escape, and clicking outside reset the checkbox and leave the switch unchanged.

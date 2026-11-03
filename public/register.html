@@ -980,7 +980,7 @@
                 if (response.ok) {
                     showMessage(otpMessage, 'Registration complete! Redirecting...', 'success');
                     if (data.token) {
-                        localStorage.setItem('mentorlink_token', data.token);
+                        localStorage.setItem('mentorconnect_token', data.token);
                     }
                     if (data.user) {
                         localStorage.setItem('user', JSON.stringify(data.user));

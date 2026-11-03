@@ -1,6 +1,6 @@
-# MentorLink Research Paper
+# MentorConnect Research Paper
 
-This folder contains the IEEE conference-format research paper draft for MentorLink.
+This folder contains the IEEE conference-format research paper draft for MentorConnect.
 
 - `conference_101719.tex`: manuscript source; author fields are intentionally blank.
 - `bibliography.bib`: references used by the manuscript.

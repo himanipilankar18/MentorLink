@@ -98,7 +98,7 @@ curl http://localhost:5000
 **Check 2:** Is JWT token present?
 ```javascript
 // In browser console
-localStorage.getItem('mentorlink_token')
+localStorage.getItem('mentorconnect_token')
 // Should show a long token string, not null
 ```
 

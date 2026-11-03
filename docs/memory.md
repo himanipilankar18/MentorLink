@@ -102,7 +102,7 @@ This file is an append-only decision journal. Add new entries rather than rewrit
 - External profile/request presentation uses `External` and `Seeking Admission Guidance` badges. External profiles keep skills, interests, projects, and the Communities post scope while hiding the composer and personal My Posts scope.
 - Added `Community.allowInternal` (default `true`) and `Community.allowExternal` (default `false`). Missing legacy fields are interpreted using those defaults in `utils/communityAccess.js`; no database migration or writes were performed.
 - Community visibility is enforced at request time with 404 responses for disallowed communities. Owners/admins retain management access, memberships are not edited when a flag changes, and External users cannot create or moderate communities.
-- External mentor recommendations and requests are limited to active senior/faculty users with a current-year opt-in (`availableForExternalGuidance` and a future `externalGuidanceLockedUntil`). External requests are capped at three pending requests.
+- External mentor recommendations and requests are limited to active senior users with a current-year opt-in (`availableForExternalGuidance` and a future `externalGuidanceLockedUntil`). External requests are capped at three pending requests.
 - Peer recommendations/connections, calls, and External groups remain deferred because their scope and fraud/access risks require a separate decision.
 
 ## 2026-10-11 — Markdown consolidation

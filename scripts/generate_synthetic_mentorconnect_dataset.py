@@ -4,8 +4,8 @@ from datetime import datetime, timedelta
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-SOURCE_FILE = ROOT / "MentorLink .csv"
-OUTPUT_FILE = ROOT / "MentorLink_500_synthetic.csv"
+SOURCE_FILE = ROOT / "MentorConnect .csv"
+OUTPUT_FILE = ROOT / "MentorConnect_500_synthetic.csv"
 TARGET_ROWS = 500
 
 random.seed(42)

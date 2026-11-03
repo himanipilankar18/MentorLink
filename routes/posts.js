@@ -299,6 +299,46 @@ router.post('/:id/comment', verifyToken, apiLimiter, async (req, res) => {
   }
 });
 
+// @route   DELETE /api/posts/:id/comment/:commentId
+// @desc    Delete a comment from a post
+// @access  Private (Comment author only)
+router.delete('/:id/comment/:commentId', verifyToken, apiLimiter, async (req, res) => {
+  try {
+    const post = await Post.findById(req.params.id);
+
+    if (!post || !(await ensurePostCommunityAccess(post, req.user))) {
+      return res.status(404).json({ success: false, message: 'Post not found' });
+    }
+
+    const comment = post.comments.id(req.params.commentId);
+    if (!comment) {
+      return res.status(404).json({ success: false, message: 'Comment not found' });
+    }
+
+    if (comment.authorId.toString() !== req.user._id.toString()) {
+      return res.status(403).json({
+        success: false,
+        message: 'Not authorized to delete this comment'
+      });
+    }
+
+    comment.deleteOne();
+    await post.save();
+
+    res.json({
+      success: true,
+      message: 'Comment deleted successfully',
+      commentCount: post.comments.length
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Failed to delete comment',
+      error: error.message
+    });
+  }
+});
+
 // @route   DELETE /api/posts/:id
 // @desc    Delete a post
 // @access  Private (Author only)

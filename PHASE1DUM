@@ -1,5 +1,5 @@
 %----------------------------------------------------------------
-%MentorLink phase 1  - Full Project Report (LaTeX)
+%MentorConnect phase 1  - Full Project Report (LaTeX)
 % Complete 25-40 page style report (single-file)
 % Integrates the user's template and fills all required sections.
 %----------------------------------------------------------------
@@ -51,7 +51,7 @@
     linkcolor=blue,
     citecolor=blue,
     urlcolor=blue,
-    pdftitle={MentorLink: A Data-Driven Interaction and Academic Analytics Platform},
+    pdftitle={MentorConnect: A Data-Driven Interaction and Academic Analytics Platform},
     pdfauthor={Himani Arvind Pilankar, Tithi Kiran Talele, Chetan Vijay Wankhede}
 }
 \setlength{\parskip}{0.8ex}
@@ -95,7 +95,7 @@
   \begin{center}
     \vspace*{2cm}  \begin{center}
     \vspace*{2cm}
-    {\Large \textbf{MentorLink \\ A Data-Driven Interaction and Academic Analytics Platform}}\\[1cm]    {\Large \textbf{MentorLink \\ A Data-Driven Interaction and Academic Analytics Platform}}\\[1cm]
+    {\Large \textbf{MentorConnect \\ A Data-Driven Interaction and Academic Analytics Platform}}\\[1cm]    {\Large \textbf{MentorConnect \\ A Data-Driven Interaction and Academic Analytics Platform}}\\[1cm]
     {\large B.Tech Final Year Project – Phase I Report}\\[1.5cm]
     \textbf{Himani Arvind Pilankar \quad Tithi Kiran Talele \quad Chetan Vijay Wankhede}\\[0.5cm]    {\large B.Tech Final Year Project – Phase I Report}\\[1.5cm]
     \textbf{Himani Arvind Pilankar \quad Tithi Kiran Talele \quad Chetan Vijay Wankhede}\\[0.5cm]
@@ -104,7 +104,7 @@
     Sardar Patel Institute of Technology\\[0.5cm]
     Academic Year: 2025--2026\\[1cm]
     Under the Guidance of\\
-    \textbf{Prof. Soni Bhambar}\\[2cm]
+    \textbf{Dr. Sudhir Dhage}\\[2cm]
     \vfill
   \end{center}
 }
@@ -121,7 +121,7 @@
 
 \vspace{2cm}
 
-This is to certify that the Project entitled ``MentorLink -- A Data-Driven Interaction and Academic Analytics Platform'' by Himani Arvind Pilankar, Tithi Kiran Talele and Chetan Vijay Wankhede is approved for the partial fulfillment of Major Project - I for the Final Year Project towards obtaining the Degree of Bachelor of Technology in Computer Engineering from University of Mumbai.
+This is to certify that the Project entitled ``MentorConnect -- A Data-Driven Interaction and Academic Analytics Platform'' by Himani Arvind Pilankar, Tithi Kiran Talele and Chetan Vijay Wankhede is approved for the partial fulfillment of Major Project - I for the Final Year Project towards obtaining the Degree of Bachelor of Technology in Computer Engineering from University of Mumbai.
 
 \vspace{2cm}
 
@@ -133,7 +133,7 @@ This is to certify that the Project entitled ``MentorLink -- A Data-Driven Inter
 
 \vspace{1cm}
 
-\textbf{Name: Prof. Soni Bhambar} \hspace{2.3in} \textbf{Name:}
+\textbf{Name: Dr. Sudhir Dhage} \hspace{2.3in} \textbf{Name:}
 
 \vspace{1cm}
 
@@ -160,7 +160,7 @@ This is to certify that the Project entitled ``MentorLink -- A Data-Driven Inter
 
 \vspace{4cm}
 
-I wish to state that the work embodied in this work titled ``MentorLink -- A Data-Driven Interaction and Academic Analytics Platform'' forms my own contribution to the work carried out under the guidance of Prof. Soni Bhambar at the Sardar Patel Institute of Technology. I declare that this written submission represents my ideas in my own words and where others' ideas or words have been included, I have adequately cited and referenced the original sources. I also declare that I have adhered to all principles of academic honesty and integrity and have not misrepresented or fabricated or falsified any idea/data/fact/source in my submission.
+I wish to state that the work embodied in this work titled ``MentorConnect -- A Data-Driven Interaction and Academic Analytics Platform'' forms my own contribution to the work carried out under the guidance of Dr. Sudhir Dhage at the Sardar Patel Institute of Technology. I declare that this written submission represents my ideas in my own words and where others' ideas or words have been included, I have adequately cited and referenced the original sources. I also declare that I have adhered to all principles of academic honesty and integrity and have not misrepresented or fabricated or falsified any idea/data/fact/source in my submission.
 
 \vspace{2.8cm}
 
@@ -194,7 +194,7 @@ An additional limitation of informal mentorship models is restricted accessibili
 
 The absence of a formal mentorship management infrastructure prevents institutions from analyzing engagement patterns and identifying frequently discussed academic domains.
 
-MentorLink is developed as a centralized, web-based mentorship and academic networking platform designed to formalize peer mentorship within institutional environments. The platform introduces verified authentication, structured student profiles, role-based access control, mentorship lifecycle management, mentor discovery mechanisms, and community-driven academic interaction features. It also supports structured interaction logging and discussion-based communication to ensure that mentorship activities are recorded in an organized and analyzable format.
+MentorConnect is developed as a centralized, web-based mentorship and academic networking platform designed to formalize peer mentorship within institutional environments. The platform introduces verified authentication, structured student profiles, role-based access control, mentorship lifecycle management, mentor discovery mechanisms, and community-driven academic interaction features. It also supports structured interaction logging and discussion-based communication to ensure that mentorship activities are recorded in an organized and analyzable format.
 
 The system has been implemented using the MERN stack architecture, integrating React.js for frontend development, Node.js and Express.js for backend services, and MongoDB for database management. Core functionalities including user authentication, profile management, mentorship request workflows, academic communities, and backend API integration have been successfully implemented. The platform architecture has also been designed to support future analytics and recommendation-based extensions.
 
@@ -249,7 +249,7 @@ Additionally, informal communication lacks structured documentation. Mentorship 
 
 \subsection{Project Overview}
 
-MentorLink is proposed as a centralized, web-based mentorship and academic networking platform designed to formalize peer mentorship within the institutional ecosystem. The platform introduces a structured digital infrastructure that enables systematic mentor discovery, formal mentorship request workflows, organized interaction logging, and community-based academic discussions.
+MentorConnect is proposed as a centralized, web-based mentorship and academic networking platform designed to formalize peer mentorship within the institutional ecosystem. The platform introduces a structured digital infrastructure that enables systematic mentor discovery, formal mentorship request workflows, organized interaction logging, and community-based academic discussions.
 
 The system supports multiple user roles including junior students, senior mentors, and administrative moderators. Junior students can explore mentor profiles based on academic attributes, send mentorship requests, participate in structured mentorship conversations, and engage in domain-based communities. Senior students can accept mentorship requests, guide mentees, and actively contribute to academic discussions and community threads.
 
@@ -259,7 +259,7 @@ Furthermore, the system incorporates a mentor recommendation engine that suggest
 
 \subsection{Key Contributions}
 
-The primary contributions of MentorLink are as follows:
+The primary contributions of MentorConnect are as follows:
 
 \begin{itemize}
     \item Introduction of a structured mentorship lifecycle model.
@@ -270,11 +270,11 @@ The primary contributions of MentorLink are as follows:
     \item Creation of a scalable backend architecture prepared for future data mining integration.
 \end{itemize}
 
-By combining mentorship management, intelligent recommendation, and community-based interaction within a unified platform, MentorLink transforms informal student guidance into an organized and structured academic ecosystem.
+By combining mentorship management, intelligent recommendation, and community-based interaction within a unified platform, MentorConnect transforms informal student guidance into an organized and structured academic ecosystem.
 
 \subsection{Target Users}
 
-MentorLink is designed for the following user groups:
+MentorConnect is designed for the following user groups:
 
 \begin{itemize}
     \item \textbf{Junior Students:} Individuals seeking academic mentorship, domain exploration, and peer guidance.
@@ -305,7 +305,7 @@ Therefore, there is a need for a centralized, structured, and intelligent mentor
 
 \subsection{Scope of the Project}
 
-The scope of MentorLink is confined to the development of an institute-exclusive web-based mentorship and academic networking platform. The system focuses on formalizing peer mentorship and enabling structured academic collaboration among students.
+The scope of MentorConnect is confined to the development of an institute-exclusive web-based mentorship and academic networking platform. The system focuses on formalizing peer mentorship and enabling structured academic collaboration among students.
 
 The project includes:
 
@@ -324,7 +324,7 @@ The system is designed with a scalable backend architecture to support future in
 \subsection{Objectives}
 
 \begin{itemize}
-    \item To develop a secure full-stack mentorship and social networking platform (MentorLink) with core features such as user profiles, posts, communities, group chat, and follow relationships.
+    \item To develop a secure full-stack mentorship and social networking platform (MentorConnect) with core features such as user profiles, posts, communities, group chat, and follow relationships.
     
     \item To enable smooth mentor–student interaction through personalized profiles, discussion feeds, communities, and real-time group messaging.
     
@@ -345,23 +345,23 @@ The system is designed with a scalable backend architecture to support future in
 
 This literature survey examines research related to Educational Data Mining (EDM), peer mentoring effectiveness, personalized recommendation systems, and machine learning-based mentor–mentee matching frameworks. Relevant studies were identified from academic journals, conference proceedings, and recent survey papers published between 2023 and 2024. The selected works were chosen based on methodological rigor, empirical validation, statistical significance, and relevance to academic mentorship and recommendation platforms. 
 
-The reviewed literature provides a theoretical and empirical foundation for MentorLink’s architecture, particularly in areas such as structured interaction logging, behavioural analytics, recommendation mechanisms, and mentoring effectiveness. The survey also highlights recurring challenges such as cold-start problems, data privacy concerns, ethical AI use, and scalability constraints in educational systems. These findings guide the design of MentorLink as a data-driven, scalable, and analytics-ready mentorship platform.
+The reviewed literature provides a theoretical and empirical foundation for MentorConnect’s architecture, particularly in areas such as structured interaction logging, behavioural analytics, recommendation mechanisms, and mentoring effectiveness. The survey also highlights recurring challenges such as cold-start problems, data privacy concerns, ethical AI use, and scalability constraints in educational systems. These findings guide the design of MentorConnect as a data-driven, scalable, and analytics-ready mentorship platform.
 
 \subsection{Paper Summaries}
 
 \begin{enumerate}
 
 \item \textbf{Papadogiannis, Wallace \& Karountzou (2024).} \textit{Educational Data Mining (EDM): Trends and Applications.}\\
-Provides a comprehensive synthesis of the evolution, significance, methods, and applications of Educational Data Mining. The study reports exponential growth in EDM research using the model $y = 4 \times 10^{-143} e^{0.1646x}$ ($R^2 = 0.89$), indicating strong upward research trends. The authors categorize EDM data into three hierarchical levels: Micro (individual learner interactions), Meso (course-level data), and Macro (institution-level data). Academic performance data (36.2\%) is the most widely used category, followed by behavioural and programming data (20.3\% each). Common techniques include classification, regression, clustering, association mining, and NLP. The study supports MentorLink’s structured interaction logging approach and its analytics-ready backend design.
+Provides a comprehensive synthesis of the evolution, significance, methods, and applications of Educational Data Mining. The study reports exponential growth in EDM research using the model $y = 4 \times 10^{-143} e^{0.1646x}$ ($R^2 = 0.89$), indicating strong upward research trends. The authors categorize EDM data into three hierarchical levels: Micro (individual learner interactions), Meso (course-level data), and Macro (institution-level data). Academic performance data (36.2\%) is the most widely used category, followed by behavioural and programming data (20.3\% each). Common techniques include classification, regression, clustering, association mining, and NLP. The study supports MentorConnect’s structured interaction logging approach and its analytics-ready backend design.
 
 \item \textbf{Gehreke, Schilling \& Kauffeld (2024).} \textit{Effectiveness of Peer Mentoring in Higher Education.}\\
-Conducted a meta-analysis of 23 empirical studies focusing on peer mentoring during study entry phases. The findings indicate that structured peer mentoring improves academic performance by approximately 12\% in grades and completion rates. Key success factors include structured program design, mentor training, regular monitoring, and institutional commitment. The study emphasizes that technology-mediated mentoring platforms can scale effectively when supported by proper pedagogical design. These findings justify MentorLink’s structured mentorship lifecycle model.
+Conducted a meta-analysis of 23 empirical studies focusing on peer mentoring during study entry phases. The findings indicate that structured peer mentoring improves academic performance by approximately 12\% in grades and completion rates. Key success factors include structured program design, mentor training, regular monitoring, and institutional commitment. The study emphasizes that technology-mediated mentoring platforms can scale effectively when supported by proper pedagogical design. These findings justify MentorConnect’s structured mentorship lifecycle model.
 
 \item \textbf{Bin, Zuhairi \& Morcos (2024).} \textit{Personalized Learning Recommendation Systems.}\\
-Surveyed 87 research studies on personalized recommendation systems in educational contexts. The study found that hybrid recommendation approaches (collaborative + content-based + deep learning) achieve 85–92\% accuracy compared to 65–75\% for single-method systems. The cold-start problem was identified as a major challenge, recommending explicit preference collection during onboarding. Context-aware recommendation systems improved learner satisfaction by 23\%, while Explainable AI increased user trust by 34\%. This research supports MentorLink’s future hybrid recommendation engine design.
+Surveyed 87 research studies on personalized recommendation systems in educational contexts. The study found that hybrid recommendation approaches (collaborative + content-based + deep learning) achieve 85–92\% accuracy compared to 65–75\% for single-method systems. The cold-start problem was identified as a major challenge, recommending explicit preference collection during onboarding. Context-aware recommendation systems improved learner satisfaction by 23\%, while Explainable AI increased user trust by 34\%. This research supports MentorConnect’s future hybrid recommendation engine design.
 
 \item \textbf{Varghese \& Mohaghegh (2023).} \textit{ML-Based Mentor–Mentee Matching.}\\
-Proposed a hybrid machine learning model combining Big Five personality traits with collaborative and content-based filtering for mentor–mentee matching. The study achieved 78\% accuracy using profile data only and 89\% accuracy when interaction data was included. Personality traits such as extraversion and conscientiousness showed strong correlation with mentoring satisfaction ($r = 0.67$, $p < 0.01$). The hybrid model effectively addressed the cold-start problem through initial personality-based matching. This work provides empirical validation for structured data collection in MentorLink.
+Proposed a hybrid machine learning model combining Big Five personality traits with collaborative and content-based filtering for mentor–mentee matching. The study achieved 78\% accuracy using profile data only and 89\% accuracy when interaction data was included. Personality traits such as extraversion and conscientiousness showed strong correlation with mentoring satisfaction ($r = 0.67$, $p < 0.01$). The hybrid model effectively addressed the cold-start problem through initial personality-based matching. This work provides empirical validation for structured data collection in MentorConnect.
 
 \end{enumerate}
 
@@ -387,7 +387,7 @@ Varghese \& Mohaghegh, 2023 & ML mentor–mentee matching & Demonstrates effecti
 
 Existing literature provides strong foundations in educational data mining, mentoring effectiveness, and recommendation algorithms. However, most studies address these domains independently rather than integrating them into a unified academic mentorship ecosystem. Many peer mentoring studies lack automated behavioural data tracking, while recommendation research often overlooks structured mentorship lifecycle modeling. Additionally, practical systems frequently struggle with cold-start limitations, transparency issues, and ethical concerns in algorithmic decision-making.
 
-MentorLink addresses these gaps by combining structured mentorship workflows, interaction-level transactional logging, and an analytics-ready backend within a single institute-exclusive platform. By integrating behavioural data capture with scalable recommendation and mining mechanisms, the proposed system bridges the divide between theoretical EDM research and practical mentorship platform implementation.
+MentorConnect addresses these gaps by combining structured mentorship workflows, interaction-level transactional logging, and an analytics-ready backend within a single institute-exclusive platform. By integrating behavioural data capture with scalable recommendation and mining mechanisms, the proposed system bridges the divide between theoretical EDM research and practical mentorship platform implementation.
 
 % ------------------------------
 % 4. Analysis
@@ -399,7 +399,7 @@ MentorLink addresses these gaps by combining structured mentorship workflows, in
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.70\textwidth]{PM1.png}
-    \caption{Overall System Architecture of MentorLink}
+    \caption{Overall System Architecture of MentorConnect}
 \end{figure}
 
 \subsection{Use Case Diagram}
@@ -448,7 +448,7 @@ MentorLink addresses these gaps by combining structured mentorship workflows, in
 
 \subsection{Major Modules of the Proposed System}
 
-The MentorLink system is divided into the following major modules:
+The MentorConnect system is divided into the following major modules:
 
 \begin{itemize}
     \item \textbf{Authentication Module}
@@ -515,7 +515,7 @@ This structured logging enables future application of data mining techniques suc
 
 \subsection{Implementation Progress (Phase I – 25\%)}
 
-Phase I of MentorLink focuses on establishing the foundational backend architecture and core system modules. The following components have been successfully implemented:
+Phase I of MentorConnect focuses on establishing the foundational backend architecture and core system modules. The following components have been successfully implemented:
 
 \begin{itemize}
     \item User authentication and registration module.
@@ -579,7 +579,7 @@ The system is currently functional at the core backend level with partial fronte
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.95\textwidth]{TechStackDiagram.png}
-    \caption{Technology Stack of MentorLink}
+    \caption{Technology Stack of MentorConnect}
 \end{figure}
 
 \subsection{Frontend Technologies}

@@ -16,7 +16,7 @@ MAX_CLUSTERS = 15
 MIN_DOMAIN_AFFINITY = 0.72
 
 _NOISE = {
-    "project", "projects", "profile", "mentorlink", "fictional", "demo",
+    "project", "projects", "profile", "mentorconnect", "mentorlink", "fictional", "demo",
     "git", "github", "exploring", "explore", "peer", "peers", "student",
     "students", "user", "users", "account", "mentor", "mentee", "technical",
     "technology", "technologies", "interest", "interests", "experience",

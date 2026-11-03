@@ -1,18 +1,18 @@
-MentorLink
+MentorConnect
 Major Project - ESE Report
 submitted in partial fulfillment of the requirement
 for the award of the Degree of
 Bachelor of Technology
 in
-Information Technology
+Computer Engineering
 by
 Himani Arvind Pilankar
 Tithi Kiran Talele
 Chetan Vijay Wankhede
 under the guidance of
-Prof. Soni Bhambar
+Dr. Sudhir Dhage
 Co-Guide Name
-Department of Information Technology
+Department of Computer Engineering
 Bharatiya Vidya Bhavan's
 Sardar Patel Institute of Technology
 (Autonomous Institute Affiliated to University of Mumbai)
@@ -20,19 +20,19 @@ Munshi Nagar, Andheri-West, Mumbai-400058
 University of Mumbai
 
 Approval Certificate
-This is to certify that the Project entitled “MentorLink” by Himani Pilankar, Tithi Talele and
+This is to certify that the Project entitled “MentorConnect” by Himani Pilankar, Tithi Talele and
 Chetan Wankhede is approved for the partial fulfillment of Major Project - I for the Final Year Project
-towards obtaining the Degree of Bachelor of Technology in Information Technology from University of Mumbai.
+towards obtaining the Degree of Bachelor of Technology in Computer Engineering from University of Mumbai.
 Project Guide External Examiner
 (signature) (signature)
-Name: Prof. Soni Bhambar        Name:
+Name: Dr. Sudhir Dhage        Name:
 Date:                           Date:
 Head of Department Principal
 Seal of the Institute
 
 Declaration
-I wish to state that the work embodied in this work titled “MentorLink” forms my own contribution
-to the work carried out under the guidance of Prof. Soni Bhambar at the Sardar Patel Institute of
+I wish to state that the work embodied in this work titled “MentorConnect” forms my own contribution
+to the work carried out under the guidance of Dr. Sudhir Dhage at the Sardar Patel Institute of
 Technology. I declare that this written submission represents my ideas in my own words and where
 others' ideas or words have been included, I have adequately cited and referenced the original sources.
 I also declare that I have adhered to all principles of academic honesty and integrity and have not
@@ -56,7 +56,7 @@ leading to unequal access to mentorship opportunities.
 The absence of a formal mentorship management infrastructure prevents institutions from analyzing
 engagement patterns and identifying frequently discussed academic domains.
 
-MentorLink is developed as a centralized, web-based mentorship and academic networking platform
+MentorConnect is developed as a centralized, web-based mentorship and academic networking platform
 designed to formalize peer mentorship within institutional environments. The platform introduces
 verified authentication, structured student profiles, role-based access control, mentorship lifecycle
 management, mentor discovery mechanisms, and community-driven academic interaction features.
@@ -124,25 +124,23 @@ To provide a verified, institute-exclusive platform for academic mentoring.
 To enable structured interaction between juniors and seniors for guidance and collaboration.
 To capture student interactions as structured transactional data.
 To apply data mining and analytics techniques to derive academic insights.
-To support faculty and administrators with dashboards for data-driven decision-making.
+To produce analytics-ready mentoring records for data-driven decision-making.
 
 1.3 Scope
-The scope of MentorLink includes institute-only mentorship management, role-based user access,
+The scope of MentorConnect includes institute-only mentorship management, role-based user access,
 structured profile management, mentorship request handling, academic discussions, and logging of
 mentoring interactions for future analytics.
 
 1.3.1 Types of Users
 Student (Junior / Senior)
 Moderator
-Admin / Faculty
+Admin
 
 1.3.2 Functionalities per Type of User
 Student: account management, academic profile, mentorship browsing, requests, discussions, and
 communication features.
 
 Admin: user management, community moderation, and system monitoring.
-
-Faculty: analytics dashboard access, academic trend analysis, and academic reporting.
 
 1.3.3 Shared Functionalities
 Authentication and authorization
@@ -222,7 +220,7 @@ comparative analysis of methodologies used. Label all tables and figures whereve
 5.2 Results and Discussion 2
 
 6 Conclusion and Further Work
-MentorLink is designed as a structured mentoring and academic analytics platform that transforms
+MentorConnect is designed as a structured mentoring and academic analytics platform that transforms
 informal student interactions into valuable academic intelligence. By combining verified access,
 structured mentoring, and data-driven analytics, the system addresses key challenges in student
 guidance and institutional decision-making. The project demonstrates a scalable and practical solution

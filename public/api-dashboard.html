@@ -265,7 +265,6 @@
                             <select id="regRole">
                                 <option value="junior" selected>Junior</option>
                                 <option value="senior">Senior</option>
-                                <option value="faculty">Faculty</option>
                             </select>
                         </div>
                         <button onclick="register()">Register</button>
@@ -382,7 +381,7 @@
 
     <script>
         const API_URL = document.getElementById('apiUrl');
-        let authToken = localStorage.getItem('mentorlink_token') || '';
+        let authToken = localStorage.getItem('mentorconnect_token') || '';
 
         // Check connection on load
         window.onload = () => {
@@ -455,7 +454,7 @@
                 
                 if (result.success && result.token) {
                     authToken = result.token;
-                    localStorage.setItem('mentorlink_token', authToken);
+                    localStorage.setItem('mentorconnect_token', authToken);
                     document.getElementById('tokenDisplay').style.display = 'block';
                     document.getElementById('tokenValue').textContent = authToken.substring(0, 50) + '...';
                     showResponse('authResponse', result);
@@ -484,7 +483,7 @@
                 
                 if (result.success && result.token) {
                     authToken = result.token;
-                    localStorage.setItem('mentorlink_token', authToken);
+                    localStorage.setItem('mentorconnect_token', authToken);
                     document.getElementById('tokenDisplay').style.display = 'block';
                     document.getElementById('tokenValue').textContent = authToken.substring(0, 50) + '...';
                     showResponse('authResponse', result);

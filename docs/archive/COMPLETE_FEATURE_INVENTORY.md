@@ -1,6 +1,6 @@
 Archived 2026-10-11, not authoritative; see docs/architecture.md
 
-# MentorLink - Complete Feature Inventory (April 2026)
+# MentorConnect - Complete Feature Inventory (April 2026)
 
 **Status:** Fully Implemented & Operational  
 **Last Updated:** April 23, 2026  
@@ -31,7 +31,7 @@ Archived 2026-10-11, not authoritative; see docs/architecture.md
   - OTP generation (6-digit) with 15-minute expiry
   - Temporary pending registration storage
   - Auto-role detection based on year (1-2=junior, 3-4=senior)
-  - Role whitelisting (only: junior, senior, faculty)
+  - Role whitelisting (only: junior, senior)
   - **Prevents:** Admin role privilege escalation
   - Email notification with OTP
   - Duplicate registration prevention
@@ -145,7 +145,7 @@ Archived 2026-10-11, not authoritative; see docs/architecture.md
 #### 3. **Get All Mentors**
 - **Endpoint:** `GET /api/users/mentors`
 - **Features:**
-  - Fetch all senior/faculty users
+  - Fetch all senior users
   - Populate mentee requests count
   - Populate active mentorships
   - Filter by year, department, skills
@@ -153,7 +153,7 @@ Archived 2026-10-11, not authoritative; see docs/architecture.md
 
 #### 4. **Get All Juniors**
 - **Endpoint:** `GET /api/users/juniors`
-- **Access:** Mentor-only (senior/faculty)
+- **Access:** Mentor-only (senior)
 - **Features:**
   - Fetch junior students
   - Filter by year, department, skills
@@ -191,7 +191,7 @@ Archived 2026-10-11, not authoritative; see docs/architecture.md
 - **Endpoint:** `POST /api/mentorship/request`
 - **Access:** Juniors only
 - **Features:**
-  - Junior requests mentorship from senior/faculty
+  - Junior requests mentorship from senior
   - Validation: mentorship not already requested
   - Compound index prevents duplicates
   - Status: `pending`
@@ -701,7 +701,7 @@ Archived 2026-10-11, not authoritative; see docs/architecture.md
     - Step 3: Password setup (step 3)
   - Email domain validation (SPIT only)
   - Year auto-detection of role
-  - Role selector (Junior/Senior/Faculty)
+  - Role selector (Junior/Senior)
   - Password strength indicator
   - OTP resend functionality
   - Error handling & validation messages
@@ -944,7 +944,7 @@ Archived 2026-10-11, not authoritative; see docs/architecture.md
   // Profile
   year: Number (1-4)
   department: String
-  role: String (enum: junior, senior, faculty, admin)
+  role: String (enum: junior, senior, admin)
   cgpa: Number (optional)
   
   // Skills & Interests
@@ -1362,7 +1362,7 @@ Final Score = Weighted combination of:
 #### 2. **Authentication Middleware** (`middleware/auth.js`)
 - `verifyToken`: JWT validation
 - `checkRole(...roles)`: Role-based access
-- `isMentor`: Check if mentor (senior/faculty)
+- `isMentor`: Check if mentor (senior)
 - `isMentee`: Check if junior
 - `isAdmin`: Check if admin
 
@@ -1511,4 +1511,4 @@ Final Score = Weighted combination of:
 
 **Document Status:** Complete & Comprehensive  
 **Last Updated:** April 23, 2026  
-**Maintained By:** MentorLink Development Team
+**Maintained By:** MentorConnect Development Team
